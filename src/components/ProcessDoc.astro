@@ -268,12 +268,23 @@ const views = [
       // A key that names an activity has a node on the page, so the link moves the
       // selection there as well as the panel — otherwise the drawer changes under
       // the reader while the marked node still points at where they came from.
-      const btn = acts.find((b) => b.dataset.act === key);
-      // A step taken from inside the drawer onto an entry with no node of its own —
-      // a harness, an event — leaves the mark where it is: BACK returns to the panel
-      // it came from, and that panel's node is still the reading position.
-      const marks = doors.filter((d) => d.dataset.detailKey === key);
-      if (btn || marks.length || !deeper) {
+      const actMarks = acts.filter((b) => b.dataset.act === key);
+      const btn = actMarks[0];
+      // A step taken from inside the drawer moves the mark only when the reader can
+      // see it arrive. An entry with no node at all — a harness — and one whose only
+      // nodes sit in a view that is not showing both leave the mark where it is:
+      // BACK returns to the panel it came from, and that panel's node is still the
+      // reading position. Losing the mark to a node nobody can see reads as the
+      // click having deselected something.
+      // Three ways a node names the same entry: an activity by id, a tool by the id
+      // behind its prefix, a catalog entry by the key itself. All three land on
+      // every node that names it, not on the one that happened to be clicked.
+      const marks = [
+        ...actMarks,
+        ...(key.startsWith('tool:') ? tools.filter((t) => t.dataset.tool === key.slice(5)) : []),
+        ...doors.filter((d) => d.dataset.detailKey === key),
+      ];
+      if (btn || !deeper || marks.some((m) => m.offsetParent !== null)) {
         clearMarks();
         for (const m of marks) m.setAttribute('aria-current', 'true');
       }
@@ -287,7 +298,6 @@ const views = [
               ?.click();
           }
         }
-        btn.setAttribute('aria-current', 'true');
       }
       openDrawer(key, deeper);
       if (btn) bringIntoView(btn, 'center');

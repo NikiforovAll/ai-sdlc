@@ -54,6 +54,11 @@ activities:
     consumes: [impact-assessment]
     produces: [status-update]
     why: Silence during an incident is read as a larger incident.
+    open:
+      need: >-
+        A draft status update written off the impact assessment, ready for the
+        lead to correct and send. The cost here is not writing the words, it is
+        that whoever writes them is not working the incident.
 
   - id: apply-mitigation
     name: Apply Mitigation

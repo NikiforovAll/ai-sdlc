@@ -35,6 +35,6 @@ artifacts:
 #   tools:      a concrete thing inside a harness, named so activities can use it
 #   events:     a recurring moment a recommendation can be attached to
 #
-# Add them when you have one to add. An activity with no tooling renders as an
-# open slot, and an open slot is a first-class state — it is the roadmap, not a
-# gap to apologise for.
+# Add them when you have one to add. Until then every activity is either an
+# open slot you declared with `open:` or work the team does itself, and both are
+# first-class states — the slots are the roadmap, not a gap to apologise for.

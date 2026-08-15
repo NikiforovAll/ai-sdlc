@@ -62,6 +62,11 @@ activities:
     consumes: [spec]
     produces: [acceptance-criteria]
     why: Review against criteria written before the change, not after it.
+    open:
+      need: >-
+        A pass that reads the spec and proposes the criteria it implies, so the
+        reviewer edits a list instead of transcribing one. The criteria have to
+        stay the reviewer's — the ask is a draft, not a verdict.
 
   - id: implement
     name: Implement
@@ -129,6 +134,11 @@ activities:
         consumes: [draft-change]
         produces: [change-set]
         why: The author reads the diff as a reviewer before the reviewer must.
+        open:
+          need: >-
+            A reviewer's-eye pass over the author's own diff, run before the
+            change set is handed on. The author already knows what they meant,
+            which is exactly why they are the wrong reader of it.
 
   - id: write-tests
     name: Write Tests
@@ -164,6 +174,11 @@ activities:
     consumes: [evidence-pack, acceptance-criteria]
     produces: [review-verdict]
     why: The review judges evidence against criteria — not the diff against taste.
+    open:
+      need: >-
+        Something that lines the evidence pack up against the acceptance criteria
+        and says which ones are actually answered. This sits directly on the
+        constraint, so it is the slot worth filling first.
 
   - id: prepare-release
     name: Prepare Release

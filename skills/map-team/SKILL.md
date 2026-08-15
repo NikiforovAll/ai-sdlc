@@ -45,15 +45,23 @@ One activity per edit. Assembling a whole file in one pass buys a sixty-second s
 | "that's where it always gets stuck" | `constraint:` on the process, naming the artifact |
 | "Copilot writes most of those tests" | a tool in the catalog, and `tooling:` on that activity with a level |
 | "sometimes it turns out bigger than we thought" | an event, plus a `recommends:` bound to it |
-| "we do that by hand" | the activity, with no `tooling:`. Move on |
+| "we do that by hand, and that's fine" | the activity, with neither `tooling:` nor `open:`. Move on |
+| "we do that by hand, and we'd love something for it" | `open:` on that activity, with their sentence about what would take the work off them as `need:` |
 
 When the team gives you the reason — *"otherwise it bounces back at us"* — that is `why:`. It reads in the drawer, and it is the field that makes the document worth returning to.
 
-### Ask once about tooling
+### Ask once about tooling — then once about the gap
 
-An activity with no `tooling:` renders dashed: an open slot, a first-class state. Ask neutrally, once — *"anything doing that work for you today?"* — take the first answer and move on.
+Ask neutrally, once — *"anything doing that work for you today?"* — take the first answer and move on. A yes is `tooling:`.
 
-The gap between what a team blueprints and what they have filled is the most honest thing this document produces. A session that talks a team into aspirational fills destroys the signal the product exists to show.
+A no leaves two different facts, and only the team can say which one it is. Ask the follow-up in their words — *"would you want something here?"* — because the answer decides how the activity draws:
+
+- **Yes, we want something here.** That is `open:`, and the sentence they just said about what would help is `need:`. Write their sentence, not a product name: an open slot names the work that would be taken off them. This is the roadmap, so it is worth one extra beat to get the sentence right.
+- **No, this stays ours.** Write neither field. The activity draws plain, and the document says nothing about it — which is exactly right, because the team said nothing about it.
+
+Never infer the first from the second. An unanswered question is the second state, not the first: if the team has not asked for anything, the page must not ask on their behalf.
+
+The gap between what a team blueprints and what they have filled is the most honest thing this document produces. A session that talks a team into aspirational fills — or into open slots they never wanted — destroys the signal the product exists to show.
 
 Write the spine first — stages, activities, roles, artifacts. Record a tool the moment someone volunteers one, and open tooling questions only about activities the team has stopped arguing about.
 
@@ -74,7 +82,7 @@ Stop when the team stops, not when the document looks finished. Then:
 
 1. Run `ai-sdlc status <dir>` and read the counts aloud.
 2. Name what is unmapped: processes not covered, activities with no `why:`, stages nobody described.
-3. Give the open slots as a count.
+3. Give the open slots as a count, and say plainly that the unclaimed activities are not part of it — the team declared those, and nothing is owed on them.
 ## References
 
 - `references/ontology-cheatsheet.md` — the model on one page. Read before you start.

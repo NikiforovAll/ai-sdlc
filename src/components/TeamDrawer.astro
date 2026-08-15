@@ -1,25 +1,25 @@
 ---
 import type { OverviewModel } from '../lib/docs';
-import { catalogDescriptions } from '../lib/markdown';
+import { catalogDescriptions, paragraphs } from '../lib/markdown';
 import { toolsOfHarness } from '../lib/derive';
+import ReachList from './ReachList.astro';
 import UseList from './UseList.astro';
 
 interface Props {
   model: OverviewModel;
+  /** Set by the export, where every document shares one file and there are no routes. */
+  inline?: boolean;
 }
-const { model } = Astro.props;
-const { team, teamId, roleUse, harnessUse, artifactUse, toolUse, eventUse } = model;
+const { model, inline = false } = Astro.props;
+const { team, teamId, roleUse, harnessUse, eventUse, toolReach, artifactReach } = model;
 const harnessNames = new Map(team.harnesses.map((h) => [h.id, h.name]));
 const harnessName = (id: string) => harnessNames.get(id) ?? id;
+const eventNames = new Map(team.events.map((e) => [e.id, e.name]));
 
 // The catalogs are team-level, so this is where their descriptions belong: the
 // process drawer explains an entity in the context of one flow, this one explains
 // what it is at all and lists every process that touches it.
 const descriptions = await catalogDescriptions(team);
-// The description is authored as a YAML block, so it keeps the soft wraps the
-// block preserved. Fold them the way the activity drawer does.
-const paragraphs = (text: string) =>
-  text.trim().split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' '));
 ---
 
 <aside class="tdrawer" id="team-drawer" hidden aria-label="Team document detail">
@@ -126,11 +126,24 @@ const paragraphs = (text: string) =>
         </div>
         {s.note && <p class="tdrawer__prose">{s.note}</p>}
         <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Reached for in</h4>
-          <p class="tdrawer__uses">
-            <UseList uses={toolUse.get(s.id) ?? []} empty="Shelf inventory — nothing references it yet." emptyClass="tdrawer__none" />
-          </p>
+          <h4 class="tdrawer__label">Reached for</h4>
+          <ReachList
+            rows={toolReach.get(s.id) ?? []}
+            empty="Shelf inventory — nothing references it yet."
+            eventNames={eventNames}
+            inline={inline}
+          />
         </div>
+        {(s.refs ?? []).length > 0 && (
+          <div class="tdrawer__section">
+            <h4 class="tdrawer__label">Refs</h4>
+            <ul class="tdrawer__refs">
+              {s.refs!.map((ref) => (
+                <li>{ref}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     ))}
 
@@ -145,10 +158,12 @@ const paragraphs = (text: string) =>
           <div class="tdrawer__md prose-md" set:html={descriptions.get(`artifact:${a.id}`)} />
         )}
         <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Changes hands in</h4>
-          <p class="tdrawer__uses">
-            <UseList uses={artifactUse.get(a.id) ?? []} empty="Declared, but no activity produces or consumes it." emptyClass="tdrawer__none" />
-          </p>
+          <h4 class="tdrawer__label">Changes hands</h4>
+          <ReachList
+            rows={artifactReach.get(a.id) ?? []}
+            empty="Declared, but no activity produces or consumes it."
+            inline={inline}
+          />
         </div>
       </div>
     ))}
@@ -360,6 +375,13 @@ const paragraphs = (text: string) =>
   .tdrawer__tool-link:focus-visible {
     color: var(--accent);
     border-color: var(--accent);
+  }
+  .tdrawer__refs {
+    list-style: none;
+  }
+  .tdrawer__refs li {
+    font-size: var(--label);
+    color: var(--sub);
   }
   .tdrawer__list li + li {
     margin-top: 4px;

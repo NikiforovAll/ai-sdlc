@@ -19,7 +19,7 @@ const fill = z.object({
 
 // A recommendation has no identity: it is a pointer from one activity to one
 // tool, optionally bound to the moment that calls for it. It never fills the
-// slot — an activity with ten recommendations and no `tooling:` is still open.
+// slot — an activity with ten recommendations and an `open:` block is still open.
 const recommendation = z.object({
   tool: id,
   level: z.enum(DELEGATION_LEVELS).optional(),
@@ -27,8 +27,32 @@ const recommendation = z.object({
   usage: z.string().optional(),
 });
 
+// An open slot is declared, never inferred. Absence of `tooling:` used to mean
+// "open", which flattened two different facts into one dashed box: work a team
+// has decided to hand to a tool and has not yet, versus work they do themselves
+// and have no intention of changing. Only the first is a roadmap item, and the
+// difference is a sentence only the team can write — so `need:` is required. A
+// slot with nothing to say about what it wants is not a slot, it is a blank.
+const openSlot = z.object({
+  need: z.string(),
+});
+
 export type Fill = z.infer<typeof fill>;
 export type Recommendation = z.infer<typeof recommendation>;
+export type OpenSlot = z.infer<typeof openSlot>;
+
+// The two are mutually exclusive by definition: a slot is open until something
+// fills it. Stating both is an authoring mistake worth failing on rather than
+// resolving by precedence, which would silently drop whichever lost.
+const oneOrTheOther = <T extends { tooling?: unknown; open?: unknown }>(a: T, ctx: z.RefinementCtx) => {
+  if (a.tooling && a.open) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['open'],
+      message: 'an activity is either filled (`tooling:`) or open (`open:`) — not both',
+    });
+  }
+};
 
 export interface SubActivity {
   id: string;
@@ -38,6 +62,7 @@ export interface SubActivity {
   produces: string[];
   why?: string;
   tooling?: Fill;
+  open?: OpenSlot;
   recommends?: Recommendation[];
   activities?: SubActivity[];
 }
@@ -53,23 +78,27 @@ const subActivity: z.ZodType<SubActivity> = z.lazy(() =>
     produces: z.array(id).min(1),
     why: z.string().optional(),
     tooling: fill.optional(),
+    open: openSlot.optional(),
+    recommends: z.array(recommendation).optional(),
+    activities: z.array(subActivity).optional(),
+  }).superRefine(oneOrTheOther)
+);
+
+const activity = z
+  .object({
+    id,
+    name: z.string(),
+    stage: id,
+    roles: z.array(id).min(1),
+    consumes: z.array(id).default([]),
+    produces: z.array(id).min(1),
+    why: z.string().optional(),
+    tooling: fill.optional(),
+    open: openSlot.optional(),
     recommends: z.array(recommendation).optional(),
     activities: z.array(subActivity).optional(),
   })
-);
-
-const activity = z.object({
-  id,
-  name: z.string(),
-  stage: id,
-  roles: z.array(id).min(1),
-  consumes: z.array(id).default([]),
-  produces: z.array(id).min(1),
-  why: z.string().optional(),
-  tooling: fill.optional(),
-  recommends: z.array(recommendation).optional(),
-  activities: z.array(subActivity).optional(),
-});
+  .superRefine(oneOrTheOther);
 
 // One entry of the Tooling catalog: a named tool and the harness it runs in.
 // It states no roles and no activities — the activities that name it supply

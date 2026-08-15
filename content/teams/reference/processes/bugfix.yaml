@@ -39,6 +39,11 @@ activities:
     consumes: [bug-report]
     produces: [reproduction]
     why: A bug you cannot reproduce on demand is a hypothesis, and fixes to hypotheses do not hold.
+    open:
+      need: >-
+        Something that turns a report into a runnable case — the environment, the
+        data and the steps, standing up on demand. Today every reproduction is
+        rebuilt by hand from whatever the reporter remembered.
     recommends:
       - tool: bisect
         event: cannot-reproduce
@@ -56,9 +61,6 @@ activities:
     tooling:
       tool: explore-subagent
       level: delegated-review
-    recommends:
-      - tool: bisect
-        usage: The commit that introduced the symptom names the code that owns it.
 
   - id: write-regression-test
     name: Write Regression Test

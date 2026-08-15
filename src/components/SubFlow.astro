@@ -1,6 +1,6 @@
 ---
 import type { Team, SubActivity } from '../lib/derive';
-import { deriveSub, LEVEL_LABELS } from '../lib/derive';
+import { deriveSub, LEVEL_LABELS, statesCapability } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -24,7 +24,7 @@ const cols = [...Array(d.cols).keys()];
           {cell(r.id, c).map((p) => (
             <>
               <button
-                class={`subflow__act${p.activity.tooling ? '' : ' subflow__act--open'}`}
+                class={`subflow__act${p.activity.open ? ' subflow__act--open' : ''}`}
                 data-act={p.activity.id}
                 data-fills={p.activity.tooling?.tool}
                 data-roles={p.activity.roles.join(' ')}
@@ -32,9 +32,11 @@ const cols = [...Array(d.cols).keys()];
                 aria-label={`${p.activity.name} — details`}
               >
                 <span class="subflow__name">{p.activity.name}</span>
-                <span class="subflow__level">
-                  {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
-                </span>
+                {statesCapability(p.activity) && (
+                  <span class="subflow__level">
+                    {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
+                  </span>
+                )}
               </button>
               {(p.activity.activities?.length ?? 0) > 0 && (
                 <button class="subflow__expand" data-expand={p.activity.id} aria-expanded="false">

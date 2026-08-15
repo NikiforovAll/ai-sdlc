@@ -45,7 +45,7 @@ Two concepts: **Sub-activity** and **Sub-process**.
 - **No `stage`.** A child lives in its parent's stage, always. Stages label the coarse map; sub-activities are below that resolution, and letting a child leave its parent's stage would make the stage label meaningless at both levels.
 - **Roles come from the same team catalog**, and a child's roles need not match its parent's. That is how a handoff *inside* an activity becomes visible — the engineer writes the change, the reviewer checks it, and the nesting shows a boundary the parent node hides.
 - **Artifacts come from the same team catalog too.** There is no such thing as a private, sub-process-local artifact — if children pass something between them, it is declared like any other artifact. This is a deliberate cost: it keeps one producer per artifact true document-wide, and it forces intermediate things to be named rather than assumed.
-- **Fills and recommendations work identically at any depth.** A sub-activity with no `tooling:` is an open slot, dashed and green, exactly like a top-level one. That is the whole payoff of not inventing a separate "step" concept.
+- **Fills and recommendations work identically at any depth.** A sub-activity carrying `open: {need}` draws dashed and green, exactly like a top-level one, and one with neither `tooling:` nor `open:` draws plain at either depth. That is the whole payoff of not inventing a separate "step" concept.
 - Nesting is *zoom*, not decomposition-by-obligation. Most activities have no children, and that is not a gap — an activity is nested only when the inside is worth showing.
 - Child count is not size, effort, or duration. Four children does not mean bigger than two.
 

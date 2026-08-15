@@ -197,6 +197,15 @@ export function flatten(team: Team): FlatActivity[] {
   return out;
 }
 
+/* An activity is in one of three states: filled (`tooling:`), open (`open:`), or
+   neither — work the team does itself and has said nothing about. Every figure
+   and both drawers ask the same question of it: is there anything to report at
+   all? The answer is one predicate here rather than a bare `||` at each site,
+   because six sites can disagree silently and a fourth state would be a six-file
+   edit. Callers still branch on `tooling` / `open` directly to draw the state,
+   which is what narrows the type. */
+export const statesCapability = (a: AnyActivity) => Boolean(a.tooling || a.open);
+
 // The levels are an ordinal ramp, not a set: a figure can draw the level as a
 // position on the scale rather than spend a text row on its name.
 export const LEVEL_ORDER = ['manual', 'assisted', 'delegated-review', 'gated-autonomous'];

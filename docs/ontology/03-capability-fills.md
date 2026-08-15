@@ -1,8 +1,8 @@
 # Layer 3 — Capability Fills
 
-Layers 1–2 describe a delivery process with no AI in it. This layer is where AI enters — and the central design choice is *how little* it takes: capability attaches to the spine as a **fill** on an activity, one uniform shape everywhere, and the *absence* of a fill is itself a first-class, visible thing.
+Layers 1–2 describe a delivery process with no AI in it. This layer is where AI enters — and the central design choice is *how little* it takes: capability attaches to the spine as a **fill** on an activity, one uniform shape everywhere, and a gap the team *declares* is itself a first-class, visible thing.
 
-Five concepts: **Harness**, **Tool**, **Fill**, the **Level ladder**, and the **Open slot**. Two of them are inventory (harness, tool — things the team *has*); the rest are usage (how the process *uses* them). The model keeps that line hard: **a tool never says how it is used — the blueprint references it.**
+Five concepts: **Harness**, **Tool**, **Fill**, the **Level ladder**, and the **Open slot** — and, between fill and slot, the third state an activity can be in: neither. Two of them are inventory (harness, tool — things the team *has*); the rest are usage (how the process *uses* them). The model keeps that line hard: **a tool never says how it is used — the blueprint references it.**
 
 ---
 
@@ -125,6 +125,8 @@ The loop position is a derived gloss, not a field — nothing authors it, and it
 ▮▮▮▮  GATED + AUTONOMOUS      ▯▯▯▯  OPEN SLOT
 ```
 
+An activity that is neither filled nor open draws no gauge and no caption. The row is absent rather than empty — an empty gauge says "nothing has reached the first rung", which is a claim, and the third state makes none.
+
 **Invariants & non-meanings.**
 - The ladder measures *delegation*, not quality or maturity. `assisted` is not a worse state than `gated-autonomous` — shipping is gated-autonomous and spec-writing is assisted in the reference model precisely because the right level differs per activity.
 - It is not a maturity roadmap. Nothing in the model says a team should climb; it says a team should *know where it stands* on each activity.
@@ -135,17 +137,29 @@ The loop position is a derived gloss, not a field — nothing authors it, and it
 
 ## Open slot
 
-**Definition.** An activity with no fill. Not an omission — a named, rendered gap: work the team does entirely by hand where capability *could* attach.
+**Definition.** An activity the team has declared it wants capability on and has not filled, together with the sentence saying what would fill it. Not an omission — a claim.
 
-**Why it exists.** The set of open slots *is the team's roadmap*. A document where gaps are invisible invites the fiction of full coverage; a document where every unfilled activity announces itself turns "where should we invest next" into reading, and pairs naturally with the ① constraint ("fill the slot at the bottleneck first").
+**Why it exists.** The set of open slots *is the team's roadmap*. A document where gaps are invisible invites the fiction of full coverage; a document where every declared gap announces itself turns "where should we invest next" into reading, and pairs naturally with the ① constraint ("fill the slot at the bottleneck first").
 
-**Shape.** Nothing — the absence of `tooling:` on an activity is the entire declaration.
+**Shape.**
 
-**How it renders.** The dashed border + green stripe over washi, with a green "OPEN SLOT" caption and an empty four-cell gauge (no rung reached) — the loudest visual voice a node can have; the open-slots count is the accented stat in the masthead; the drawer shows an explicit open-slot notice; a role whose PLAYBOOK has no tooling gets "this role's playbook is an open slot."
+```yaml
+open:
+  need: >-                       # required — what the team wants here, in their words
+    Something that turns a report into a runnable case — the environment,
+    the data and the steps, standing up on demand.
+```
+
+`open:` and `tooling:` are mutually exclusive: a slot is open until something fills it, and stating both fails `check`.
+
+**How it renders.** The dashed border + green stripe over washi, with a green "OPEN SLOT" caption and an empty four-cell gauge (no rung reached) — the loudest visual voice a node can have; the open-slots count is the accented stat in the masthead; the drawer's TOOLING section prints the `need:` text under an OPEN SLOT mark; a role whose PLAYBOOK has no tooling says so and stops there, because a slot is declared per activity and a role is not an activity.
 
 **Invariants & non-meanings.**
+- **Open is declared, never inferred.** An activity with neither `tooling:` nor `open:` is the third state — work the team does itself and has asked for nothing on. It draws plain, with no tooling line at all, and counts as *unclaimed* rather than open.
+- That third state is what the `need:` field buys. Before it, absence of `tooling:` meant "open", so Apply Mitigation — work an incident team deliberately keeps in human hands — was rendered as a gap on the roadmap. Two facts had one shape, and the louder reading won.
 - An open slot is a *statement about the present*, not a commitment: "unfilled today", never "planned for Q3". (No dates — the model has no time anywhere.)
-- Open ≠ broken. Review Conformance is an open slot in the reference model *on purpose* — some activities a team decides to keep fully human. The model doesn't distinguish "not yet filled" from "deliberately human"; the activity's `why` is where that reasoning lives.
+- Open ≠ broken, and unclaimed ≠ neglected. Apply Mitigation in the reference model has a recommendation and no slot: a tool is available for one moment, and the work itself stays the team's.
+- The `need:` sentence is the team's, not the tool vendor's. It names the work that would be taken off them, not the product that would do it — a slot that names a product has already been filled in someone's head.
 - Only the fill can be open. Roles, stages, and artifacts are never "open" — the slot metaphor applies to capability alone.
 
 ---

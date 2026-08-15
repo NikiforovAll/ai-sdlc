@@ -53,7 +53,8 @@ activities:                      # at least one
     consumes: [spec]             # optional
     produces: [change-set]       # at least one
     why: One sentence on why this exists.   # optional, worth writing
-    tooling: { ... }             # optional — absent means open slot
+    tooling: { ... }             # optional — what does this work today
+    open: { need: ... }          # optional — a gap the team declared; excludes tooling:
     recommends: [ ... ]          # optional
     activities: [ ... ]          # optional — sub-activities
 ```
@@ -65,7 +66,8 @@ activities:                      # at least one
 | **Harness** | a runtime the team has: an agentic CLI, CI, a tracker |
 | **Tool** | a concrete thing inside a harness. Inventory only — the catalog says *what it is*, never *where it is used* |
 | **Fill** | `tooling:` on an activity — capability attached to actual work |
-| **Open slot** | an activity with no `tooling:`. Renders dashed. **The roadmap, not an error** |
+| **Open slot** | `open: { need }` on an activity — a gap the team declared, plus their sentence on what would fill it. Renders dashed. **The roadmap, not an error** |
+| **Unclaimed** | an activity with neither. Renders plain, no tooling line. Work the team does itself and has asked for nothing on — never counted as a gap |
 
 ```yaml
 tooling:
@@ -74,13 +76,21 @@ tooling:
   usage: ...                   # optional — advice true only here
 ```
 
+```yaml
+open:
+  need: >-                     # required — the team's own words on what would fill it,
+    Something that turns a report into a runnable case.   # naming the work, not a product
+```
+
+Open is declared, never inferred. Stating both `tooling:` and `open:` fails `check`.
+
 The level ladder reads as *where the human stands*: **manual** (doing it) → **assisted** (in the loop) → **delegated-review** (on the loop) → **gated-autonomous** (at the gate).
 
 A tool carries no level in the catalog, deliberately. The same tool is legitimately assisted in one activity and delegated in another.
 
 ## Layer 4 — recommendations and events
 
-A **recommendation** is a pointer: another tool worth reaching for here, optionally bound to a moment. It has no identity and **never fills the slot** — an activity with ten recommendations and no `tooling:` is still open.
+A **recommendation** is a pointer: another tool worth reaching for here, optionally bound to a moment. It has no identity and **never fills the slot** — an activity with ten recommendations and an `open:` block is still open, and one with ten recommendations and no `open:` is not.
 
 An **event** is a named recurring moment ("the task turns out bigger than planned"). It carries no mechanics; it exists so a recommendation can be attached to a situation rather than a process position.
 

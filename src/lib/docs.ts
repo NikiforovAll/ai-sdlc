@@ -4,6 +4,7 @@
 import { getCollection } from 'astro:content';
 import { toolOf, view } from './derive';
 import type { AnyActivity, ProcessDoc as ProcessData, Team, TeamDoc } from './derive';
+import type { Fill } from './schema';
 
 // A use is where a catalog entry is actually reached for: which process, and the
 // entity inside it that answers "where?". `focus` is a drawer key the process
@@ -21,6 +22,37 @@ export interface Use {
 // sits over it cannot answer the same link differently.
 export const useHref = (u: Use, inline = false) =>
   inline ? '#' : `/${u.slug}${u.focus ? `#${u.focus}` : ''}`;
+
+// A use answers "which processes", which is all a table cell has room for. The
+// team document's drawer has a panel, and the question a reader opens it with is
+// the next one down: which activity, owned by whom, at what degree of
+// delegation. A reach is that answer — one row per place the entry is actually
+// reached for, across every process, with the activity as the door.
+export interface Reach {
+  slug: string;
+  process: string;
+  activity: string;
+  actId: string;
+  /** Sub-activities live inside their parent's stage, so they name none of their own. */
+  stage?: string;
+  roles: string[];
+  kind: 'fill' | 'recommended' | 'produces' | 'consumes';
+  level?: Fill['level'];
+  event?: string;
+  usage?: string;
+}
+
+/** How a reach reads in a sentence. House wording, not authored content, so it
+    has no home in the YAML — but it is stated on three surfaces (the team
+    drawer's rows, the activity drawer's "reached for", the playbook item), and
+    a rename that reaches two of the three makes them disagree about what a fill
+    does. It sits beside `Reach`, whose `kind` union it answers. */
+export const VERB: Record<Reach['kind'], string> = {
+  fill: 'fills the slot in',
+  recommended: 'recommended in',
+  produces: 'produced by',
+  consumes: 'consumed by',
+};
 
 export interface ProcStat {
   slug: string;
@@ -40,6 +72,8 @@ export interface OverviewModel {
   roleActs: Map<string, number>;
   toolUse: Map<string, Use[]>;
   eventUse: Map<string, Use[]>;
+  toolReach: Map<string, Reach[]>;
+  artifactReach: Map<string, Reach[]>;
 }
 
 export interface ProcessModel {
@@ -90,7 +124,10 @@ export async function overviewModel(): Promise<OverviewModel> {
       slug: p.id,
       data: p.data,
       activities: flat.length,
-      open: flat.filter((e) => !e.a.tooling).length,
+      // Declared slots only. An activity with no `tooling:` and no `open:` is
+      // work the team does itself and has not asked for anything on — counting it
+      // as a gap made the roadmap number a headcount of everything unautomated.
+      open: flat.filter((e) => e.a.open).length,
     };
   });
 
@@ -106,9 +143,23 @@ export async function overviewModel(): Promise<OverviewModel> {
   // Which tool answers each moment. Read from the activities, because a
   // recommendation is the only place an event is ever named.
   const eventUse = new Map<string, Use[]>();
+  // The same walk answers the drawer's deeper question — every activity that
+  // reaches for a tool, every hand-off of an artifact — so it is one pass, not a
+  // second one per panel.
+  const toolReach = new Map<string, Reach[]>();
+  const artifactReach = new Map<string, Reach[]>();
+  // Unlike `pushUse`, every row is kept: two activities reaching for the same
+  // tool is the answer, not a duplicate.
+  const pushReach = (m: Map<string, Reach[]>, key: string, r: Reach) => {
+    const list = m.get(key);
+    if (list) list.push(r);
+    else m.set(key, [r]);
+  };
+  const roleNames = new Map(team.roles.map((r) => [r.id, r.name]));
 
   for (const p of procs) {
-    const flat = flatOf(p.data.activities);
+    const flat = flats.get(p.slug)!;
+    const stageNames = new Map(p.data.stages.map((s) => [s.id, s.name]));
 
     // An artifact has no panel of its own, so its door is the activity that makes it.
     // A top-level one is preferred: a sub-activity's node sits inside a collapsed inset.
@@ -142,6 +193,23 @@ export async function overviewModel(): Promise<OverviewModel> {
         if (!r.event) continue;
         pushUse(eventUse, r.event, { slug: p.slug, label: toolOf(team, r.tool).name, focus: `tool-${r.tool}` });
       }
+
+      const at: Omit<Reach, 'kind'> = {
+        slug: p.slug,
+        process: p.data.name,
+        activity: a.name,
+        actId: a.id,
+        stage: 'stage' in a ? stageNames.get(a.stage) : undefined,
+        roles: a.roles.map((r) => roleNames.get(r) ?? r),
+      };
+      if (a.tooling) {
+        pushReach(toolReach, a.tooling.tool, { ...at, kind: 'fill', level: a.tooling.level, usage: a.tooling.usage });
+      }
+      for (const r of a.recommends ?? []) {
+        pushReach(toolReach, r.tool, { ...at, kind: 'recommended', level: r.level, event: r.event, usage: r.usage });
+      }
+      for (const art of a.produces) pushReach(artifactReach, art, { ...at, kind: 'produces' });
+      for (const art of a.consumes ?? []) pushReach(artifactReach, art, { ...at, kind: 'consumes' });
     }
   }
   for (const s of team.tools) {
@@ -161,6 +229,8 @@ export async function overviewModel(): Promise<OverviewModel> {
     roleActs,
     toolUse,
     eventUse,
+    toolReach,
+    artifactReach,
     stats: [
       { n: procs.length, label: 'Processes' },
       { n: team.roles.length, label: 'Roles' },

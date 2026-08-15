@@ -21,7 +21,7 @@ ai-sdlc is a composer of project delivery processes. A single YAML document desc
 
 ## Positioning
 
-No exact prior art exists (research 2026-08-13): {stage×role matrix + YAML source + interactive click-through + per-team documents + AI-delivery vocabulary} is an empty niche. Unlike generic diagram tools, the schema is domain-opinionated (D2): it hard-codes the SDLC ontology (stage, role, artifact, activity, delegation level, constraint), so users supply instances, not concepts. Unfilled capability slots render as visible open slots — "empty cells are the roadmap" is structural, not editorial.
+No exact prior art exists (research 2026-08-13): {stage×role matrix + YAML source + interactive click-through + per-team documents + AI-delivery vocabulary} is an empty niche. Unlike generic diagram tools, the schema is domain-opinionated (D2): it hard-codes the SDLC ontology (stage, role, artifact, activity, delegation level, constraint), so users supply instances, not concepts. Declared capability slots render as visible open slots — "the declared gaps are the roadmap" is structural, not editorial.
 
 ## Operating Context
 
@@ -35,7 +35,7 @@ No exact prior art exists (research 2026-08-13): {stage×role matrix + YAML sour
 - **Document, not timeline.** Sequence is ordinal — topological sort of artifact edges. No durations, calendar, or lead-time metrics; anything VSM-shaped is out.
 - **Forward-only DAG.** Rework/back-edges are never drawn — assumed by any reader.
 - **Core entity is the activity** (D11): performed by roles, sits in a stage, consumes/produces artifacts, addresses problems, optional tooling fill. Handoffs are derived (artifact edge crossing a role boundary), never authored. The flow swimlane and the stage×role grid are two projections of the same YAML.
-- **Capability slots + tool fills** (D8): an activity without tooling renders as an open slot (dashed). Delegation level is per-activity fill.
+- **Capability slots + tool fills** (D8): an activity declaring `open: {need}` renders as an open slot (dashed) and states what would fill it; one with neither a fill nor a slot is work the team does itself and renders plain. Delegation level is per-activity fill.
 - **One global view** (D10): role is a filter (dim others), not separate pages; progressive drill-down L0 grid → stage/cell → activity → tool.
 - **Theory of constraints:** a single ① marker is a first-class model field; may mark a handoff edge.
 - **Read-only site** (D9): interactivity is navigational only — no in-browser editing, no export.

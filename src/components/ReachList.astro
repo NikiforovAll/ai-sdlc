@@ -1,0 +1,179 @@
+---
+// The team document's drawer answers "where is this actually used" one level
+// below the process name: which activity, whose it is, and how it is reached for.
+// Tools and artifacts ask that question in the same shape — only the verb differs
+// — so the rows are written once and grouped by process, because a reader is
+// looking for a place to go next and a process is how they name places.
+import { LEVEL_LABELS } from '../lib/derive';
+import { useHref, VERB } from '../lib/docs';
+import type { Reach } from '../lib/docs';
+import { paragraphs } from '../lib/markdown';
+
+interface Props {
+  rows: Reach[];
+  /** What the reader is told when nothing reaches for the entry. */
+  empty: string;
+  /** Resolves the moment a recommendation is bound to. */
+  eventNames?: Map<string, string>;
+  /** Set by the export, where every document shares one file and there are no routes. */
+  inline?: boolean;
+}
+const { rows, empty, eventNames, inline = false } = Astro.props;
+
+// Where the activity sits and who owns it — one micro-caps run, because both
+// answer "which one of these rows is mine" and neither is worth its own line.
+const where = (r: Reach) => [r.stage, r.roles.join(', ')].filter(Boolean).join(' · ');
+
+// Grouped in first-seen order, which is the order the processes are listed in
+// everywhere else on the document.
+const groups = [
+  ...rows.reduce((m, r) => {
+    const row = { r, where: where(r) };
+    const list = m.get(r.slug);
+    if (list) list.push(row);
+    else m.set(r.slug, [row]);
+    return m;
+  }, new Map<string, { r: Reach; where: string }[]>()),
+];
+
+---
+
+{groups.length === 0 ? (
+  <p class="reach__none">{empty}</p>
+) : (
+  groups.map(([slug, group]) => (
+    <div class="reach">
+      <a class="reach__proc" href={useHref({ slug, label: group[0].r.process }, inline)} data-goto={slug}>
+        {group[0].r.process}
+      </a>
+      <ul class="reach__rows">
+        {group.map(({ r, where }) => (
+          <li class="reach__row">
+            <p class="reach__line">
+              {/* Explicit: the newline before a multi-line tag is not kept as a
+                  space, so the verb ran into the name it introduces. */}
+              <span class="reach__verb">{VERB[r.kind]}</span>{' '}
+              <a
+                class="row__go reach__act"
+                href={useHref({ slug: r.slug, label: r.activity, focus: `act-${r.actId}` }, inline)}
+                data-goto={r.slug}
+                data-focus={`act-${r.actId}`}
+              >
+                {r.activity}
+              </a>
+            </p>
+            {(where || r.level) && (
+              <p class="reach__meta">
+                {where && <span>{where}</span>}
+                {/* Delegation is a chip everywhere else it is stated — the playbook
+                    item, the activity drawer — so it stays a chip here rather than
+                    flattening into the same micro-caps run as place and owner. */}
+                {r.level && <span class="chip chip--muted">{LEVEL_LABELS[r.level]}</span>}
+              </p>
+            )}
+            {r.event && (
+              <p class="reach__event">
+                <svg class="reach__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>
+                {eventNames?.get(r.event) ?? r.event}
+              </p>
+            )}
+            {r.usage && paragraphs(r.usage).map((t) => <p class="reach__usage">{t}</p>)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))
+)}
+
+<style>
+  /* A process is a wider break than the 7px between two rows inside one, so it
+     takes the reading step rather than a value only slightly above it. */
+  .reach + .reach {
+    margin-top: 14px;
+  }
+  /* The process is the kicker over its own rows rather than a row of its own: the
+     reader is inside one catalog entry, and what varies down the panel is where
+     it is reached for. */
+  .reach__proc {
+    display: inline-block;
+    font-size: var(--micro);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+    border-bottom: 1px solid rgba(15, 107, 60, 0.35);
+    transition: border-color 0.14s var(--ease-out);
+  }
+  .reach__proc:hover,
+  .reach__proc:focus-visible {
+    border-bottom-color: var(--accent);
+  }
+  .reach__rows {
+    list-style: none;
+    margin-top: 5px;
+  }
+  .reach__row + .reach__row {
+    margin-top: 7px;
+  }
+  .reach__row {
+    border-left: 1px solid var(--line);
+    padding-left: 8px;
+  }
+  .reach__line {
+    font-size: var(--body);
+    line-height: 17px;
+  }
+  .reach__verb {
+    color: var(--sub);
+  }
+  /* The rule and the hover are `.row__go` — this is the same door every other
+     catalog row draws. What is local is the weight and the ink: here the
+     activity is the thing being named, not an aside beside it. */
+  .reach__act {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .reach__meta {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 5px;
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sub);
+    margin-top: 3px;
+  }
+  .reach__event {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 3px;
+  }
+  /* The same bolt the playbook draws, at the same size: one glyph for one meaning
+     across the two surfaces that state when a tool is reached for. */
+  .reach__bolt {
+    width: 7px;
+    height: 9px;
+  }
+  /* Authored prose, so it takes the body step rather than an off-scale one — a
+     step under the row it explains, level with the indexes elsewhere. */
+  .reach__usage {
+    font-size: var(--body);
+    line-height: 17px;
+    color: var(--sub);
+    margin-top: 4px;
+  }
+  /* An aside about a list must not outweigh the rows it stands in for, so the
+     empty line takes the same body step the rows do, not the drawer's prose. */
+  .reach__none {
+    font-size: var(--body);
+    line-height: 17px;
+    color: var(--sub);
+  }
+</style>

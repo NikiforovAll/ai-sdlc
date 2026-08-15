@@ -51,6 +51,8 @@ export async function describeTeam(teamDir) {
 
   let activities = 0;
   let filled = 0;
+  let open = 0;
+  let unclaimed = 0;
   let stages = 0;
 
   for (const { file, data } of docs) {
@@ -67,6 +69,11 @@ export async function describeTeam(teamDir) {
         filled += 1;
         refer('tools', a.tooling.tool, file, `${path}.tooling.tool`);
       }
+      // Declared, not inferred, and counted rather than subtracted: the third
+      // state is work the team does itself, and a state nobody counts is a state
+      // the next one silently lands in.
+      if (a.open) open += 1;
+      if (!a.tooling?.tool && !a.open) unclaimed += 1;
       list(a.recommends).forEach((r, i) => {
         refer('tools', r?.tool, file, `${path}.recommends.${i}.tool`);
         if (r?.event) refer('events', r.event, file, `${path}.recommends.${i}.event`);
@@ -97,7 +104,8 @@ export async function describeTeam(teamDir) {
       stages,
       activities,
       filled,
-      open: activities - filled,
+      open,
+      unclaimed,
       roles: catalog.roles.size,
       artifacts: catalog.artifacts.size,
       harnesses: catalog.harnesses.size,
@@ -129,7 +137,13 @@ export function reportStatus(s) {
   out.push(row('stages', c.stages));
   // Counted, not flagged: the gap between blueprint and fill is the signal the
   // document exists to show, so this line must read as an inventory.
-  out.push(row('activities', c.activities, `${c.filled} filled · ${plural(c.open, 'open slot')}`));
+  out.push(
+    row(
+      'activities',
+      c.activities,
+      `${c.filled} filled · ${plural(c.open, 'open slot')} · ${c.unclaimed} unclaimed`
+    )
+  );
 
   for (const kind of ['roles', 'artifacts', 'harnesses', 'tools', 'events']) {
     const idle = s.unused[kind];

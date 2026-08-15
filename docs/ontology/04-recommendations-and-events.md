@@ -43,7 +43,7 @@ Two concepts: **Recommendation** and **Event**.
 - **A recommendation has no identity.** No id, no name of its own, nothing references it. It is a pointer from one activity to one tool; the name and harness live on the tool.
 - **It states no roles.** Whoever owns the activity owns the recommendation. This is the direct consequence of the inversion: the activity is the anchor, so it supplies the context.
 - **The same tool recommended in two activities is two entries**, with different `usage` prose. That duplication is deliberate — advice that is true everywhere is usually the tool's `note`, and advice that is true *here* deserves to be written here.
-- **`recommends:` never affects the open slot.** An activity with ten recommendations and no `tooling:` is still an open slot: the fill says how the work is *done*, recommendations say what is *available*. Absence of recommendations means nothing at all.
+- **`recommends:` never affects the open slot.** An activity with ten recommendations and an `open:` block is still open: the fill says how the work is *done*, recommendations say what is *available*. Nor does a recommendation open a slot — Apply Mitigation in the reference model has one and no `open:`, because a tool being available for a moment is not the team asking for the work to be taken off them. Absence of recommendations means nothing at all.
 - **`level` is optional here**, unlike on a fill. Omitting it says "reach for this", not "reach for this at this degree of delegation" — the tool is the advice, the ladder is not always part of it.
 - A recommendation adds no edges, no columns, nothing to Layer 2's derivation. It annotates an activity; it never creates flow.
 

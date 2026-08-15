@@ -42,6 +42,11 @@ activities:
     consumes: [bug-report]
     produces: [reproduction]
     why: A bug you cannot reproduce on demand is a hypothesis, and fixes to hypotheses do not hold.
+    open:
+      need: >-
+        Something that turns a report into a runnable case — the environment, the
+        data and the steps, standing up on demand. Today every reproduction is
+        rebuilt by hand from whatever the reporter remembered.
     recommends:
       - tool: bisect
         event: cannot-reproduce
@@ -80,7 +85,7 @@ activities:
 
 **The constraint is named, not positioned.** `constraint: { artifact: reproduction }` says *which* artifact is the bottleneck. Where the ① lands on the page is computed from wherever that artifact flows. The `note` is the argument for the claim, and it belongs there — a bottleneck asserted without a reason is not worth marking.
 
-**One activity is an open slot.** `reproduce-bug` has no `tooling:`. It has a *recommendation* — `/bisect`, for when the report does not reproduce — and a recommendation never fills the slot. Reproducing a bug is still hand work here, and the document says so plainly instead of dressing it up.
+**One activity is an open slot, and it says what it wants.** `reproduce-bug` has no `tooling:` — but that alone would not open a slot, because plenty of work is hand work a team is content with. What opens it is `open: need:`, the team's own sentence about what would take the job off them. Note what the sentence names: a runnable case standing up on demand, not a product. It also has a *recommendation* — `/bisect`, for when the report does not reproduce — and a recommendation never fills the slot, nor opens one.
 
 **The recommendation is bound to a moment, not to the position.** `event: cannot-reproduce` means the advice is for the situation where the bug will not reproduce on demand, not for everyone who reaches this box. Without the event it would read as standing advice for the activity, which would be a different and weaker claim.
 

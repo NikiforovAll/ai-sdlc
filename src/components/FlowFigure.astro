@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { derive, LEVEL_LABELS, LEVEL_ORDER } from '../lib/derive';
+import { derive, LEVEL_LABELS, LEVEL_ORDER, statesCapability } from '../lib/derive';
 import SubFlow from './SubFlow.astro';
 
 interface Props {
@@ -92,18 +92,12 @@ const paths = d.edges.map((e) => {
 
 const artifactName = (id: string) => team.artifacts.find((a) => a.id === id)?.name ?? id;
 
-// One label per (producer, artifact) — fan-out edges share it; keep the lowest, clearest spot.
-const labelEdges = [
-  ...paths
-    .filter((e) => e.handoff)
-    .reduce((m, e) => {
-      const k = `${e.from}:${e.artifact}`;
-      const prev = m.get(k);
-      if (!prev || e.my > prev.my) m.set(k, e);
-      return m;
-    }, new Map<string, (typeof paths)[number]>())
-    .values(),
-];
+// One label per hand-off edge. Fan-out used to share a single label, chosen by
+// whichever midpoint sat lowest — which assumed the consumers of one artifact sit
+// near each other. They do not: bug-report leaves triage on two curves 600px
+// apart, and "lowest" put the only name on the far one, leaving the curve beside
+// the producer bare. An edge that carries a document says which document.
+const labelEdges = paths.filter((e) => e.handoff);
 
 // A column is a step in the topological order — the only horizontal unit this
 // figure can honestly name. Stages are not drawn here: their activities interleave
@@ -206,7 +200,7 @@ const idleCells = steps.flatMap((s) =>
         return (
           <div class="fig__node" style={`left:${at.x}px;top:${at.y}px;width:${NODEW}px`}>
             <button
-              class={`fig__act${p.activity.tooling ? '' : ' fig__act--open'}`}
+              class={`fig__act${p.activity.open ? ' fig__act--open' : ''}`}
               style={`min-height:${NODEH}px`}
               data-act={p.activity.id}
               data-fills={p.activity.tooling?.tool}
@@ -216,20 +210,25 @@ const idleCells = steps.flatMap((s) =>
             >
               <span class="fig__act-stage">{stageName(p.activity.stage)}</span>
               <span class="fig__act-name">{p.activity.name}</span>
-              <span class="fig__act-level">
-                <span class="fig__act-level-name">
-                  {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
+              {/* Three states, and the third one draws nothing: an activity with
+                  neither a fill nor a declared slot is work the team does itself,
+                  and a ladder reading zero would state a gap nobody claimed. */}
+              {statesCapability(p.activity) && (
+                <span class="fig__act-level">
+                  <span class="fig__act-level-name">
+                    {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
+                  </span>
+                  <span
+                    class={`fig__act-track${p.activity.tooling ? '' : ' fig__act-track--open'}`}
+                    aria-hidden="true"
+                    style={`--lv:${
+                      p.activity.tooling ? LEVEL_ORDER.indexOf(p.activity.tooling.level) : 0
+                    }`}
+                  >
+                    <span class="fig__act-fill" />
+                  </span>
                 </span>
-                <span
-                  class={`fig__act-track${p.activity.tooling ? '' : ' fig__act-track--open'}`}
-                  aria-hidden="true"
-                  style={`--lv:${
-                    p.activity.tooling ? LEVEL_ORDER.indexOf(p.activity.tooling.level) : 0
-                  }`}
-                >
-                  <span class="fig__act-fill" />
-                </span>
-              </span>
+              )}
             </button>
 
 

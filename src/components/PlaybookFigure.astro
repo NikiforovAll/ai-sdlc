@@ -1,6 +1,7 @@
 ---
 import type { Team } from '../lib/derive';
 import { LEVEL_LABELS, toolOf } from '../lib/derive';
+import { VERB } from '../lib/docs';
 
 interface Props {
   team: Team;
@@ -52,8 +53,12 @@ const rows = team.roles.map((role) => {
         <span class="pb__rolenote">{role.note}</span>
         <span class="pb__count">{tools.length} TOOLS · {fills.length} TOOLED ACTIVITIES</span>
       </div>
+      {/* Not "this role's playbook is an open slot": a slot is declared per
+          activity, and a role with none of them still owns work they have
+          asked for nothing on. The figure reports the emptiness and leaves
+          the reading of it to the activities. */}
       {harnesses.length === 0 && (
-        <p class="pb__empty">No harness tooling recommended yet — this role's playbook is an open slot.</p>
+        <p class="pb__empty">No harness tooling in this role's playbook — what they own is either an open slot or their own hand work.</p>
       )}
       <div class="pb__harnesses">
         {harnesses.map((h) => (
@@ -89,7 +94,7 @@ const rows = team.roles.map((role) => {
                     {toolOf(team, a.tooling!.tool).name}
                     <span class="chip chip--muted">{LEVEL_LABELS[a.tooling!.level]}</span>
                   </span>
-                  <span class="pb__when">fills {a.name} · {stageName(a.stage)}</span>
+                  <span class="pb__when">{VERB.fill} {a.name} · {stageName(a.stage)}</span>
                 </button>
               ))}
           </div>

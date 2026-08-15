@@ -1,7 +1,8 @@
 ---
 import type { Team } from '../lib/derive';
-import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
-import { catalogDescriptions } from '../lib/markdown';
+import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
+import { catalogDescriptions, paragraphs } from '../lib/markdown';
+import { VERB } from '../lib/docs';
 
 interface Props {
   team: Team;
@@ -17,11 +18,6 @@ const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? 
 const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.name ?? id;
 const eventName = (id: string) => team.events.find((e) => e.id === id)?.name ?? id;
 const activityLabel = (id: string) => flat.find((f) => f.activity.id === id)?.activity.name ?? id;
-// `usage` is authored as a markdown literal block. The drawer honours the one
-// piece of markdown the prose actually uses — the paragraph break — and folds
-// the soft wraps the YAML block preserved. Lists and emphasis wait for a renderer.
-const paragraphs = (text: string) =>
-  text.trim().split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' '));
 const producerOf = (art: string) => flat.find((f) => f.activity.produces.includes(art));
 const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? []).includes(art));
 
@@ -150,12 +146,19 @@ const recsOfEvent = (ev: string) =>
           </ul>
         </div>
 
+        {/* Three states. The section is drawn for the two the team has said
+            something about; an activity that is neither filled nor declared open
+            has nothing to report here, and a TOOLING head over a shrug was the
+            page asserting a gap the team never claimed. */}
+        {statesCapability(a) && (
         <div class="drawer__section">
           <h4 class="drawer__label">Tooling</h4>
           {a.tooling ? (
             <div class="drawer__tooling">
               <p class="drawer__tool-line">
-                <span class="drawer__artifact">{harnessName(toolOf(team, a.tooling.tool).harness)} · {toolOf(team, a.tooling.tool).name}</span>
+                <button class="drawer__artifact drawer__link" data-detail-key={`harness:${toolOf(team, a.tooling.tool).harness}`}>{harnessName(toolOf(team, a.tooling.tool).harness)}</button>
+                <span class="drawer__artifact"> · </span>
+                <button class="drawer__artifact drawer__link" data-detail-key={`tool:${a.tooling.tool}`}>{toolOf(team, a.tooling.tool).name}</button>
                 {a.tooling.asset && <span class="drawer__via"> · {a.tooling.asset}</span>}
               </p>
               <div class="drawer__ladder">
@@ -184,12 +187,16 @@ const recsOfEvent = (ev: string) =>
               )}
             </div>
           ) : (
-            <p class="drawer__open-slot">
+            <div>
               <span class="drawer__open-mark">OPEN SLOT</span>
-              Capability defined, tooling unfilled. Open slots are the team's roadmap.
-            </p>
+              {/* The team's own words about what would fill it. That sentence is
+                  the whole reason the slot is declared rather than inferred, so
+                  it is the content here — not a house line about roadmaps. */}
+              {paragraphs(a.open!.need).map((t) => <p class="drawer__open-need">{t}</p>)}
+            </div>
           )}
         </div>
+        )}
 
         {(a.activities?.length ?? 0) > 0 && (
           <div class="drawer__section">
@@ -199,7 +206,13 @@ const recsOfEvent = (ev: string) =>
                 <li>
                   <button class="drawer__artifact drawer__link" data-detail-key={c.id}>{c.name}</button>
                   <span class="drawer__via">
-                    {c.tooling ? ` ${harnessName(toolOf(team, c.tooling.tool).harness)} · ${toolOf(team, c.tooling.tool).name}` : ' open slot'}
+                    {c.tooling ? (
+                      <>
+                        <button class="drawer__via drawer__link" data-detail-key={`harness:${toolOf(team, c.tooling.tool).harness}`}>{harnessName(toolOf(team, c.tooling.tool).harness)}</button>
+                        {' · '}
+                        <button class="drawer__via drawer__link" data-detail-key={`tool:${c.tooling.tool}`}>{toolOf(team, c.tooling.tool).name}</button>
+                      </>
+                    ) : c.open ? ' open slot' : ''}
                   </span>
                 </li>
               ))}
@@ -214,8 +227,8 @@ const recsOfEvent = (ev: string) =>
             <ul class="drawer__list">
               {(a.recommends ?? []).map((r) => (
                 <li>
-                  <span class="drawer__artifact">{toolOf(team, r.tool).name}</span>
-                  <span class="drawer__via"> {harnessName(toolOf(team, r.tool).harness)}</span>
+                  <button class="drawer__artifact drawer__link" data-detail-key={`tool:${r.tool}`}>{toolOf(team, r.tool).name}</button>
+                  <button class="drawer__via drawer__link" data-detail-key={`harness:${toolOf(team, r.tool).harness}`}>{harnessName(toolOf(team, r.tool).harness)}</button>
                   {r.level && <span class="drawer__via"> · {LEVEL_LABELS[r.level]}</span>}
                   {r.event && (
                     <button class="drawer__event drawer__link" data-detail-key={`event:${r.event}`}> <svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(r.event)}</button>
@@ -224,9 +237,6 @@ const recsOfEvent = (ev: string) =>
                 </li>
               ))}
             </ul>
-            {a.tooling === undefined && (
-              <p class="drawer__none">Still an open slot — a recommendation says what is available, not how the work is done.</p>
-            )}
           </div>
         )}
       </div>
@@ -257,18 +267,17 @@ const recsOfEvent = (ev: string) =>
                   <button class="drawer__event drawer__link" data-detail-key={`event:${rec.event}`}><svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(rec.event)}</button><span class="drawer__via"> · </span>
                 )}
                 <span class="drawer__via">
-                  {rec ? 'recommended in ' : 'fills '}
+                  {/* "fills" alone leaves the reader to guess what is being filled,
+                      and the name beside it can read as an artifact. The slot is the
+                      activity's — the same slot the drawer calls an OPEN SLOT when
+                      nothing occupies it. */}
+                  {VERB[rec ? 'recommended' : 'fill']}{' '}
                   <button class="drawer__link drawer__here" data-detail-key={activity.id}>{activityLabel(activity.id)}</button>
                 </span>
                 {rec?.usage && paragraphs(rec.usage).map((t) => <span class="drawer__usage">{t}</span>)}
               </li>
             ))}
           </ul>
-          {uses.some((u) => u.rec?.event) && (
-            <p class="drawer__none">
-              Event-driven: this tool is reached for when the moment happens, not at a fixed step.
-            </p>
-          )}
         </div>
 
         {(s.refs ?? []).length > 0 && (
@@ -369,7 +378,9 @@ const recsOfEvent = (ev: string) =>
                     {' '}{stageName(f.stage)}
                     {f.activity.tooling
                       ? ` · ${LEVEL_LABELS[f.activity.tooling.level]}`
-                      : ' · open slot'}
+                      : f.activity.open
+                        ? ' · open slot'
+                        : ''}
                   </span>
                 </li>
               ))}
@@ -626,13 +637,16 @@ const recsOfEvent = (ev: string) =>
     max-width: 44ch;
     margin-top: 4px;
   }
+  /* Authored prose, and the reason the reader opened the panel — it takes the body
+     step, not the label step the line above it uses to state where the tool sits.
+     The panel is 400px, so it is already the measure and a ch cap only wraps the
+     line early. */
   .drawer__usage {
     display: block;
-    font-size: var(--label);
-    line-height: 14px;
+    font-size: var(--body);
+    line-height: 17px;
     color: var(--sub);
-    margin-top: 2px;
-    max-width: 44ch;
+    margin-top: 3px;
   }
   /* An aside, not the reading: these lines answer "why is this section empty"
      or footnote the list above them, so they sit a step under the prose. At the
@@ -657,11 +671,16 @@ const recsOfEvent = (ev: string) =>
     font-size: var(--label);
     color: var(--sub);
   }
-  .drawer__open-slot {
-    font-size: 11px;
-    line-height: 15px;
+  /* What an open slot means is the section's whole content, not a footnote on it,
+     so it reads at the body step the panel's other prose does; the panel is the
+     measure, so no ch cap on top of it. */
+  .drawer__open-need {
+    font-size: var(--body);
+    line-height: 17px;
     color: var(--sub);
-    max-width: 40ch;
+  }
+  .drawer__open-need + .drawer__open-need {
+    margin-top: 6px;
   }
   .drawer__open-mark {
     display: block;

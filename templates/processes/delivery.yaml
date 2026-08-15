@@ -23,12 +23,18 @@ activities:
     roles: [engineer]
     produces: [change-set]
 
-    # Two fields worth knowing about before you need them:
+    # Three fields worth knowing about before you need them:
     #
     #   why:      one sentence on why this activity exists. It reads in the drawer.
     #   tooling:  { tool: <id>, level: manual | assisted | delegated-review |
-    #              gated-autonomous } — what does this work today. Leave it off
-    #              and the activity draws dashed: an open slot.
+    #              gated-autonomous } — what does this work today.
+    #   open:     { need: <sentence> } — this is a slot the team wants filled and
+    #              has not. It draws dashed and counts on the roadmap, and the
+    #              sentence says what would fill it.
+    #
+    # An activity with neither draws plain: work the team does itself and has
+    # asked for nothing on. That is a third state, not a missing one — only
+    # `open:` is a gap, and only because the team said so.
     #
     # A `consumes:` list turns this into a flow. The moment a second activity
     # consumes `change-set`, an arrow appears between them, and if the two

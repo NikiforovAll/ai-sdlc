@@ -20,7 +20,7 @@ flowchart TB
   subgraph L3["Layer 3 — Capability fills"]
     Harness --> Tool
     Tool --> Fill["Fill {tool, level, usage?}"]
-    Fill -.->|absent| OpenSlot["Open slot"]
+    OpenSlot["Open slot {need}"]
   end
   subgraph L4["Layer 4 — Recommendations & events"]
     Recommendation["Recommendation {tool, level?, event?, usage?}"] --> Tool
@@ -31,6 +31,7 @@ flowchart TB
   end
   L1 --> L2
   Activity -->|"tooling:"| Fill
+  Activity -->|"open:"| OpenSlot
   Activity -->|"recommends:"| Recommendation
   Activity -->|"activities:"| SubActivity
 ```
@@ -41,7 +42,7 @@ flowchart TB
 |---|---|---|
 | [01 — Process spine](01-process-spine.md) | Team, Process, Role, Stage, Activity, Artifact | Write the skeleton of a team document |
 | [02 — Derived structure](02-derived-structure.md) | Edge, Handoff, ordinal order, ① Constraint | Read what the composer draws that you never wrote |
-| [03 — Capability fills](03-capability-fills.md) | Harness, Tool, Fill, Level ladder, Open slot | Say where AI sits in the process — and where it doesn't yet |
+| [03 — Capability fills](03-capability-fills.md) | Harness, Tool, Fill, Level ladder, Open slot | Say where AI sits in the process, where the team has declared a gap, and where the work stays theirs |
 | [04 — Recommendations & events](04-recommendations-and-events.md) | Recommendation, Event | Attach capability to situations, not just process positions |
 | [05 — Recursion](05-recursion.md) | Sub-activity, Sub-process | Zoom into an activity without leaving the model |
 
@@ -63,7 +64,8 @@ flowchart TB
 | Tool | A concrete usable thing inside a harness; inventory with an id, never usage | 3 |
 | Fill | `{tool, level, usage?}` on an activity — capability attached to work | 3 |
 | Level ladder | Degree of delegation: manual → assisted → delegated-review → gated-autonomous; read as HITL, where the human stands (in / on the loop, at the gate) | 3 |
-| Open slot | An activity with no fill: a visible gap — the team's roadmap | 3 |
+| Open slot | `{need}` on an activity — a gap the team has declared, and what would fill it: the roadmap | 3 |
+| Unclaimed | An activity with neither `tooling:` nor `open:` — work the team does itself and has asked for nothing on. Draws plain; not a gap | 3 |
 | Recommendation | An entry under an activity: another tool worth reaching for here, optionally for one moment | 4 |
 | Event | A named recurring moment a recommendation can be for; carries no mechanics | 4 |
 | Sub-activity | An activity inside an activity; inherits its parent's stage, keeps every other field | 5 |

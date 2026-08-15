@@ -22,6 +22,15 @@ export async function mdMap(entries: Array<[string, string | undefined]>): Promi
   return new Map(rendered);
 }
 
+/** Fold one authored YAML block into paragraphs. The blocks keep the soft wraps
+    the literal style preserved, and the only piece of markdown this prose
+    actually uses is the paragraph break — so the panels that render `usage`,
+    `need` and `note` split on it rather than reaching for the processor above.
+    One home, because three panels folding prose three ways is three answers to
+    what a blank line means. */
+export const paragraphs = (text: string) =>
+  text.trim().split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' '));
+
 /** Every catalog description the drawers read, keyed the way the panels are.
     Which catalogs carry authored prose is a fact about the model, so it is
     answered once here rather than by each drawer's frontmatter. */
