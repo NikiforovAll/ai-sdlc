@@ -43,6 +43,12 @@ export function toolOf(team: Pick<TeamDoc, 'tools'>, id: string): Tool {
   return t;
 }
 
+// The shelf, grouped the way both drawers and the tooling catalog read it: a
+// harness is the runtime, and what it holds is everything pointing back at it.
+export function toolsOfHarness(team: Pick<TeamDoc, 'tools'>, harness: string): Tool[] {
+  return team.tools.filter((t) => t.harness === harness);
+}
+
 // A use of a tool, read back from the activity side: the drawer and the playbook
 // both need "where is this reached for", which the catalog deliberately no longer says.
 export interface ToolUse {

@@ -9,32 +9,143 @@ roles:
   - id: lead
     name: Product Lead
     note: Owns intent — what to build and why.
+    description: |-
+      Decides what the team builds next and why it is worth building. Holds the
+      spec and the acceptance criteria, and is the one who can say a change is
+      *out of scope*.
+
+      ### Owns
+
+      - **The spec** — what the change must do, in the team's own words.
+      - **Acceptance criteria** — the list a reviewer later reads the change against.
+      - **Scope** — the standing authority to say "not in this change".
+
+      ### Delegation posture
+
+      Mostly **assisted**. Intent is the one thing the team cannot hand to a tool,
+      so the leverage is in drafting and pressure-testing it — `grill-me` against
+      the criteria, not a generated spec.
+
+      > A spec a tool wrote is a spec nobody decided. The ladder tops out here on
+      > purpose.
   - id: engineer
     name: Engineer
     note: Owns the change and its proof.
+    description: |-
+      Turns a spec into a change set and the evidence that it works. Owns the
+      code, its tests, and the honesty of both.
+
+      ### A change, end to end
+
+      1. Read the spec and the acceptance criteria — one test per criterion.
+      2. Decompose before building; re-decompose when the task turns out bigger.
+      3. Implement, run the suite, and hand back the change *with* its evidence.
+
+      ### Delegation posture
+
+      | Work | Level |
+      | --- | --- |
+      | Implementation | `delegated-review` |
+      | Test writing | `delegated-review` |
+      | Decomposition | `assisted` |
+
+      This is where delegation runs highest — implementation and test writing are
+      the work most safely handed over, **provided the proof comes back with it**.
+
+      See [Layer 3 — Capability fills](docs/ontology/03-capability-fills.md) for
+      what each rung claims.
   - id: reviewer
     name: Reviewer
     note: Owns conformance — the change matches the intent.
+    description: |-
+      Judges whether the change does what the spec asked, and says so in a
+      verdict. Reviews **conformance and risk**, not taste.
+
+      ### Reads
+
+      - The acceptance criteria — the only thing the change is measured against.
+      - The change set and its evidence pack.
+      - What the change *touches* that the spec never mentioned.
+
+      ### Does not read
+
+      - Style. A formatter has an opinion; a reviewer does not need one.
+
+      ---
+
+      A tool can find defects here, but the verdict stays human: it is a decision
+      about intent, and *intent is not in the diff*.
   - id: operator
     name: Release Operator
     note: Owns the path to production.
+    description: |-
+      Owns everything between an approved change and a release: packaging,
+      promotion, the go decision, and the way back if it goes wrong.
+
+      ### The gate
+
+      Release runs **gated-autonomous** — the pipeline builds, tests, and proceeds
+      unless someone holds the gate. The operator is the one who can hold it.
+
+      ### Always ready to answer
+
+      1. What is in this release?
+      2. What breaks if it is wrong?
+      3. How do we get back to the previous state, and how long does that take?
+
+      > Autonomy at the gate is not the absence of a human. It is a human who has
+      > decided not to intervene *yet*.
   - id: sre
     name: On-Call Engineer
     note: Owns service health while an incident is open.
+    description: |-
+      Holds the service while an incident is open — assessing impact, mitigating
+      harm, and keeping the record straight so the postmortem has something true
+      to read.
+
+      ### While the incident is open
+
+      - **Assess** — who is affected, how badly, and since when.
+      - **Mitigate** — the smallest change that stops the harm, not the right fix.
+      - **Record** — a timeline written *as it happens*, never reconstructed after.
+
+      ### Delegation posture
+
+      Speed matters most here, which is exactly why the gates stay human. A
+      mitigation the on-call did not choose is a second incident.
 
 harnesses:
   - id: claude-code
     name: Claude Code
     note: Agentic CLI — skills, plan mode, subagents.
+    description: |-
+      An agentic CLI that works in the repository: reads the code, runs commands,
+      and edits files under review. Skills, plan mode, and subagents are how a
+      team encodes its own practice into it.
+
+      Its reach is the reason most of the delivery process can be delegated at
+      all — and the reason review stays the gate.
   - id: jira-rovo
     name: Jira + Rovo
     note: Work tracking with Rovo agents.
+    description: |-
+      Where work is tracked and where the team's written history lives. Rovo
+      agents act inside that record rather than beside it, which is what makes
+      planning and decomposition delegable.
   - id: ci
     name: CI Pipeline
     note: Build, test, and release automation.
+    description: |-
+      The automation that builds, tests, and ships. It is the only harness that
+      routinely runs **gated-autonomous**: it proceeds on its own and a human
+      holds the stop.
   - id: observability
     name: Observability Stack
     note: Metrics, logs, traces, and alert routing.
+    description: |-
+      Metrics, logs, traces, and the alert routing on top of them. It is what
+      turns "something is wrong" into an impact assessment, and what the incident
+      process reads from throughout.
 
 events:
   - id: task-too-big
@@ -59,48 +170,118 @@ events:
 artifacts:
   - id: spec
     name: Spec
+    description: |-
+      What the change is for and what it must do, written before anyone builds it.
+
+      A spec is **done** when a reader who was not in the conversation can say what
+      is in scope and what is not.
   - id: work-plan
     name: Work Plan
+    description: |-
+      The route from spec to change: the order of the work, what it touches, and
+      what has to be true before it starts.
   - id: acceptance-criteria
     name: Acceptance Criteria
+    description: |-
+      The checks the change is measured against, agreed before the work begins.
+
+      Written as observable outcomes, not as instructions — a criterion that
+      describes *how* the work is done cannot fail honestly.
   - id: task-list
     name: Task List
+    description: |-
+      The spec cut into pieces small enough that one of them can be finished,
+      reviewed, and shipped without holding the rest in your head.
   - id: context-notes
     name: Context Notes
+    description: |-
+      What the code and the history already say about the area being changed:
+      constraints, prior decisions, and the traps a reader would otherwise walk into.
   - id: draft-change
     name: Draft Change
+    description: |-
+      The change while it is still being argued with — compiling, incomplete, and
+      not yet asking anyone for judgment.
   - id: change-set
     name: Change Set
+    description: |-
+      The change offered for review: the diff, its tests, and nothing left in it
+      that its author would not defend.
   - id: test-suite
     name: Test Suite
+    description: |-
+      The executable statement of what must keep working. It is the evidence the
+      rest of the process quotes.
   - id: evidence-pack
     name: Evidence Pack
+    description: |-
+      What proves the change does what it claims: test runs, checks, and the
+      output a reviewer would otherwise have to reproduce by hand.
   - id: review-verdict
     name: Review Verdict
+    description: |-
+      The reviewer's decision on conformance — the change matches the intent, or
+      it does not and here is where.
   - id: release-candidate
     name: Release Candidate
+    description: |-
+      A change set that has passed review and is packaged for production, waiting
+      only on the decision to go.
   - id: release
     name: Release
+    description: |-
+      The change in production, with the record of when it went and what it
+      contained.
   - id: bug-report
     name: Bug Report
+    description: |-
+      The claim that something is wrong, as it arrived — from a user, an alert, or
+      a colleague. It is a report, not yet a fact.
   - id: reproduction
     name: Reproduction
+    description: |-
+      The steps that make the bug happen on demand. Until this exists, the root
+      cause is a hypothesis and any fix is a guess.
   - id: root-cause
     name: Root Cause
+    description: |-
+      The mechanism that produced the bug, stated deeply enough that the fix is
+      obvious and the class of bug — not the instance — is closed.
   - id: regression-test
     name: Regression Test
+    description: |-
+      The test that fails on the old code and passes on the new one. It is what
+      turns a fix into a guarantee.
   - id: incident-record
     name: Incident Record
+    description: |-
+      The live account of an open incident: what is known, what was tried, and
+      when. Written while it is happening, because memory rewrites it afterwards.
   - id: impact-assessment
     name: Impact Assessment
+    description: |-
+      Who is affected and how badly. Severity is set from this, and every
+      communication downstream quotes it.
   - id: status-update
     name: Status Update
+    description: |-
+      What people outside the response need to know right now: current state,
+      what is being done, and when the next update comes.
   - id: mitigation
     name: Mitigation
+    description: |-
+      The action that stops the harm. It is not the fix — a mitigation that is
+      mistaken for one leaves the cause in place.
   - id: postmortem
     name: Postmortem
+    description: |-
+      The account written after the incident closes: what happened, why the system
+      allowed it, and what changes so the next one is smaller.
   - id: follow-up-work
     name: Follow-Up Work
+    description: |-
+      The commitments a postmortem makes, handed back to the delivery process as
+      real work rather than as good intentions.
 
 # The shelf. Entries name themselves and the harness they run in — nothing more.
 # Where each is reached for is written on the activity that reaches for it.

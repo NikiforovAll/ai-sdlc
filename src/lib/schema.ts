@@ -92,9 +92,17 @@ export const teamSchema = z.object({
   description: z.string().optional(),
   version: z.string(),
   status: z.enum(['living', 'draft']).default('living'),
-  roles: z.array(z.object({ id, name: z.string(), note: z.string().optional() })).min(1),
-  artifacts: z.array(z.object({ id, name: z.string() })).min(1),
-  harnesses: z.array(z.object({ id, name: z.string(), note: z.string().optional() })).default([]),
+  // `note` is the one line a figure can afford to print beside the thing;
+  // `description` is markdown the drawer renders when a reader stops on it. Two
+  // fields rather than one because the figure has no room for the long form and
+  // the drawer has no use for a caption truncated to fit a lane.
+  roles: z
+    .array(z.object({ id, name: z.string(), note: z.string().optional(), description: z.string().optional() }))
+    .min(1),
+  artifacts: z.array(z.object({ id, name: z.string(), description: z.string().optional() })).min(1),
+  harnesses: z
+    .array(z.object({ id, name: z.string(), note: z.string().optional(), description: z.string().optional() }))
+    .default([]),
   events: z.array(z.object({ id, name: z.string(), description: z.string().optional() })).default([]),
   tools: z.array(tool).default([]),
 });

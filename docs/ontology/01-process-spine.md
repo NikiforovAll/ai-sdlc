@@ -75,14 +75,20 @@ roles:
   - id: engineer
     name: Engineer
     note: Owns the change and its proof.
+    description: |-
+      Turns a spec into a change set and the evidence that it works.
+
+      This is where delegation runs highest — implementation is the work most
+      safely handed over, provided the proof comes back with it.
 ```
 
-**How it renders.** A swimlane per role in FIG.01; a row per role in FIG.02 and FIG.03. The role filter chips at the top of the page are this list. The `note` is the one-line ownership statement shown beside the role name.
+**How it renders.** A swimlane per role in FIG.01; a row per role in FIG.02 and FIG.03. The role filter chips at the top of the page are this list. The `note` is the one-line ownership statement shown beside the role name. The lane name opens a drawer panel that renders `description` as markdown, followed by every activity the role owns and the level each one runs at.
 
 **Invariants & non-meanings.**
 - A role is not a person or a headcount. Two people can share a role; one person can hold three.
 - Declaration order matters: it is the top-to-bottom lane order in FIG.01.
 - Write the `note` as an ownership claim ("Owns intent"), not a job description.
+- `note` and `description` are not the same field at two lengths. `note` is the caption a figure prints in a lane; `description` is what a reader gets after stopping on the role, and only the drawer shows it.
 
 ---
 
@@ -150,11 +156,16 @@ activities:
 artifacts:
   - id: evidence-pack
     name: Evidence Pack
+    description: |-
+      What proves the change does what it claims: test runs, checks, and the
+      output a reviewer would otherwise have to reproduce by hand.
 ```
 
 Then referenced by id from activities' `consumes:` / `produces:` lists.
 
-**How it renders.** Edge labels between nodes in FIG.01; the consumes/produces lists in the drawer, each line naming its producer or consumers.
+**How it renders.** Edge labels between nodes in FIG.01; the consumes/produces lists in the drawer, each line naming its producer or consumers. Both are clickable: an artifact has its own drawer panel with `description` rendered as markdown, its producers, and its consumers — the whole chain the edge label can only hint at.
+
+`description` is optional and states what the thing *is*, in the team's own words. Say what would be true of a good one, not how it is produced — the activities already say that.
 
 **Invariants & non-meanings.**
 - An artifact must be *inspectable* — someone could open it and judge it. "Alignment" is not an artifact; "acceptance criteria" is.

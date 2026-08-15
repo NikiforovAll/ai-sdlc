@@ -189,6 +189,158 @@ ol {
   color: var(--white);
 }
 
+/* A chip that names another catalog entry is a door to it. The `font` shorthand
+   is deliberately not used: it would reset the size, weight, and line-height
+   `.chip` sets just above, and the button would outgrow the chips beside it. */
+.chip--link {
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+}
+.chip--link:hover,
+.chip--link:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.chip--inverse.chip--link:hover,
+.chip--inverse.chip--link:focus-visible {
+  color: var(--accent-on-ink);
+  border-color: var(--accent-on-ink);
+}
+
+/* The door out of a catalog entry and into the process that reaches for it.
+   Both drawers and the team document draw it, so it is world, not component. */
+.row__go {
+  color: var(--sub);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+}
+.row__go:hover,
+.row__go:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Drawer chrome: BACK and CLOSE read as one control voice in both drawers. */
+.drawer-ctl {
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 4px;
+  transition: color 0.14s var(--ease-out);
+}
+.drawer-ctl:hover,
+.drawer-ctl:focus-visible {
+  color: var(--accent);
+}
+.drawer-ctl[hidden] {
+  display: none;
+}
+/* BACK is the first of the right-hand cluster, so it carries the push. Two
+   `margin-left: auto` siblings would split the free space between them and
+   park BACK mid-line. */
+.drawer-ctl--back {
+  margin-left: auto;
+  color: var(--sub);
+}
+.drawer-ctl--back:not([hidden]) + .drawer-ctl--close {
+  margin-left: 0;
+}
+.drawer-ctl--close {
+  margin-left: auto;
+}
+
+/* Authored markdown, rendered from YAML and injected as HTML. Both drawers show
+   the same descriptions, so the look lives here rather than being restated per
+   drawer — two owners of one prose voice drift apart a tag at a time. A panel
+   sets the type scale it reads at; everything below is rhythm and voice. */
+.prose-md > * {
+  margin: 0 0 8px;
+}
+.prose-md > *:last-child {
+  margin-bottom: 0;
+}
+/* The document's own lists are chromeless, so the reset kills every marker.
+   Authored prose is the one place a marker earns its keep — without it a
+   three-item list reads as three orphaned lines. */
+.prose-md ul {
+  list-style: disc;
+  padding-left: 17px;
+}
+.prose-md ol {
+  list-style: decimal;
+  padding-left: 19px;
+}
+.prose-md li {
+  margin-bottom: 4px;
+}
+.prose-md li::marker {
+  color: var(--muted);
+}
+.prose-md code {
+  font-size: var(--body);
+  background: var(--washi);
+  padding: 0 3px;
+}
+.prose-md a {
+  color: var(--accent);
+}
+.prose-md strong {
+  font-weight: 700;
+}
+/* A description is authored prose, so its headings take the panel's own label
+   voice rather than a second title size competing with the entry name. */
+.prose-md h1,
+.prose-md h2,
+.prose-md h3,
+.prose-md h4 {
+  font-size: var(--micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sub);
+  font-weight: 700;
+  margin: 12px 0 5px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.prose-md blockquote {
+  padding-left: 9px;
+  border-left: 2px solid var(--accent);
+  color: var(--sub);
+}
+.prose-md hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 12px 0;
+}
+.prose-md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--body);
+  line-height: 16px;
+}
+.prose-md th {
+  font-size: var(--micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sub);
+  font-weight: 700;
+}
+.prose-md th,
+.prose-md td {
+  text-align: left;
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+/* The panel already has a heading — the entry's name — so the first authored
+   block starts flush rather than opening with a rule and a gap. */
+.prose-md > *:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .module {
   background: var(--white);
   border: 1px solid var(--line);

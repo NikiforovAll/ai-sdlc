@@ -22,9 +22,12 @@ harnesses:
   - id: ci
     name: CI Pipeline
     note: Build, test, and release automation.
+    description: |-
+      The automation that builds, tests, and ships. It is the only harness that
+      routinely runs **gated-autonomous**.
 ```
 
-**How it renders.** The harness name prefixes every fill ("Claude Code · Plan Mode"); FIG.03 PLAYBOOK groups each role's capability by harness; the drawer names it in a chip row.
+**How it renders.** The harness name prefixes every fill ("Claude Code · Plan Mode"); FIG.03 PLAYBOOK groups each role's capability by harness; the drawer names it in a chip row. That chip opens the harness panel: `description` as markdown, plus every tool on the shelf that runs in it and how many uses each has. Like a role, the harness carries both a `note` for the figure and an optional `description` for the drawer.
 
 **Invariants & non-meanings.**
 - A harness is not necessarily an AI product — the CI pipeline qualifies. The catalog answers "what runtimes can capability live in", and gated automation is capability.

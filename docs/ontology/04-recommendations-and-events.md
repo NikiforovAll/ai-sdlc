@@ -68,7 +68,7 @@ events:
 
 Referenced by id from a recommendation's optional `event:`.
 
-**How it renders.** A drawn bolt glyph marks event-bound recommendation lines everywhere (PLAYBOOK items, drawer panels) — the bolt is the reserved encoding for "this one is for a moment, not for the work in general".
+**How it renders.** A drawn bolt glyph marks event-bound recommendation lines everywhere (PLAYBOOK items, drawer panels) — the bolt is the reserved encoding for "this one is for a moment, not for the work in general". The bolt is clickable: the event's own panel renders its `description` as markdown and lists every recommendation bound to it, which is the only place the moment can be read whole rather than one activity at a time.
 
 **Invariants & non-meanings.**
 - An event is a *recognizable moment*, not an error, an exception, or a state. `rework-requested` is normal operation — and it is precisely how rework exists in the model at all: Layer 2 never draws rework loops, because rework isn't flow, it's a moment with a play attached.

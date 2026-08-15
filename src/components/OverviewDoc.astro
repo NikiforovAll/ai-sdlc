@@ -3,7 +3,8 @@
 // catalogs. A component rather than a page body because the export composes it
 // with every process document into one file — `_plans/spec-cli-layer.md`, D-CLI-5.
 import TeamDrawer from './TeamDrawer.astro';
-import type { OverviewModel, Use } from '../lib/docs';
+import UseList from './UseList.astro';
+import type { OverviewModel } from '../lib/docs';
 
 interface Props {
   model: OverviewModel;
@@ -12,12 +13,8 @@ interface Props {
   inline?: boolean;
 }
 const { model, hidden = false, inline = false } = Astro.props;
-const { teamId, team, procs, stats, artifactUse, harnessUse, toolUse, eventUse } = model;
+const { teamId, team, procs, stats, artifactUse, harnessUse, roleUse, roleActs, toolUse, eventUse } = model;
 
-// The href carries the multi-page route; `data-goto` / `data-focus` carry the same
-// intent for the single-file export, where there is no route to point at and the
-// script answers the click instead.
-const useHref = (u: Use) => (inline ? '#' : `/${u.slug}${u.focus ? `#${u.focus}` : ''}`);
 const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
 ---
 
@@ -95,8 +92,17 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
           {team.roles.map((r) => (
             <li class="row">
               <span class="row__id">{r.id}</span>
-              <span class="row__name">{r.name}</span>
+              <button type="button" class="row__name row__open" data-detail-key={`role:${r.id}`}>{r.name}</button>
               {r.note && <span class="row__note">{r.note}</span>}
+              <span class="row__use">
+                <UseList
+                  uses={roleUse.get(r.id) ?? []}
+                  empty="no activities yet"
+                  inline={inline}
+                  lead={`${roleActs.get(r.id) ?? 0} act`}
+                  leadClass="row__count"
+                />
+              </span>
             </li>
           ))}
         </ul>
@@ -111,11 +117,11 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
         <ul class="rows">
           {team.harnesses.map((h) => (
             <li class="row">
-              <span class="row__name">{h.name}</span>
+              <button type="button" class="row__name row__open" data-detail-key={`harness:${h.id}`}>{h.name}</button>
               <span class="row__id">{h.id}</span>
               {h.note && <span class="row__note">{h.note}</span>}
               <span class="row__use">
-                {[...(harnessUse.get(h.id) ?? [])].join(' · ') || 'shelf inventory'}
+                <UseList uses={harnessUse.get(h.id) ?? []} empty="shelf inventory" inline={inline} />
               </span>
             </li>
           ))}
@@ -140,15 +146,10 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
                 <ul class="tools__list">
                   {owned.map((s) => (
                     <li class="tool">
-                      <span class="tool__name">{s.name}</span>
+                      <button type="button" class="tool__name row__open" data-detail-key={`tool:${s.id}`}>{s.name}</button>
                       <span class="chip chip--muted">{s.kind}</span>
                       <span class="tool__when">
-                        {(toolUse.get(s.id) ?? []).length === 0 ? 'shelf inventory' : (toolUse.get(s.id) ?? []).map((u, i) => (
-                          <>
-                            {i > 0 && <span aria-hidden="true"> · </span>}
-                            <a class="row__go" href={useHref(u)} data-goto={u.slug} data-focus={u.focus}>{u.label}</a>
-                          </>
-                        ))}
+                        <UseList uses={toolUse.get(s.id) ?? []} empty="shelf inventory" inline={inline} />
                       </span>
                       {s.note && <span class="tool__note">{s.note}</span>}
                     </li>
@@ -169,17 +170,12 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
         <ul class="rows rows--event">
           {team.events.map((e) => (
             <li class="row">
-              <span class="row__name">{e.name}</span>
+              <button type="button" class="row__name row__open" data-detail-key={`event:${e.id}`}>{e.name}</button>
               <span class="row__id">{e.id}</span>
               {e.description && <span class="row__note">{e.description}</span>}
               <span class="row__use">
                 <svg class="row__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>
-                {(eventUse.get(e.id) ?? []).length === 0 ? 'no play yet' : (eventUse.get(e.id) ?? []).map((u, i) => (
-                  <>
-                    {i > 0 && <span aria-hidden="true"> · </span>}
-                    <a class="row__go" href={useHref(u)} data-goto={u.slug} data-focus={u.focus}>{u.label}</a>
-                  </>
-                ))}
+                <UseList uses={eventUse.get(e.id) ?? []} empty="no play yet" inline={inline} />
               </span>
             </li>
           ))}
@@ -195,15 +191,10 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
         <ul class="rows rows--tight">
           {team.artifacts.map((a) => (
             <li class="row">
-              <span class="row__name">{a.name}</span>
+              <button type="button" class="row__name row__open" data-detail-key={`artifact:${a.id}`}>{a.name}</button>
               <span class="row__id">{a.id}</span>
               <span class="row__use">
-                {(artifactUse.get(a.id) ?? []).length === 0 ? 'unused' : (artifactUse.get(a.id) ?? []).map((u, i) => (
-                  <>
-                    {i > 0 && <span aria-hidden="true"> · </span>}
-                    <a class="row__go" href={useHref(u)} data-goto={u.slug} data-focus={u.focus}>{u.label}</a>
-                  </>
-                ))}
+                <UseList uses={artifactUse.get(a.id) ?? []} empty="unused" inline={inline} />
               </span>
             </li>
           ))}
@@ -212,7 +203,7 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
 
     </div>
   </main>
-  <TeamDrawer team={team} teamId={teamId} />
+  <TeamDrawer model={model} />
 </section>
 
 <style>
@@ -478,7 +469,9 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     width: 8px;
     height: 10px;
   }
-  .rows--event .row__go {
+  /* The door itself is rendered by `UseList`, so it carries that component's
+     scope rather than this one's — the descendant has to be reached globally. */
+  .rows--event :global(.row__go) {
     color: var(--accent);
     border-bottom-color: rgba(15, 107, 60, 0.35);
   }
@@ -499,6 +492,28 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     font-size: var(--body);
     font-weight: 700;
   }
+  /* The catalog name is the door into the entry's own reading, so it takes the
+     underline a link takes — the row is otherwise indistinguishable from text. */
+  button.row__name,
+  button.tool__name {
+    line-height: 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+  }
+  button.row__name:hover,
+  button.row__name:focus-visible,
+  button.tool__name:hover,
+  button.tool__name:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  /* One process makes every "used in" cell read the same word, so the count is
+     what actually separates one role from another. */
+  .row__count {
+    font-weight: 700;
+    color: var(--ink);
+  }
   .row__id {
     font-size: var(--micro);
     letter-spacing: 0.06em;
@@ -517,19 +532,6 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     text-transform: uppercase;
     color: var(--sub);
     white-space: nowrap;
-  }
-  /* A live relationship is a door; a dead one ("unused", "shelf inventory") stays
-     bare text in the same slot, so the two stop looking alike. */
-  .row__go {
-    color: var(--sub);
-    text-decoration: none;
-    border-bottom: 1px solid var(--line);
-    transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
-  }
-  .row__go:hover,
-  .row__go:focus-visible {
-    color: var(--accent);
-    border-color: var(--accent);
   }
   @media (max-width: 860px) {
     .row__use {

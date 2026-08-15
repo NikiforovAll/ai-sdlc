@@ -1,0 +1,36 @@
+---
+// "Where is this reached for" is the same answer on the team document and inside
+// either drawer: a dot-separated run of process doors, or one sentence saying
+// nothing reaches for it. Ten hand-written copies of that run drifted in their
+// separators; this is the one copy.
+import type { Use } from '../lib/docs';
+import { useHref } from '../lib/docs';
+
+interface Props {
+  uses: Use[];
+  /** What the reader is told when the catalog entry is unused. */
+  empty: string;
+  /** Set by the export, where every document shares one file and there are no routes. */
+  inline?: boolean;
+  /** The empty sentence is prose in the drawer and a plain cell on the document. */
+  emptyClass?: string;
+  /** A fact that leads the run — the role rows count activities before naming processes. */
+  lead?: string;
+  leadClass?: string;
+}
+const { uses, empty, inline = false, emptyClass, lead, leadClass } = Astro.props;
+---
+
+{uses.length === 0 ? (
+  emptyClass ? <span class={emptyClass}>{empty}</span> : empty
+) : (
+  <>
+    {lead && <span class={leadClass}>{lead}</span>}
+    {uses.map((u, i) => (
+      <>
+        {(lead || i > 0) && <span aria-hidden="true"> · </span>}
+        <a class="row__go" href={useHref(u, inline)} data-goto={u.slug} data-focus={u.focus}>{u.label}</a>
+      </>
+    ))}
+  </>
+)}

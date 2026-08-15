@@ -15,6 +15,13 @@ export interface Use {
   focus?: string;
 }
 
+// The href carries the multi-page route; `data-goto` / `data-focus` carry the same
+// intent for the single-file export, where there is no route to point at and the
+// script answers the click instead. One rule, so the document and the drawer that
+// sits over it cannot answer the same link differently.
+export const useHref = (u: Use, inline = false) =>
+  inline ? '#' : `/${u.slug}${u.focus ? `#${u.focus}` : ''}`;
+
 export interface ProcStat {
   slug: string;
   data: ProcessData;
@@ -28,7 +35,9 @@ export interface OverviewModel {
   procs: ProcStat[];
   stats: { n: number; label: string; open?: boolean }[];
   artifactUse: Map<string, Use[]>;
-  harnessUse: Map<string, Set<string>>;
+  harnessUse: Map<string, Use[]>;
+  roleUse: Map<string, Use[]>;
+  roleActs: Map<string, number>;
   toolUse: Map<string, Use[]>;
   eventUse: Map<string, Use[]>;
 }
@@ -47,9 +56,12 @@ const flatOf = (acts: AnyActivity[], depth = 0): { a: AnyActivity; depth: number
   acts.flatMap((a) => [{ a, depth }, ...flatOf(a.activities ?? [], depth + 1)]);
 
 const pushUse = (m: Map<string, Use[]>, key: string, use: Use) => {
-  const list = m.get(key) ?? [];
+  const list = m.get(key);
+  if (!list) {
+    m.set(key, [use]);
+    return;
+  }
   if (!list.some((u) => u.label === use.label)) list.push(use);
-  m.set(key, list);
 };
 
 // One team folder renders per run, so the collection holds exactly one entry.
@@ -85,7 +97,11 @@ export async function overviewModel(): Promise<OverviewModel> {
   // Which processes touch each artifact, harness, and event — the catalogs are
   // shared, so "used by nothing" is a fact worth showing.
   const artifactUse = new Map<string, Use[]>();
-  const harnessUse = new Map<string, Set<string>>();
+  const harnessUse = new Map<string, Use[]>();
+  const roleUse = new Map<string, Use[]>();
+  // A team with one process makes the "used in" column read the same word on every
+  // row, so the count is what actually distinguishes the roles.
+  const roleActs = new Map<string, number>();
   const toolUse = new Map<string, Use[]>();
   // Which tool answers each moment. Read from the activities, because a
   // recommendation is the only place an event is ever named.
@@ -111,9 +127,15 @@ export async function overviewModel(): Promise<OverviewModel> {
     }
 
     for (const { a } of flat) {
+      // A role's door is any activity it owns: the process opens with that node
+      // selected, which is where "where does this role actually work" is answered.
+      for (const r of a.roles) {
+        pushUse(roleUse, r, { slug: p.slug, label: p.data.name, focus: `act-${a.id}` });
+        roleActs.set(r, (roleActs.get(r) ?? 0) + 1);
+      }
       for (const id of [...(a.tooling ? [a.tooling.tool] : []), ...(a.recommends ?? []).map((r) => r.tool)]) {
         const { harness } = toolOf(team, id);
-        harnessUse.set(harness, (harnessUse.get(harness) ?? new Set()).add(p.data.name));
+        pushUse(harnessUse, harness, { slug: p.slug, label: p.data.name, focus: `tool-${id}` });
         pushUse(toolUse, id, { slug: p.slug, label: p.data.name, focus: `tool-${id}` });
       }
       for (const r of a.recommends ?? []) {
@@ -123,7 +145,7 @@ export async function overviewModel(): Promise<OverviewModel> {
     }
   }
   for (const s of team.tools) {
-    harnessUse.set(s.harness, harnessUse.get(s.harness) ?? new Set());
+    harnessUse.set(s.harness, harnessUse.get(s.harness) ?? []);
   }
 
   const totalActivities = procs.reduce((n, p) => n + p.activities, 0);
@@ -135,6 +157,8 @@ export async function overviewModel(): Promise<OverviewModel> {
     procs,
     artifactUse,
     harnessUse,
+    roleUse,
+    roleActs,
     toolUse,
     eventUse,
     stats: [

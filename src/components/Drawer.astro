@@ -1,6 +1,7 @@
 ---
 import type { Team } from '../lib/derive';
-import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, toolOf, usesOfTool } from '../lib/derive';
+import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
+import { catalogDescriptions } from '../lib/markdown';
 
 interface Props {
   team: Team;
@@ -23,6 +24,19 @@ const paragraphs = (text: string) =>
   text.trim().split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' '));
 const producerOf = (art: string) => flat.find((f) => f.activity.produces.includes(art));
 const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? []).includes(art));
+
+// Every catalog description is rendered once here rather than per panel: the
+// processor is async and the panels are a static map, so the render belongs in
+// frontmatter where the cost is paid at build time.
+const descriptions = await catalogDescriptions(team);
+
+const actsOfRole = (r: string) => flat.filter((f) => f.activity.roles.includes(r));
+// An event is named by recommendations, never by a fill: it says when a tool is
+// reached for, so its panel is the list of those moments.
+const recsOfEvent = (ev: string) =>
+  flat.flatMap((f) =>
+    (f.activity.recommends ?? []).filter((r) => r.event === ev).map((rec) => ({ activity: f.activity, rec }))
+  );
 ---
 
 <!-- Addressed by attribute, not id: the export puts one drawer per process document
@@ -31,7 +45,8 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
   <div class="module__head drawer__head">
     <span class="tab">DETAIL</span>
     <span class="module__title">Drill-Down</span>
-    <button class="drawer__close" data-drawer-close aria-label="Close detail drawer">CLOSE ✕</button>
+    <button class="drawer-ctl drawer-ctl--back" data-drawer-back hidden aria-label="Back to the previous entry">← BACK</button>
+    <button class="drawer-ctl drawer-ctl--close" data-drawer-close aria-label="Close detail drawer">CLOSE ✕</button>
   </div>
 
   <div class="drawer__body">
@@ -77,7 +92,7 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
         <div class="drawer__chips">
           <span class="chip chip--inverse">{stageName(stage)}</span>
           {a.roles.map((r) => (
-            <span class="chip">{roleName(r)}</span>
+            <button class="chip chip--link" data-detail-key={`role:${r}`}>{roleName(r)}</button>
           ))}
         </div>
         {a.why && <p class="drawer__why">{a.why}</p>}
@@ -91,10 +106,10 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
                 const handoff = from && !from.activity.roles.some((r) => a.roles.includes(r));
                 return (
                   <li>
-                    <span class="drawer__artifact">{artifactName(art)}</span>
+                    <button class="drawer__artifact drawer__link" data-detail-key={`artifact:${art}`}>{artifactName(art)}</button>
                     {from && (
                       <span class="drawer__via">
-                        ← {from.activity.name}
+                        ← <button class="drawer__link" data-detail-key={from.activity.id}>{from.activity.name}</button>
                         {handoff && <span class="drawer__handoff"> · handoff</span>}
                         {team.constraint?.artifact === art && <span class="drawer__one"> ①</span>}
                       </span>
@@ -115,10 +130,15 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
               const consumers = consumersOf(art).filter((c) => c.activity.id !== a.id);
               return (
                 <li>
-                  <span class="drawer__artifact">{artifactName(art)}</span>
+                  <button class="drawer__artifact drawer__link" data-detail-key={`artifact:${art}`}>{artifactName(art)}</button>
                   {consumers.length > 0 ? (
                     <span class="drawer__via">
-                      → {consumers.map((c) => c.activity.name).join(', ')}
+                      {/* The separator sits inside the map with no newline before the
+                          button: a line break between two JSX expressions renders as a
+                          space, which put a gap in front of every comma. */}
+                      → {consumers.map((c, i) => (
+                        <>{i > 0 ? ', ' : ''}<button class="drawer__link" data-detail-key={c.activity.id}>{c.activity.name}</button></>
+                      ))}
                       {team.constraint?.artifact === art && <span class="drawer__one"> ①</span>}
                     </span>
                   ) : (
@@ -177,7 +197,7 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
             <ul class="drawer__list">
               {a.activities!.map((c) => (
                 <li>
-                  <span class="drawer__artifact">{c.name}</span>
+                  <button class="drawer__artifact drawer__link" data-detail-key={c.id}>{c.name}</button>
                   <span class="drawer__via">
                     {c.tooling ? ` ${harnessName(toolOf(team, c.tooling.tool).harness)} · ${toolOf(team, c.tooling.tool).name}` : ' open slot'}
                   </span>
@@ -198,7 +218,7 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
                   <span class="drawer__via"> {harnessName(toolOf(team, r.tool).harness)}</span>
                   {r.level && <span class="drawer__via"> · {LEVEL_LABELS[r.level]}</span>}
                   {r.event && (
-                    <span class="drawer__event"> <svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(r.event)}</span>
+                    <button class="drawer__event drawer__link" data-detail-key={`event:${r.event}`}> <svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(r.event)}</button>
                   )}
                   {r.usage && paragraphs(r.usage).map((t) => <span class="drawer__usage">{t}</span>)}
                 </li>
@@ -220,9 +240,9 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
           <h3 class="drawer__name">{s.name}</h3>
         </div>
         <div class="drawer__chips">
-          <span class="chip chip--inverse">{harnessName(s.harness)}</span>
+          <button class="chip chip--inverse chip--link" data-detail-key={`harness:${s.harness}`}>{harnessName(s.harness)}</button>
           {[...new Set(uses.flatMap((u) => u.activity.roles))].map((r) => (
-            <span class="chip">{roleName(r)}</span>
+            <button class="chip chip--link" data-detail-key={`role:${r}`}>{roleName(r)}</button>
           ))}
         </div>
         <p class="drawer__why">{s.kind}</p>
@@ -234,11 +254,11 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
             {uses.map(({ activity, rec }) => (
               <li>
                 {rec?.event && (
-                  <span class="drawer__event"><svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(rec.event)} · </span>
+                  <button class="drawer__event drawer__link" data-detail-key={`event:${rec.event}`}><svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(rec.event)}</button><span class="drawer__via"> · </span>
                 )}
                 <span class="drawer__via">
                   {rec ? 'recommended in ' : 'fills '}
-                  <strong>{activityLabel(activity.id)}</strong>
+                  <button class="drawer__link drawer__here" data-detail-key={activity.id}>{activityLabel(activity.id)}</button>
                 </span>
                 {rec?.usage && paragraphs(rec.usage).map((t) => <span class="drawer__usage">{t}</span>)}
               </li>
@@ -264,6 +284,169 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
       </div>
       );
     })}
+
+    {/* An artifact is the whole reason the flow has a shape — the layering is
+        computed from it — but until now it was only a label on an edge. Its panel
+        answers the two questions the edge cannot: what it is, and its full chain. */}
+    {team.artifacts.map((art) => {
+      const producers = flat.filter((f) => f.activity.produces.includes(art.id));
+      const consumers = consumersOf(art.id);
+      const isConstraint = team.constraint?.artifact === art.id;
+      return (
+        <div class="drawer__panel" data-detail={`artifact:${art.id}`} hidden>
+          <div class="drawer__title-row">
+            <h3 class="drawer__name">{art.name}</h3>
+          </div>
+          <div class="drawer__chips">
+            <span class="chip chip--inverse">ARTIFACT</span>
+            {isConstraint && <span class="chip">① THE CONSTRAINT</span>}
+          </div>
+          {descriptions.has(`artifact:${art.id}`) && (
+            <div class="drawer__prose prose-md" set:html={descriptions.get(`artifact:${art.id}`)} />
+          )}
+          {isConstraint && team.constraint && <p class="drawer__why">{team.constraint.note}</p>}
+
+          <div class="drawer__section">
+            <h4 class="drawer__label">Produced by</h4>
+            {producers.length ? (
+              <ul class="drawer__list">
+                {producers.map((f) => (
+                  <li>
+                    <button class="drawer__link" data-detail-key={f.activity.id}>{f.activity.name}</button>
+                    <span class="drawer__via"> {stageName(f.stage)} · {f.activity.roles.map(roleName).join(', ')}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="drawer__none">Nothing in this process — it arrives from outside.</p>
+            )}
+          </div>
+
+          <div class="drawer__section">
+            <h4 class="drawer__label">Consumed by</h4>
+            {consumers.length ? (
+              <ul class="drawer__list">
+                {consumers.map((f) => (
+                  <li>
+                    <button class="drawer__link" data-detail-key={f.activity.id}>{f.activity.name}</button>
+                    <span class="drawer__via"> {stageName(f.stage)} · {f.activity.roles.map(roleName).join(', ')}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="drawer__none">Nobody — it leaves the process here.</p>
+            )}
+          </div>
+        </div>
+      );
+    })}
+
+    {team.roles.map((r) => {
+      const owned = actsOfRole(r.id);
+      const filled = owned.filter((f) => f.activity.tooling);
+      return (
+        <div class="drawer__panel" data-detail={`role:${r.id}`} hidden>
+          <div class="drawer__title-row">
+            <h3 class="drawer__name">{r.name}</h3>
+          </div>
+          <div class="drawer__chips">
+            <span class="chip chip--inverse">ROLE</span>
+            <span class="chip">{owned.length} ACTIVITIES</span>
+            <span class="chip">{filled.length} FILLED</span>
+          </div>
+          {r.note && <p class="drawer__why">{r.note}</p>}
+          {descriptions.has(`role:${r.id}`) && (
+            <div class="drawer__prose prose-md" set:html={descriptions.get(`role:${r.id}`)} />
+          )}
+
+          <div class="drawer__section">
+            <h4 class="drawer__label">Owns</h4>
+            <ul class="drawer__list">
+              {owned.map((f) => (
+                <li>
+                  <button class="drawer__link" data-detail-key={f.activity.id}>{f.activity.name}</button>
+                  <span class="drawer__via">
+                    {' '}{stageName(f.stage)}
+                    {f.activity.tooling
+                      ? ` · ${LEVEL_LABELS[f.activity.tooling.level]}`
+                      : ' · open slot'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    })}
+
+    {team.harnesses.map((h) => {
+      const inside = toolsOfHarness(team, h.id);
+      return (
+        <div class="drawer__panel" data-detail={`harness:${h.id}`} hidden>
+          <div class="drawer__title-row">
+            <h3 class="drawer__name">{h.name}</h3>
+          </div>
+          <div class="drawer__chips">
+            <span class="chip chip--inverse">HARNESS</span>
+            <span class="chip">{inside.length} TOOLS</span>
+          </div>
+          {h.note && <p class="drawer__why">{h.note}</p>}
+          {descriptions.has(`harness:${h.id}`) && (
+            <div class="drawer__prose prose-md" set:html={descriptions.get(`harness:${h.id}`)} />
+          )}
+
+          <div class="drawer__section">
+            <h4 class="drawer__label">Tools</h4>
+            {inside.length ? (
+              <ul class="drawer__list">
+                {inside.map((t) => (
+                  <li>
+                    <button class="drawer__link" data-detail-key={`tool:${t.id}`}>{t.name}</button>
+                    <span class="drawer__via"> {t.kind} · {usesOfTool(team, t.id).length} uses</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="drawer__none">Nothing on the shelf runs in it yet.</p>
+            )}
+          </div>
+        </div>
+      );
+    })}
+
+    {team.events.map((ev) => {
+      const moments = recsOfEvent(ev.id);
+      return (
+        <div class="drawer__panel" data-detail={`event:${ev.id}`} hidden>
+          <div class="drawer__title-row">
+            <h3 class="drawer__name">{ev.name}</h3>
+          </div>
+          <div class="drawer__chips">
+            <span class="chip chip--inverse">EVENT</span>
+            <span class="chip">{moments.length} RECOMMENDATIONS</span>
+          </div>
+          {descriptions.has(`event:${ev.id}`) && (
+            <div class="drawer__prose prose-md" set:html={descriptions.get(`event:${ev.id}`)} />
+          )}
+
+          <div class="drawer__section">
+            <h4 class="drawer__label">Reached for when it happens</h4>
+            {moments.length ? (
+              <ul class="drawer__list">
+                {moments.map(({ activity, rec }) => (
+                  <li>
+                    <button class="drawer__link" data-detail-key={`tool:${rec.tool}`}>{toolOf(team, rec.tool).name}</button>
+                    <span class="drawer__via"> in <button class="drawer__link drawer__here" data-detail-key={activity.id}>{activityLabel(activity.id)}</button></span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="drawer__none">Defined, but nothing is bound to it yet.</p>
+            )}
+          </div>
+        </div>
+      );
+    })}
   </div>
 </aside>
 
@@ -285,16 +468,6 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
   }
   .drawer__head {
     background: var(--white);
-  }
-  .drawer__close {
-    margin-left: auto;
-    font-size: var(--label);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    padding: 3px 4px;
-  }
-  .drawer__close:hover {
-    color: var(--accent);
   }
   .drawer__body {
     overflow-y: auto;
@@ -377,6 +550,48 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
     vertical-align: -1px;
   }
   /* The advice reads as prose under its line, not as another metadata column. */
+  /* A name that opens another panel is drawn as the name, not as a link: the
+     drawer is a reading surface and a page of underlined blue would read as a
+     list of exits. The affordance arrives on hover, where the reader is already
+     pointing, and the hairline underline is the same green the rest of the page
+     uses for signal. */
+  /* No `font: inherit` — the global button reset already does it, and restating
+     it here as a class-level shorthand would wipe the size and weight
+     `.drawer__artifact` and `.drawer__event` set on the same element. */
+  .drawer__link {
+    text-align: left;
+    border-bottom: 1px solid transparent;
+    /* A name inside a sentence stays inside it: as an inline-block the whole
+       name would jump to the next line rather than break, leaving a hole in the
+       middle of the via-line the panel is 400px wide enough to notice. */
+    display: inline;
+    transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+  }
+  /* The one place a sentence names the activity the reader is standing beside —
+     it carried a <strong> before it became a door, and it keeps that weight so
+     the line still reads as prose with one word emphasised. */
+  .drawer__here.drawer__link {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .drawer__link:hover,
+  .drawer__link:focus-visible {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  /* Authored markdown, so the drawer owns the vertical rhythm rather than the
+     renderer: the same prose step the rest of the panel reads at, with lists
+     kept tight enough that a three-item list is not the loudest thing in view. */
+  .drawer__prose {
+    font-size: var(--prose);
+    line-height: 19px;
+    color: var(--ink);
+    max-width: 46ch;
+  }
+  .drawer__chips + .drawer__prose,
+  .drawer__why + .drawer__prose {
+    margin-top: 9px;
+  }
   /* The figure can only show where a fill sits on the ladder. The drawer is where
      the reader has stopped to ask what that position means, so the same four steps
      are repeated here with the loop position spelled out beside them. */

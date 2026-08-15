@@ -107,6 +107,8 @@ const views = [
 </section>
 
 <script>
+  import { panelNav } from '../lib/panel-nav';
+
   // Root-scoped, initialized once per process document. The export puts four of
   // these in one file, so nothing here may reach for a document-global singleton.
   const escapers: (() => void)[] = [];
@@ -151,16 +153,24 @@ const views = [
 
     // Drawer
     const drawer = root.querySelector<HTMLElement>('[data-drawer]')!;
-    const panels = [...root.querySelectorAll<HTMLElement>('[data-detail]')];
     const procOpen = root.querySelector<HTMLButtonElement>('[data-open-process]');
-    const openDrawer = (key: string) => {
-      for (const p of panels) p.hidden = p.dataset.detail !== key;
+    const back = drawer.querySelector<HTMLButtonElement>('[data-drawer-back]');
+    const closeBtn = drawer.querySelector<HTMLButtonElement>('[data-drawer-close]');
+    const nav = panelNav(drawer, {
+      back,
+      onBack: () => (back?.hidden ? closeBtn : back)?.focus(),
+    });
+    // `deeper` is a step taken from inside the open drawer, which is the only
+    // move BACK is meant to undo — an entry opened from the page is a fresh read.
+    const openDrawer = (key: string, deeper = false) => {
+      nav.show(key, deeper);
       drawer.hidden = false;
       main.setAttribute('data-drawer-open', '');
       procOpen?.setAttribute('aria-expanded', String(key === '__process'));
     };
     const closeDrawer = () => {
       drawer.hidden = true;
+      nav.clear();
       main.removeAttribute('data-drawer-open');
       for (const a of [...acts, ...tools]) a.setAttribute('aria-current', 'false');
       procOpen?.setAttribute('aria-expanded', 'false');
@@ -229,6 +239,37 @@ const views = [
         bringIntoView(btn, 'nudge');
       });
     }
+    // Catalog entities — artifacts, roles, harnesses, events — have no node of
+    // their own to select, so they open by key from wherever they are named: an
+    // edge label, a lane, a chip inside the drawer itself. One delegated listener
+    // rather than a binding per element, because the drawer rewrites its own body
+    // as the reader moves between panels.
+    root.addEventListener('click', (e) => {
+      const el = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-detail-key]');
+      const key = el?.dataset.detailKey;
+      if (!key || !nav.has(key)) return;
+      const deeper = Boolean(el!.closest('[data-drawer]')) && !drawer.hidden;
+      for (const b of [...acts, ...tools]) b.setAttribute('aria-current', 'false');
+      // A key that names an activity has a node on the page, so the link moves the
+      // selection there as well as the panel — otherwise the drawer changes under
+      // the reader while the marked node still points at where they came from.
+      const btn = acts.find((b) => b.dataset.act === key);
+      if (btn) {
+        const panel = btn.closest<HTMLElement>('[data-viewpanel]');
+        if (panel?.dataset.viewpanel) setView(panel.dataset.viewpanel);
+        for (let el = btn.closest<HTMLElement>('[data-subflow-panel]'); el; el = el.parentElement?.closest<HTMLElement>('[data-subflow-panel]') ?? null) {
+          if (el.hidden) {
+            root
+              .querySelector<HTMLButtonElement>(`[data-expand="${CSS.escape(el.dataset.subflowPanel!)}"]`)
+              ?.click();
+          }
+        }
+        btn.setAttribute('aria-current', 'true');
+      }
+      openDrawer(key, deeper);
+      if (btn) bringIntoView(btn, 'center');
+      if (deeper) (nav.depth() ? back : closeBtn)?.focus();
+    });
     root.querySelector('[data-drawer-close]')?.addEventListener('click', closeDrawer);
     escapers.push(() => {
       if (!drawer.hidden && !root.hidden) closeDrawer();
@@ -244,7 +285,7 @@ const views = [
       const kind = target.slice(0, sep);
       const id = target.slice(sep + 1);
       const key = kind === 'tool' ? `tool:${id}` : kind === 'act' ? id : null;
-      if (!key || !panels.some((p) => p.dataset.detail === key)) return;
+      if (!key || !nav.has(key)) return;
       // A tool that fills an activity has no button of its own — it is drawn as
       // the activity that reaches for it — so the link's node is that fill, and
       // the swimlane is where a reader expects to land: `acts` is in document

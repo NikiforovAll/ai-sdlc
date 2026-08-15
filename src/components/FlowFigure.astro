@@ -178,24 +178,26 @@ const idleCells = steps.flatMap((s) =>
 
       {team.roles.map((r, i) => (
         <div class="fig__lane" style={`top:${laneY[i]}px;height:${laneHpx[i]}px`} data-roles={r.id}>
-          <span class="fig__lane-name">{r.name}</span>
+          <button type="button" class="fig__lane-name" data-detail-key={`role:${r.id}`}>{r.name}</button>
           <span class="fig__lane-note">{r.note}</span>
         </div>
       ))}
 
       {labelEdges.map((e) => (
-        <span
+        <button
+          type="button"
           class={`fig__artifact${e.constraint ? ' fig__artifact--constraint' : ''}`}
           style={`left:${e.mx}px;top:${e.my}px`}
           data-roles={e.roles}
-          tabindex={e.constraint && team.constraint ? 0 : undefined}
+          data-detail-key={`artifact:${e.artifact}`}
+          aria-label={`${artifactName(e.artifact)} — details`}
         >
           {e.constraint && <span class="fig__one" aria-label="the constraint">①</span>}
           {artifactName(e.artifact)}
           {e.constraint && team.constraint && (
             <span class="fig__artifact-note">{team.constraint.note}</span>
           )}
-        </span>
+        </button>
       ))}
 
       {d.placed.map((p) => {
@@ -323,11 +325,16 @@ const idleCells = steps.flatMap((s) =>
     flex-direction: column;
     gap: 3px;
   }
+  /* The label became a button when artifacts and roles got a panel of their own.
+     It keeps the label's exact skin — the global button reset plus the same box —
+     so the figure reads as it did and only the pointer says the name now opens
+     something. */
   .fig__lane-name {
     font-size: var(--body);
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    text-align: left;
   }
   .fig__lane-note {
     font-size: var(--micro);
@@ -482,6 +489,10 @@ const idleCells = steps.flatMap((s) =>
   .fig__lane {
     transition: opacity 0.28s var(--ease-out);
   }
+  .fig__lane-name:hover,
+  .fig__lane-name:focus-visible {
+    color: var(--accent);
+  }
   .fig__artifact {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -495,6 +506,11 @@ const idleCells = steps.flatMap((s) =>
     display: inline-flex;
     align-items: center;
     gap: 4px;
+  }
+  .fig__artifact:hover,
+  .fig__artifact:focus-visible {
+    border-color: var(--accent);
+    color: var(--ink);
   }
   .fig__artifact--constraint {
     border-color: var(--accent);
