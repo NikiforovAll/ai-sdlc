@@ -93,7 +93,7 @@ const paragraphs = (text: string) =>
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(400px, 94vw);
+    width: var(--drawer-w);
     background: var(--white);
     border-left: 1px solid var(--ink);
     z-index: 40;
@@ -151,21 +151,25 @@ const paragraphs = (text: string) =>
     margin-bottom: 6px;
   }
   .tdrawer__prose {
-    font-size: var(--body);
-    line-height: 17px;
+    font-size: var(--prose);
+    line-height: 20px;
+    font-weight: 400;
   }
   .tdrawer__prose + .tdrawer__prose {
     margin-top: 8px;
   }
   .tdrawer__path {
-    font-size: 11px;
+    font-size: var(--prose);
+    line-height: 20px;
     font-weight: 700;
   }
+  /* The drawer is a reading surface, not an index: its notes take the body step
+     and the panel's own width. A 44ch measure inside a 400px panel wrapped the
+     note two words early for no gain — the panel is already the measure. */
   .tdrawer__none {
-    font-size: var(--label);
-    line-height: 14px;
+    font-size: var(--prose);
+    line-height: 20px;
     color: var(--sub);
     margin-top: 6px;
-    max-width: 44ch;
   }
 </style>

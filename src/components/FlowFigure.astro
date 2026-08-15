@@ -188,9 +188,13 @@ const idleCells = steps.flatMap((s) =>
           class={`fig__artifact${e.constraint ? ' fig__artifact--constraint' : ''}`}
           style={`left:${e.mx}px;top:${e.my}px`}
           data-roles={e.roles}
+          tabindex={e.constraint && team.constraint ? 0 : undefined}
         >
           {e.constraint && <span class="fig__one" aria-label="the constraint">①</span>}
           {artifactName(e.artifact)}
+          {e.constraint && team.constraint && (
+            <span class="fig__artifact-note">{team.constraint.note}</span>
+          )}
         </span>
       ))}
 
@@ -242,16 +246,25 @@ const idleCells = steps.flatMap((s) =>
     </div>
   </div>
   {team.constraint && (
-    <p class="fig__note" data-roles={team.roles.map((r) => r.id).join(' ')}>
+    <p class="fig__note" tabindex="0" data-roles={team.roles.map((r) => r.id).join(' ')}>
       <span class="fig__one" aria-hidden="true">①</span>
-      {team.constraint.note}
+      <span class="fig__note-text">{team.constraint.note}</span>
     </p>
   )}
 </section>
 
 <style>
+  /* `overflow-x: auto` alone computes `overflow-y` to `auto` as well, and the
+     horizontal scrollbar then eats 10px out of a canvas that is exactly as tall
+     as its content — so the figure grew a second, nested vertical scrollbar for
+     ten pixels it did not need. The figure is drawn at full height and the page
+     scrolls it; only sideways travel belongs to the figure itself. The padding
+     gives the horizontal bar its own strip instead of it covering the closing
+     hairline. */
   .fig__scroll {
     overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 10px;
   }
   .fig__canvas {
     position: relative;
@@ -434,21 +447,81 @@ const idleCells = steps.flatMap((s) =>
     border-color: var(--accent);
     color: var(--ink);
     font-weight: 700;
+    cursor: help;
+  }
+  /* The label carries the ① but not the sentence behind it, so the note opens
+     from the label itself as well as from the corner chip — the reader asking
+     "why is this one marked?" is looking at the label, not the corner.
+     `white-space: normal` is not decoration: the label sets `nowrap` and the
+     panel inherits it, which runs the whole sentence off one line. */
+  /* One skin, two placements: the constraint speaks from the artifact label and
+     from the pinned corner chip, and a reader has to recognise them as the same
+     object saying the same thing. Mint is the edge because the chip floats over
+     the figure's own white and washi bands and needs a border that is not a
+     fourth colour — it is the voice the ① inside it already speaks in. */
+  .fig__artifact-note,
+  .fig__note {
+    background: var(--ink);
+    color: var(--white);
+    border: 1px solid var(--accent-on-ink);
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 15px;
+  }
+  .fig__artifact-note {
+    display: none;
+    position: absolute;
+    left: -1px;
+    top: calc(100% + 5px);
+    width: 44ch;
+    max-width: 60vw;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: normal;
+    z-index: 25;
+  }
+  .fig__artifact:hover,
+  .fig__artifact:focus-visible {
+    z-index: 26;
+  }
+  .fig__artifact:hover .fig__artifact-note,
+  .fig__artifact:focus-visible .fig__artifact-note {
+    display: block;
   }
   .fig__one {
     color: var(--accent);
     font-weight: 700;
     font-size: var(--body);
   }
+  /* The constraint is the one fact a reader may want at any point in a figure
+     that is taller and wider than the screen, and it used to sit at the very
+     foot — reachable only after scrolling past everything it explains. It keeps
+     a fixed corner instead, showing the ① alone until hover or focus opens the
+     note. The two states swap rather than grow into each other: a collapsed text
+     column is still a column of text, so every attempt to animate it to zero
+     width simply wrapped the note one character per line into a black tower. The
+     mark is legible standing still, which is the rule this world reads by. */
   .fig__note {
-    background: var(--ink);
-    color: var(--white);
-    padding: 9px 12px;
-    font-size: 11px;
-    line-height: 15px;
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 30;
+    display: flex;
+    align-items: flex-start;
+    max-width: calc(100vw - 28px);
+  }
+  .fig__note-text {
+    display: none;
+    width: 46ch;
+    max-width: 100%;
+    padding-left: 7px;
+  }
+  .fig__note:hover .fig__note-text,
+  .fig__note:focus-visible .fig__note-text {
+    display: block;
   }
   .fig__note .fig__one {
-    margin-right: 6px;
-    color: #7fd6a8;
+    color: var(--accent-on-ink);
   }
 </style>

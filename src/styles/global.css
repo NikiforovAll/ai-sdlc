@@ -2,6 +2,10 @@
   --white: #ffffff;
   --ink: #111111;
   --accent: #0f6b3c;
+  /* The same signal green, lifted to carry on the ink ground: --accent at 2.1:1
+     on #111111 is unreadable, so anything green that sits inside an inverted
+     block wears this instead. */
+  --accent-on-ink: #7fd6a8;
   --line: #dadada;
   --surface: #f2f2f2;
   --washi: #f7f7f7;
@@ -21,9 +25,16 @@
 
   --font: 'Archivo Variable', 'Archivo', 'Yu Gothic', sans-serif;
 
+  /* One width for both drawers and for the trailing room a scroll track has to
+     leave them: the room only works while it matches the panel exactly. */
+  --drawer-w: min(400px, 94vw);
+
   --display-xl: 56px;
   --display-md: 28px;
+  --title: 20px;
   --subhead: 16px;
+  /* The drawer reading step: the indexes are scanned at 12px, a drawer is read. */
+  --prose: 14px;
   --body: 12px;
   --label: 10px;
   --micro: 9px;
@@ -57,6 +68,45 @@ body {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+/* The scale is fixed px and the mosaic is capped at nothing, so a wider display
+   makes the team document wider but never bigger: at ~1900px the 9-12px type is
+   doing the same work at half the apparent size. Zoom re-reads the density at
+   the width it was tuned for — content lays out at width / zoom and paints
+   scaled up, which is what a reader already gets from browser zoom. Every page
+   takes it, drawers included: the flow figure scrolls inside a container that
+   lays out at the divided width, so it keeps its geometry and simply gets a
+   narrower viewport to scroll — the same trade the reader accepts from the
+   browser's own zoom. */
+.doc main,
+.tdrawer,
+.drawer {
+  zoom: var(--zoom, 1);
+}
+@media (min-width: 1600px) {
+  :root {
+    --zoom: 1.15;
+  }
+}
+@media (min-width: 1900px) {
+  :root {
+    --zoom: 1.25;
+  }
+}
+
+/* Every state in this world is legible standing still — a wash, an inversion, a
+   green mark. The transitions only smooth the arrival, so removing them costs
+   nothing a reader needs. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -186,12 +236,6 @@ main {
   flex-wrap: wrap;
 }
 
-.mast__file {
-  font-size: var(--label);
-  letter-spacing: 0.02em;
-  color: var(--sub);
-}
-
 .mast__status {
   margin-left: auto;
   font-size: var(--label);
@@ -239,38 +283,9 @@ main {
   color: inherit;
 }
 
-.mast--line .mast__file {
-  margin-left: auto;
-}
-
-.mast--line .mast__status {
-  margin-left: 0;
-}
-
 /* One rule, not two: the top line already closes with a hairline. */
 .mast--line .mast__stats {
   border-top: none;
-}
-
-.mast__main {
-  padding: 14px 16px 12px;
-}
-
-.mast__name {
-  font-size: clamp(26px, 4vw, var(--display-xl));
-  line-height: 1.02;
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-
-.mast__desc {
-  margin-top: 8px;
-  font-size: var(--body);
-  line-height: 17px;
-  color: var(--sub);
-  max-width: 72ch;
 }
 
 .mast__stats {

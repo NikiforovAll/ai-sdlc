@@ -77,8 +77,11 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
 </section>
 
 <style>
+  /* Sideways travel only — see the same rule in FlowFigure: an implied
+     `overflow-y: auto` nests a second vertical scrollbar inside the page's. */
   .grid__scroll {
     overflow-x: auto;
+    overflow-y: hidden;
   }
   .grid__table {
     width: 100%;

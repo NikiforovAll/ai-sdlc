@@ -28,18 +28,18 @@ const views = [
 
 <section class="doc" data-doc={slug} data-doc-kind="process" hidden={hidden}>
   <main data-role="" data-view="flow">
-    <header class="mast module">
+    <header class="mast mast--line module">
       <div class="mast__top">
         <span class="tab">PROCESS</span>
         <a class="mast__up" href={inline ? '#' : '/'} data-goto="">↑ {team.name}</a>
-        <span class="mast__file">content/teams/{file}</span>
+        <h1 class="mast__title">
+          <button type="button" class="mast__open" data-open-process aria-expanded="false">
+            {process.name}<span class="mast__open-mark" aria-hidden="true">▸</span>
+          </button>
+        </h1>
         <span class="mast__status">
           {doc.activities.length} ACTIVITIES · {process.stages.length} STAGES
         </span>
-      </div>
-      <div class="mast__main">
-        <h1 class="mast__name">{process.name}</h1>
-        {process.description && <p class="mast__desc">{process.description}</p>}
       </div>
       <nav class="mast__switch" aria-label="Process">
         <span class="tab tab--quiet">PROCESSES</span>
@@ -94,7 +94,16 @@ const views = [
     </div>
   </main>
 
-  <Drawer team={doc} />
+  <Drawer
+    team={doc}
+    process={{
+      name: process.name,
+      description: process.description,
+      stages: process.stages.length,
+      activities: doc.activities.length,
+      file,
+    }}
+  />
 </section>
 
 <script>
@@ -143,20 +152,72 @@ const views = [
     // Drawer
     const drawer = root.querySelector<HTMLElement>('[data-drawer]')!;
     const panels = [...root.querySelectorAll<HTMLElement>('[data-detail]')];
+    const procOpen = root.querySelector<HTMLButtonElement>('[data-open-process]');
     const openDrawer = (key: string) => {
       for (const p of panels) p.hidden = p.dataset.detail !== key;
       drawer.hidden = false;
+      main.setAttribute('data-drawer-open', '');
+      procOpen?.setAttribute('aria-expanded', String(key === '__process'));
     };
     const closeDrawer = () => {
       drawer.hidden = true;
+      main.removeAttribute('data-drawer-open');
       for (const a of [...acts, ...tools]) a.setAttribute('aria-current', 'false');
+      procOpen?.setAttribute('aria-expanded', 'false');
     };
+
+    // Every figure scrolls sideways inside its own track, so "bring this node
+    // into view" is a scroll of that track, not of the page. The trailing-room
+    // rule in this component's stylesheet names the same two classes: a track
+    // the CSS does not know about has no room to scroll into, so the node would
+    // stay behind the drawer and the fault would look like a script fault.
+    const TRACK = '.fig__scroll, .grid__scroll';
+    // The drawer is a fixed panel over the right edge: the width a reader can
+    // actually see is the track minus that panel. Selecting a node underneath it
+    // reads as nothing having happened at all.
+    const visibleRight = () =>
+      drawer.hidden ? window.innerWidth : Math.min(window.innerWidth, drawer.getBoundingClientRect().left);
+    // Both moves wait two frames: the room the drawer leaves at the end of the
+    // track is a style change, and a track measured in the same frame as the
+    // opening still reports its old width — the node then stops short.
+    const afterLayout = (fn: () => void) =>
+      requestAnimationFrame(() => requestAnimationFrame(fn));
+    // `nudge` moves the node just clear of the drawer and no further, which is
+    // what a click wants — the reader chose where to look. `center` parks it
+    // mid-way in the width the drawer leaves, which is what an arrival from a
+    // catalog link wants, since the reader has not seen the figure yet.
+    const bringIntoView = (btn: HTMLElement, mode: 'nudge' | 'center') =>
+      afterLayout(() => {
+        // Vertical first: `scrollIntoView` also moves the horizontal axis to
+        // "nearest", which parks the node just inside the track's right edge —
+        // exactly where the drawer is. The horizontal maths runs after it.
+        if (mode === 'center') btn.scrollIntoView({ block: 'center' });
+        const track = btn.closest<HTMLElement>(TRACK);
+        if (!track) return;
+        const trackBox = track.getBoundingClientRect();
+        const box = btn.getBoundingClientRect();
+        const limit = visibleRight();
+        const delta =
+          mode === 'center'
+            ? box.left - trackBox.left - (Math.min(trackBox.right, limit) - trackBox.left - box.width) / 2
+            : Math.max(0, box.right + 12 - limit);
+        // Client rects and `scrollLeft` do not share a unit while the
+        // wide-display `zoom` is in force, so the factor is measured — from the
+        // rect already taken above, rather than a second read of the same box.
+        track.scrollLeft += delta / (trackBox.width / track.clientWidth || 1);
+      });
+    procOpen?.addEventListener('click', () => {
+      for (const b of [...acts, ...tools]) b.setAttribute('aria-current', 'false');
+      openDrawer('__process');
+      drawer.querySelector<HTMLButtonElement>('[data-drawer-close]')?.focus();
+    });
     for (const btn of acts) {
       btn.addEventListener('click', () => {
         const id = btn.dataset.act!;
         for (const a of acts) a.setAttribute('aria-current', String(a.dataset.act === id));
         for (const s of tools) s.setAttribute('aria-current', 'false');
         openDrawer(id);
+        bringIntoView(btn, 'nudge');
       });
     }
     for (const btn of tools) {
@@ -165,6 +226,7 @@ const views = [
         for (const s of tools) s.setAttribute('aria-current', String(s.dataset.tool === id));
         for (const a of acts) a.setAttribute('aria-current', 'false');
         openDrawer(`tool:${id}`);
+        bringIntoView(btn, 'nudge');
       });
     }
     root.querySelector('[data-drawer-close]')?.addEventListener('click', closeDrawer);
@@ -202,9 +264,11 @@ const views = [
         }
         for (const b of [...acts, ...tools]) b.setAttribute('aria-current', 'false');
         btn.setAttribute('aria-current', 'true');
-        btn.scrollIntoView({ block: 'center', inline: 'center' });
       }
+      // The drawer opens first: it takes the right edge of the window, and the
+      // reveal below has to know how much room is left before it centres.
       openDrawer(key);
+      if (btn) bringIntoView(btn, 'center');
     };
     root.addEventListener('aisdlc:focus', (e) => focus((e as CustomEvent<string>).detail));
 
@@ -245,6 +309,15 @@ const views = [
 </script>
 
 <style>
+  /* The drawer is fixed over the right edge, so the last node in a figure has
+     nowhere left to travel: without this much extra room at the end of the
+     track, a selection at the end of a flow can never come out from behind the
+     panel. The room only exists while the panel does. */
+  main[data-drawer-open] :global(.fig__scroll),
+  main[data-drawer-open] :global(.grid__scroll) {
+    padding-right: calc(var(--drawer-w) + 16px);
+  }
+
   main[data-view='flow'] [data-viewpanel]:not([data-viewpanel='flow']),
   main[data-view='grid'] [data-viewpanel]:not([data-viewpanel='grid']),
   main[data-view='playbook'] [data-viewpanel]:not([data-viewpanel='playbook']) {

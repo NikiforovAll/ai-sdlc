@@ -4,8 +4,10 @@ import { flatten, LEVEL_LABELS, toolOf, usesOfTool } from '../lib/derive';
 
 interface Props {
   team: Team;
+  /** The process itself is a drawer panel: its name opens from the masthead line. */
+  process?: { name: string; description?: string; stages: number; activities: number; file?: string };
 }
-const { team } = Astro.props;
+const { team, process } = Astro.props;
 const flat = flatten(team);
 
 const artifactName = (id: string) => team.artifacts.find((a) => a.id === id)?.name ?? id;
@@ -33,6 +35,35 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
   </div>
 
   <div class="drawer__body">
+    {process && (
+      <div class="drawer__panel" data-detail="__process" hidden>
+        <div class="drawer__title-row">
+          <h3 class="drawer__name drawer__name--doc">{process.name}</h3>
+        </div>
+        <div class="drawer__chips">
+          <span class="chip chip--inverse">{process.activities} ACTIVITIES</span>
+          <span class="chip">{process.stages} STAGES</span>
+        </div>
+
+        {process.description && (
+          <div class="drawer__section">
+            <h4 class="drawer__label">About</h4>
+            {paragraphs(process.description).map((p) => <p class="drawer__why">{p}</p>)}
+          </div>
+        )}
+
+        {process.file && (
+          <div class="drawer__section">
+            <h4 class="drawer__label">Source</h4>
+            <p class="drawer__tool-line">content/teams/{process.file}</p>
+            <p class="drawer__none">
+              One file is one process. The page has no write path — the editor is the editor.
+            </p>
+          </div>
+        )}
+      </div>
+    )}
+
     {flat.map(({ activity: a, stage, parent, depth }) => (
       <div class="drawer__panel" data-detail={a.id} hidden>
         {parent && (
@@ -227,7 +258,7 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(400px, 94vw);
+    width: var(--drawer-w);
     background: var(--white);
     border-left: 1px solid var(--ink);
     z-index: 40;
@@ -267,6 +298,11 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
     font-weight: 700;
     letter-spacing: 0.01em;
   }
+  /* The document name is a title, not an activity label — uppercase the way the
+     team drawer states its own. */
+  .drawer__name--doc {
+    text-transform: uppercase;
+  }
   .drawer__chips {
     display: flex;
     gap: 5px;
@@ -275,8 +311,9 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
   }
   .drawer__why {
     margin-top: 9px;
-    font-size: var(--body);
-    line-height: 17px;
+    font-size: var(--prose);
+    line-height: 20px;
+    font-weight: 400;
   }
   .drawer__section {
     border-top: 1px solid var(--line);
@@ -333,9 +370,12 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
     margin-top: 2px;
     max-width: 44ch;
   }
+  /* An aside, not the reading: these lines answer "why is this section empty"
+     or footnote the list above them, so they sit a step under the prose. At the
+     prose step the footnote outweighed the entries it was commenting on. */
   .drawer__none {
-    font-size: var(--label);
-    line-height: 14px;
+    font-size: var(--body);
+    line-height: 17px;
     color: var(--sub);
     margin-top: 6px;
   }

@@ -37,7 +37,6 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
             {team.name}<span class="mast__open-mark" aria-hidden="true">▸</span>
           </button>
         </h1>
-        <span class="mast__file">content/teams/{teamId}/</span>
         <span class="mast__status">
           VERSION {team.version} · STATUS <strong class:list={{ 'mast__living': team.status === 'living' }}>{team.status.toUpperCase()}</strong>
         </span>
@@ -77,7 +76,7 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
             </dl>
             {p.data.constraint && (
               <p class="proc__constraint">
-                <span class="chip chip--inverse">① {team.artifacts.find((a) => a.id === p.data.constraint!.artifact)?.name ?? p.data.constraint.artifact}</span>
+                <span class="proc__constraint-mark"><span class="proc__constraint-glyph">①</span> {team.artifacts.find((a) => a.id === p.data.constraint!.artifact)?.name ?? p.data.constraint.artifact} —</span>
                 {p.data.constraint.note}
               </p>
             )}
@@ -91,13 +90,12 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
         <div class="module__head">
           <span class="tab">CATALOG</span>
           <span class="module__title">Roles</span>
-          <span class="module__meta">the vertical axis of every figure</span>
         </div>
-        <ul class="rows">
+        <ul class="rows rows--stack">
           {team.roles.map((r) => (
             <li class="row">
-              <span class="row__name">{r.name}</span>
               <span class="row__id">{r.id}</span>
+              <span class="row__name">{r.name}</span>
               {r.note && <span class="row__note">{r.note}</span>}
             </li>
           ))}
@@ -139,7 +137,7 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
                   <span class="tools__harness">{h.name}</span>
                   <span class="tools__count">{owned.length}</span>
                 </div>
-                <ul>
+                <ul class="tools__list">
                   {owned.map((s) => (
                     <li class="tool">
                       <span class="tool__name">{s.name}</span>
@@ -168,13 +166,14 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
           <span class="module__title">Events</span>
           <span class="module__meta">conditions that trigger tooling</span>
         </div>
-        <ul class="rows">
+        <ul class="rows rows--event">
           {team.events.map((e) => (
             <li class="row">
               <span class="row__name">{e.name}</span>
               <span class="row__id">{e.id}</span>
               {e.description && <span class="row__note">{e.description}</span>}
               <span class="row__use">
+                <svg class="row__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>
                 {(eventUse.get(e.id) ?? []).length === 0 ? 'no play yet' : (eventUse.get(e.id) ?? []).map((u, i) => (
                   <>
                     {i > 0 && <span aria-hidden="true"> · </span>}
@@ -191,7 +190,7 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
         <div class="module__head">
           <span class="tab">CATALOG</span>
           <span class="module__title">Artifacts</span>
-          <span class="module__meta">the joints — every edge is one changing hands</span>
+          <span class="module__meta">the joints of every handoff</span>
         </div>
         <ul class="rows rows--tight">
           {team.artifacts.map((a) => (
@@ -210,6 +209,7 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
           ))}
         </ul>
       </section>
+
     </div>
   </main>
   <TeamDrawer team={team} teamId={teamId} />
@@ -239,27 +239,30 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     gap: 10px;
     text-decoration: none;
   }
+  /* A card title, not the page title: at the headline step it competed with the
+     masthead, so it takes the title step and the underline thins with it. */
   .proc__name {
-    font-size: var(--display-md);
-    line-height: 30px;
+    font-size: var(--title);
+    line-height: 24px;
     font-weight: 800;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
     text-transform: uppercase;
-    border-bottom: 2px solid transparent;
+    border-bottom: 1px solid transparent;
     transition: border-color 0.14s var(--ease-out), color 0.14s var(--ease-out);
   }
   .proc__go {
     font-size: var(--subhead);
     color: var(--muted);
-    transition: transform 0.14s var(--ease-out), color 0.14s var(--ease-out);
+    transition: color 0.14s var(--ease-out);
   }
-  .proc__link:hover .proc__name {
+  .proc__link:hover .proc__name,
+  .proc__link:focus-visible .proc__name {
     color: var(--accent);
     border-color: var(--accent);
   }
-  .proc__link:hover .proc__go {
+  .proc__link:hover .proc__go,
+  .proc__link:focus-visible .proc__go {
     color: var(--accent);
-    transform: translateX(4px);
   }
   .proc__desc {
     font-size: var(--body);
@@ -308,30 +311,39 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     text-transform: uppercase;
     color: var(--sub);
   }
+  /* The constraint is a footnote to the card, not a second body paragraph: a
+     measure holds it in instead of a filled band running the whole width, which
+     at this width read as more important than the numbers above it. */
   .proc__constraint {
-    display: flex;
-    align-items: baseline;
-    gap: 7px;
+    display: block;
+    max-width: 64ch;
+    margin-top: 2px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
     font-size: var(--label);
     line-height: 15px;
     color: var(--sub);
-    background: var(--washi);
-    padding: 7px 8px;
   }
-  .proc__constraint .chip {
-    flex: none;
+  .proc__constraint-mark {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .proc__constraint-glyph {
+    color: var(--accent);
   }
 
-  /* Five indexes of very unequal length (4, 3, 16, 4, 6 rows). A row grid pads
-     every short catalog out to the tallest one and orphans the fifth onto a row
-     of its own; column flow packs them, so the band ends where the content ends. */
+  /* Every catalog is a full-width band, and the columns live inside it. Laying
+     the catalogs out as columns of the page instead made width a function of how
+     many catalogs there happen to be: five short indexes squeezed the long ones
+     and left voids under the short ones. Banding them puts each index's own
+     length in charge of how many columns it takes, so no catalog is squashed by
+     a neighbour and the page uses whatever width it is given. */
   .cats {
-    columns: 320px;
-    column-gap: 8px;
-  }
-  .cat {
-    break-inside: avoid;
-    margin-bottom: 8px;
+    display: grid;
+    gap: 8px;
   }
   /* Tooling is grouped by harness, so the harness leaves the row and becomes a
      band; the entry then fits one catalog column like every other catalog. */
@@ -359,12 +371,29 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     font-size: var(--micro);
     color: var(--sub);
   }
+  /* The band is wide, the entries are one line each: flow them in columns ruled
+     by the same hairline that divides everything else, so the shelf reads as an
+     inventory rather than one very long list down the left edge. Capped at
+     three: uncapped, a wide display keeps splitting until the name and its
+     usage tag can no longer share a line. */
+  .tools__list {
+    columns: 320px 3;
+    column-gap: 17px;
+    column-rule: 1px solid var(--line);
+  }
   .tool {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
     gap: 6px;
     padding: 5px 8px 4px;
+    break-inside: avoid;
+  }
+  /* The other four catalogs band their rows; tooling reads as the same kind of
+     list, so it bands too. Zebra rather than a bottom rule: a rule under the
+     last entry of a column would end in mid-air where the column stops. */
+  .tool:nth-child(even) {
+    background: var(--washi);
   }
   .tool__name {
     font-size: var(--body);
@@ -383,26 +412,86 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     text-transform: uppercase;
     color: var(--sub);
   }
+  /* Grid, not a multicol flow: in multicol every entry keeps its own height, so a
+     note that wraps gave each column its own baselines and no two hairlines ever
+     met across the catalog. A grid row is shared — every cell takes the tallest
+     one's height — so the rules line up the whole way across. Each cell draws its
+     own top and left rule and the list is pulled 1px up and left, landing the
+     first row and column on the module's own border instead of doubling it: the
+     same construction the process cards use. Wider than tooling's column because
+     these entries carry a note on its own line. Zebra belonged to the flow — under
+     a grid, nth-child banding checkerboards instead of striping, and the rules now
+     do that work. */
   .rows {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    margin: -1px 0 0 -1px;
+  }
+  /* Artifacts are a name, an id and a usage tag — one line, so they pack tighter. */
+  .rows--tight {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+  /* Roles are the one catalog every figure is drawn against, so they stack instead
+     of running inline: the id leads as a muted kicker — it is the key the YAML and
+     the lens chips use — the name takes the subhead step under it, and the note
+     follows. Read down a column, the three sizes give the entry a shape the
+     single-line catalogs do not need. */
+  .rows--stack {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .rows--stack .row {
+    display: block;
+    padding: 9px 10px 10px;
+  }
+  .rows--stack .row__id {
+    display: block;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .rows--stack .row__name {
+    display: block;
+    font-size: var(--subhead);
+    line-height: 20px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .rows--stack .row__note {
+    display: block;
+    max-width: 40ch;
+  }
+  /* An event row is an if and a then. The other catalogs' usage tag says where an
+     entry is used; here it names the tooling the condition fires, which is the
+     playbook's event voice — so it speaks in it: green, bold, behind the bolt. */
+  .rows--event .row__use {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .rows--event .row__bolt {
+    flex: none;
+    width: 8px;
+    height: 10px;
+  }
+  .rows--event .row__go {
+    color: var(--accent);
+    border-bottom-color: rgba(15, 107, 60, 0.35);
   }
   .row {
     display: flex;
     align-items: baseline;
+    align-content: space-between;
     gap: 8px;
     flex-wrap: wrap;
     padding: 7px 8px 6px;
-    border-bottom: 1px solid var(--line);
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
   }
   .rows--tight .row {
     padding: 5px 8px 4px;
-  }
-  .row:last-child {
-    border-bottom: none;
-  }
-  .row:nth-child(even) {
-    background: var(--washi);
   }
   .row__name {
     font-size: var(--body);
