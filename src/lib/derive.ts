@@ -71,9 +71,15 @@ export function usesOfTool(team: Team, id: string): ToolUse[] {
 // activities. The rest of the shelf stays on the team document.
 export function view(team: TeamDoc, process: ProcessDoc): Team {
   const used = new Set<string>();
+  // Roles are a team catalog too, and a role this process never names would be
+  // drawn as a swimlane with nothing in it — a hatched band that says the role has
+  // no part in the work, which is what the team document is for. Sub-activities
+  // count: a role that only appears inside an inset still takes part.
+  const staffed = new Set<string>();
   const walk = (a: AnyActivity) => {
     if (a.tooling) used.add(a.tooling.tool);
     for (const r of a.recommends ?? []) used.add(r.tool);
+    for (const r of a.roles) staffed.add(r);
     for (const c of a.activities ?? []) walk(c);
   };
   for (const a of process.activities) walk(a);
@@ -83,6 +89,7 @@ export function view(team: TeamDoc, process: ProcessDoc): Team {
     stages: process.stages,
     activities: process.activities,
     constraint: process.constraint,
+    roles: team.roles.filter((r) => staffed.has(r.id)),
     tools: team.tools.filter((t) => used.has(t.id)),
   };
 }

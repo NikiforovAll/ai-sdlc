@@ -16,6 +16,6 @@ const { model } = Astro.props as { model: ProcessModel };
 ---
 
 <Layout title={`${model.process.name} — ${model.team.name}`} description={model.process.description}>
-  <RoleDimStyle roles={model.team.roles} />
+  <RoleDimStyle roles={model.doc.roles} />
   <ProcessDoc model={model} />
 </Layout>
