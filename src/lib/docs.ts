@@ -36,8 +36,10 @@ export interface Reach {
   /** Sub-activities live inside their parent's stage, so they name none of their own. */
   stage?: string;
   roles: string[];
-  kind: 'fill' | 'recommended' | 'produces' | 'consumes';
+  kind: 'fill' | 'recommended' | 'produces' | 'consumes' | 'owns';
   level?: Fill['level'];
+  /** Only an `owns` row states it: the activity is a declared gap, so it has no level to name. */
+  open?: boolean;
   event?: string;
   usage?: string;
 }
@@ -52,6 +54,7 @@ export const VERB: Record<Reach['kind'], string> = {
   recommended: 'recommended in',
   produces: 'produced by',
   consumes: 'consumed by',
+  owns: 'owned in',
 };
 
 export interface ProcStat {
@@ -74,6 +77,7 @@ export interface OverviewModel {
   eventUse: Map<string, Use[]>;
   toolReach: Map<string, Reach[]>;
   artifactReach: Map<string, Reach[]>;
+  roleReach: Map<string, Reach[]>;
 }
 
 export interface ProcessModel {
@@ -148,6 +152,9 @@ export async function overviewModel(): Promise<OverviewModel> {
   // second one per panel.
   const toolReach = new Map<string, Reach[]>();
   const artifactReach = new Map<string, Reach[]>();
+  // The team drawer answers a role the way the process drawer does — the work it
+  // owns, one line each — because "which processes" is the summary, not the answer.
+  const roleReach = new Map<string, Reach[]>();
   // Unlike `pushUse`, every row is kept: two activities reaching for the same
   // tool is the answer, not a duplicate.
   const pushReach = (m: Map<string, Reach[]>, key: string, r: Reach) => {
@@ -202,6 +209,9 @@ export async function overviewModel(): Promise<OverviewModel> {
         stage: 'stage' in a ? stageNames.get(a.stage) : undefined,
         roles: a.roles.map((r) => roleNames.get(r) ?? r),
       };
+      for (const r of a.roles) {
+        pushReach(roleReach, r, { ...at, kind: 'owns', level: a.tooling?.level, open: Boolean(a.open) });
+      }
       if (a.tooling) {
         pushReach(toolReach, a.tooling.tool, { ...at, kind: 'fill', level: a.tooling.level, usage: a.tooling.usage });
       }
@@ -231,6 +241,7 @@ export async function overviewModel(): Promise<OverviewModel> {
     eventUse,
     toolReach,
     artifactReach,
+    roleReach,
     stats: [
       { n: procs.length, label: 'Processes' },
       { n: team.roles.length, label: 'Roles' },

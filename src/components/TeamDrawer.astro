@@ -1,7 +1,8 @@
 ---
 import type { OverviewModel } from '../lib/docs';
 import { catalogDescriptions, paragraphs } from '../lib/markdown';
-import { toolsOfHarness } from '../lib/derive';
+import { LEVEL_LABELS, toolsOfHarness } from '../lib/derive';
+import { useHref } from '../lib/docs';
 import ReachList from './ReachList.astro';
 import UseList from './UseList.astro';
 
@@ -11,7 +12,7 @@ interface Props {
   inline?: boolean;
 }
 const { model, inline = false } = Astro.props;
-const { team, teamId, roleUse, harnessUse, eventUse, toolReach, artifactReach } = model;
+const { team, teamId, roleUse, harnessUse, eventUse, toolReach, artifactReach, roleReach } = model;
 const harnessNames = new Map(team.harnesses.map((h) => [h.id, h.name]));
 const harnessName = (id: string) => harnessNames.get(id) ?? id;
 const eventNames = new Map(team.events.map((e) => [e.id, e.name]));
@@ -73,6 +74,31 @@ const descriptions = await catalogDescriptions(team);
           <p class="tdrawer__uses">
             <UseList uses={roleUse.get(r.id) ?? []} empty="No activity names this role yet." emptyClass="tdrawer__none" />
           </p>
+        </div>
+        <div class="tdrawer__section">
+          <h4 class="tdrawer__label">Owns</h4>
+          {(roleReach.get(r.id) ?? []).length ? (
+            <ul class="tdrawer__list tdrawer__list--owns">
+              {(roleReach.get(r.id) ?? []).map((w) => (
+                <li>
+                  <a
+                    class="row__go tdrawer__act"
+                    href={useHref({ slug: w.slug, label: w.activity, focus: `act-${w.actId}` }, inline)}
+                    data-goto={w.slug}
+                    data-focus={`act-${w.actId}`}
+                  >
+                    {w.activity}
+                  </a>
+                  <span class="tdrawer__via">
+                    {[w.process, w.stage].filter(Boolean).join(' · ')}
+                    {w.level ? ` · ${LEVEL_LABELS[w.level]}` : w.open ? ' · open slot' : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="tdrawer__none">No activity names this role yet.</p>
+          )}
         </div>
       </div>
     ))}
@@ -297,10 +323,12 @@ const descriptions = await catalogDescriptions(team);
     color: var(--accent);
     border-color: var(--accent);
   }
+  /* The rule belongs to the section under it, so it needs more air above than
+     below — at 12px/8px it read as a line through the previous section's last row. */
   .tdrawer__section {
     border-top: 1px solid var(--line);
-    padding-top: 8px;
-    margin-top: 12px;
+    padding-top: 10px;
+    margin-top: 20px;
   }
   .tdrawer__label {
     font-size: var(--micro);
@@ -375,6 +403,27 @@ const descriptions = await catalogDescriptions(team);
   .tdrawer__tool-link:focus-visible {
     color: var(--accent);
     border-color: var(--accent);
+  }
+  /* Same shape the process drawer's Owns list draws — the activity in ink, its
+     place and degree of delegation trailing it as a caption on the same line. */
+  .tdrawer__act {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  /* A word space is not enough behind an underlined door: the rule runs to the
+     glyph edge, so the caption started before the name had finished. */
+  .tdrawer__via {
+    margin-left: 7px;
+    font-size: var(--label);
+    color: var(--sub);
+  }
+  /* Every row carries an underlined door, so the 4px the shelf lists use puts the
+     rule of one line against the descenders of the next. */
+  .tdrawer__list--owns {
+    line-height: 20px;
+  }
+  .tdrawer__list--owns li + li {
+    margin-top: 7px;
   }
   .tdrawer__refs {
     list-style: none;
