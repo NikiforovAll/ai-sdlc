@@ -245,8 +245,16 @@ const views = [
       const id = target.slice(sep + 1);
       const key = kind === 'tool' ? `tool:${id}` : kind === 'act' ? id : null;
       if (!key || !panels.some((p) => p.dataset.detail === key)) return;
+      // A tool that fills an activity has no button of its own — it is drawn as
+      // the activity that reaches for it — so the link's node is that fill, and
+      // the swimlane is where a reader expects to land: `acts` is in document
+      // order, and the flow panel comes before the grid and the playbook. Only a
+      // tool that is recommended rather than filled has a button of its own.
+      // Without this the drawer opened onto a page where nothing was marked and
+      // nothing moved.
       const btn = kind === 'tool'
-        ? tools.find((b) => b.dataset.tool === id)
+        ? acts.find((b) => b.dataset.fills === id) ??
+          tools.find((b) => b.dataset.tool === id)
         : acts.find((b) => b.dataset.act === id);
       if (btn) {
         // The node may live in a view that is not showing — a tool only has a button

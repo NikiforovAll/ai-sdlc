@@ -26,6 +26,7 @@ const cols = [...Array(d.cols).keys()];
               <button
                 class={`subflow__act${p.activity.tooling ? '' : ' subflow__act--open'}`}
                 data-act={p.activity.id}
+                data-fills={p.activity.tooling?.tool}
                 data-roles={p.activity.roles.join(' ')}
                 data-depth="sub"
                 aria-label={`${p.activity.name} — details`}
@@ -97,11 +98,6 @@ const cols = [...Array(d.cols).keys()];
   .subflow__act:hover {
     background: var(--washi);
   }
-  /* Same selection mark as the parent flow: washi plus a green spine, never an invert. */
-  .subflow__act[aria-current='true'] {
-    background: var(--washi);
-    border-left: 2px solid var(--accent);
-  }
   .subflow__act--open {
     border-style: dashed;
     border-color: var(--muted);
@@ -114,6 +110,18 @@ const cols = [...Array(d.cols).keys()];
   .subflow__act--open .subflow__level {
     color: var(--accent);
     font-weight: 700;
+  }
+  /* Same selection mark as the parent flow: an ink invert keeping the green spine.
+     The background shorthand clears the open slot's stripe, so a selected open slot
+     sheds what ink cannot carry. */
+  .subflow__act[aria-current='true'] {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-left: 2px solid var(--accent);
+    color: var(--white);
+  }
+  .subflow__act[aria-current='true'] .subflow__level {
+    color: var(--muted);
   }
   .subflow__name {
     font-size: var(--label);

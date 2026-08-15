@@ -207,6 +207,7 @@ const idleCells = steps.flatMap((s) =>
               class={`fig__act${p.activity.tooling ? '' : ' fig__act--open'}`}
               style={`min-height:${NODEH}px`}
               data-act={p.activity.id}
+              data-fills={p.activity.tooling?.tool}
               data-roles={p.activity.roles.join(' ')}
               data-depth="0"
               aria-label={`${p.activity.name} — details`}
@@ -365,16 +366,26 @@ const idleCells = steps.flatMap((s) =>
   .fig__act--open:hover {
     border-color: var(--ink);
   }
-  /* Selection marks, it does not shout: washi plus a green spine on the reading
-     edge. Inverting to solid ink turned the selected box into the loudest thing
-     on a page whose subject is the flow, not the cursor. */
-  .fig__act[aria-current='true'] {
-    background: var(--washi);
-    border-left: 2px solid var(--accent);
-  }
   .fig__act--open .fig__act-level {
     color: var(--accent);
     font-weight: 700;
+  }
+  /* Selection inverts to ink: on a figure of a hundred nodes a light mark has to be
+     hunted for, and a mark the reader hunts for reads as a click that did nothing.
+     The spine stays signal green rather than the mint variant — a 2px border is
+     read as a shape, not as text, so it does not owe text contrast. Captions do,
+     which is why they drop to muted here. The background shorthand is deliberate:
+     it clears the open slot's stripe, so a selected open slot reads as one solid
+     object rather than an inverted card with a hatch still running through it. */
+  .fig__act[aria-current='true'] {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-left: 2px solid var(--accent);
+    color: var(--white);
+  }
+  .fig__act[aria-current='true'] .fig__act-stage,
+  .fig__act[aria-current='true'] .fig__act-level {
+    color: var(--muted);
   }
   .fig__expand {
     z-index: 5;

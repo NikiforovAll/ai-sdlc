@@ -162,11 +162,6 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
   .grid__act:hover {
     background: var(--washi);
   }
-  /* Same selection mark as the flow view: washi plus a green spine, never an invert. */
-  .grid__act[aria-current='true'] {
-    background: var(--washi);
-    border-left: 2px solid var(--accent);
-  }
   .grid__act--open {
     border-style: dashed;
     border-color: var(--muted);
@@ -175,6 +170,24 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
   }
   .grid__act--open:hover {
     border-color: var(--ink);
+  }
+  /* Same selection mark as the flow view: an ink invert keeping the green spine.
+     The background shorthand clears the open slot's stripe, and the captions drop
+     to muted because ink cannot carry the green they wear on paper. */
+  .grid__act[aria-current='true'] {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-left: 2px solid var(--accent);
+    color: var(--white);
+  }
+  .grid__act[aria-current='true'] .grid__tool,
+  .grid__act[aria-current='true'] .grid__open,
+  .grid__act[aria-current='true'] .grid__nested {
+    color: var(--muted);
+  }
+  .grid__act[aria-current='true'] :global(.chip--muted) {
+    border-color: var(--muted);
+    color: var(--muted);
   }
   .grid__scrollhint {
     display: none;

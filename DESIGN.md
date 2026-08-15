@@ -101,8 +101,8 @@ components:
     textColor: "{colors.ink}"
     padding: "7px 8px"
   activity-node-selected:
-    backgroundColor: "{colors.washi}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.paper}"
     borderLeft: "2px solid {colors.signal-green}"
     padding: "7px 8px"
   activity-node-open:
@@ -148,6 +148,11 @@ components:
     textColor: "{colors.paper}"
     typography: "{typography.label}"
     padding: "6px 10px 5px"
+  drawer:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    typography: "{typography.prose}"
+    width: "min(400px, 94vw)"
 ---
 
 # Design System: ai-sdlc composer
@@ -160,14 +165,14 @@ A whole reading lives on one screen: a full-bleed mosaic of hairline-ruled, tabb
 
 The team document is two page types cut from the same mosaic. The **document page** is the catalog: the team's stat strip, one card per process, and the shared catalogs (roles, harnesses, tooling, events, artifacts) as ruled row lists. A **process page** is the reading of one process: no document-wide stats, a process switcher instead, and the three figures. Both are the same material at different zoom.
 
-The page is a printed process figure that happens to be interactive. Every module is a named figure (FLOW / GRID / PLAYBOOK) with a green tab, an uppercase title, and a right-aligned micro-caption. Ink (#111111) on paper (#ffffff) carries all content; a single utility green appears only as tabs and signals; everything else is a gray. Interaction is stated in the materials themselves: hover washes to washi, selection marks with a washi fill and a green spine on the reading edge, filtering dims to 22% opacity, and unfilled capability renders as a dashed, green-striped slot.
+The page is a printed process figure that happens to be interactive. Every module is a named figure (FLOW / GRID / PLAYBOOK) with a green tab, an uppercase title, and a right-aligned micro-caption. Ink (#111111) on paper (#ffffff) carries all content; a single utility green appears only as tabs and signals; everything else is a gray. Interaction is stated in the materials themselves: hover washes to washi, selection inverts the node to solid ink and keeps its green spine on the reading edge, filtering dims to 22% opacity, and unfilled capability renders as a dashed, green-striped slot.
 
 The system encodes meaning, not decoration. Dashed + stripe = open slot (the team's roadmap). ① = the single constraint. A bolt glyph = a workflow event. A ghost pane = filtered out of the lens. A 45° hatch = an idle band. Horizontal order is ordinal (topological), never time; rework is assumed and never drawn.
 
 **Key Characteristics:**
 - Edge-to-edge module mosaic ruled by 1px hairlines; zero border-radius, zero decorative shadows
 - One compact gothic (Archivo) at a strict 56/28/20/16/14/12/10/9 scale, tabular numerals everywhere
-- Green (#0f6b3c) reserved for tabs and semantic signals; a green spine on a washi fill is the selection voice, washi wash alone the hover voice
+- Green (#0f6b3c) reserved for tabs and semantic signals; a green spine on an ink-inverted node is the selection voice, washi wash alone the hover voice
 - Dense micro-typography: uppercase labels, wide tracking, 9-10px captions doing real work
 - Every visual device is a semantic encoding readable without a legend
 
@@ -177,24 +182,24 @@ A near-monochrome utility palette: ink on paper, four grays for structure and hi
 
 ### Primary
 - **Signal Green** (#0f6b3c): the only chromatic voice. Used for module/figure tabs, the active view button, open-slot markers ("OPEN SLOT", dashed borders' stripe fill), the ① constraint glyph and constraint edge, event text and bolt glyphs, expand affordances ("▸ N INSIDE"), the scroll hint, focus outlines, and link hover. Never used as a page or panel background.
-- **Mint On Ink** (#7fd6a8): the green's legibility variant for accent on solid ink — the ① inside the inverted constraint chip, that chip's own 1px border, and the same border on the constraint label's hover panel — its only sites. The border is mint rather than a fourth border colour because both panels float over the figure's white and washi bands and need an edge in the voice they already speak. Only ever appears on `ink`.
+- **Mint On Ink** (#7fd6a8): the green's legibility variant for accent on solid ink — the ① inside the inverted constraint chip, that chip's own 1px border, the same border on the constraint label's hover panel, and the event lines inside a selected node — its only sites. The border is mint rather than a fourth border colour because both panels float over the figure's white and washi bands and need an edge in the voice they already speak. Only ever appears on `ink`.
 
 ### Neutral
 - **Paper** (#ffffff): module and node background; the content ground.
-- **Ink** (#111111): all primary text; solid borders on interactive nodes; the inversion background for the active filter chip and view button, the ① constraint strip, and text selection.
+- **Ink** (#111111): all primary text; solid borders on interactive nodes; the inversion background for the active filter chip, the current process in the switcher, the ① constraint strip, the selected activity node, and text selection. The active view button is the one thing that inverts to green instead.
 - **Hairline** (#dadada): the structural material — every module border, table rule, lane divider, and section rule is 1px of this.
 - **Surface** (#f2f2f2): the page background behind the mosaic (visible only in the 8-10px seams).
 - **Washi** (#f7f7f7): quiet fill — alternating stage bands, table headers, quiet tabs, open-slot base fill, hover wash on light buttons.
 - **Sub** (#666666): secondary text (captions, notes, metadata) and the default handoff edge stroke.
-- **Muted** (#999999): tertiary text (ghost panes, counts) and dashed open-slot borders; #bbbbbb strokes same-role (non-handoff) edges.
+- **Muted** (#999999): non-text duty on paper — dashed open-slot borders, the `→` glyph on process links, the stage-run and process-card separators. It is 2.85:1 on white, so text on paper stops at Sub instead. Its one text use is inside a selected node, where the ground is ink and the same gray reads at 5.9:1. #bbbbbb strokes same-role (non-handoff) edges.
 - **Hatch** (#e4e4e0): the 45° idle-band hatch line inside the flow figure.
 
 ### Named Rules
 **The Green Is A Signal Rule.** Green never fills an area larger than a tab. It marks exactly seven things: figure/section tabs, the active view, open slots, the ① constraint, workflow events, expand/scroll affordances, and the selection spine. A screen with green paragraphs or green panels is off-world.
 
-**The Ink Inversion Rule.** Chrome states its position by inverting to solid ink with white text — the active filter chip, the current process in the switcher, the constraint strip. The active view button is the one exception, inverting to solid green instead, because it names which figure is being read rather than what is filtered out of it. Transient hover only washes to washi (dashed open slots darken their border to ink instead, since their base is already washi). No tints, no glows, no colored highlights.
+**The Ink Inversion Rule.** A surface states what is in hand by inverting to solid ink with white text — the active filter chip, the current process in the switcher, the constraint strip, and the selected activity node. The active view button is the one exception, inverting to solid green instead, because it names which figure is being read rather than what is filtered out of it. Transient hover only washes to washi (dashed open slots darken their border to ink instead, since their base is already washi). No tints, no glows, no colored highlights.
 
-**The Selection Mark Rule.** Content states selection quietly: an `aria-current` node in any figure takes a washi fill and a 2px green spine on its left edge, and its text stays ink. Inverting a selected node to solid ink made the cursor the loudest thing on a page whose subject is the process, so the invert belongs to chrome and the spine to content. The spine stays at 2px — a 3px-or-heavier colored side border is the house tell of generated UI, and the detector flags it.
+**The Selection Mark Rule.** An `aria-current` node in any figure inverts to solid ink with white text and keeps its 2px signal-green spine on the left edge; captions inside it drop to muted, text that was green lifts to mint, and a selected open slot drops its stripe so the mark reads as one solid object. Lighter marks were tried first and failed the only test that matters: on a figure of a hundred nodes a washi fill — and even a surface fill inside a doubled ink border — had to be hunted for, and a mark the reader hunts for reads as a click that did nothing. The spine stays signal green rather than the mint variant even on ink, because a 2px border is read as a shape and does not owe the text-contrast the captions beside it do. The spine also stays at 2px — a 3px-or-heavier colored side border is the house tell of generated UI, and the detector flags it.
 
 ## Typography
 
@@ -239,7 +244,7 @@ Flat. No decorative shadows anywhere; depth is conveyed by hairline rules, washi
 
 ## Shapes
 
-Everything is a rectangle with square corners; border-radius is 0 throughout and no rounding token exists. Form language is line-drawn: 1px hairline (#dadada) for passive structure, 1px solid ink for interactive nodes and the drawer edge, 1px dashed muted for open slots, 2px solid green for the constraint edge and nested sub-flow spines. The 135° green stripe texture (`--stripe`, 12%-alpha green, 1px stripes on a 6px period) fills open slots over a washi base; a 45° hatch of #e4e4e0 lines fills idle stage×lane cells. Flow edges are cubic bezier curves in SVG; glyphs are drawn or typographic (▸/▾ expanders, ✕ close, ① constraint, an inline SVG bolt) — no icon font, no icon library.
+Everything is a rectangle with square corners; border-radius is 0 throughout and no rounding token exists. Form language is line-drawn: 1px hairline (#dadada) for passive structure, 1px solid ink for interactive nodes and the drawer edge, 1px dashed muted for open slots, 2px solid green for the constraint edge, the nested sub-flow spine, and the selected node's reading edge. The 135° green stripe texture (`--stripe`, 12%-alpha green, 1px stripes on a 6px period) fills open slots over a washi base; a 45° hatch of #e4e4e0 lines fills idle stage×lane cells. Flow edges are cubic bezier curves in SVG; glyphs are drawn or typographic (▸/▾ expanders, ✕ close, ① constraint, an inline SVG bolt) — no icon font, no icon library.
 
 **The Semantic Texture Rule.** Dashed border + green stripe fill = open slot = the team's roadmap; 45° gray hatch = idle band ("empty but claimed"); ① = the single constraint; bolt = workflow event; ghost pane = outside the current lens. These encodings are reserved — never reuse them decoratively, and never invent a second texture for a new meaning without adding it here.
 
@@ -255,7 +260,7 @@ White panel, 1px hairline border, no radius, no shadow. Head row: tab + uppercas
 9px uppercase micro-tags with `padding: 3px 5px 2px`. Three voices: default (1px ink border, transparent), muted (hairline border, sub text — automation-level tags), inverse (solid ink, white text — the leading stage/harness tag in drawer chip rows). Chips are static metadata; the interactive filter chips in the LENS bar are larger (10px, `6px 10px 5px`), invert to ink when active, and wash to washi on hover.
 
 ### Activity Nodes
-The atomic unit across all three figures: white card, 1px solid ink border, left-aligned, stacked 11px/700 name over a 9px level caption (automation level, or "OPEN SLOT"). Hover washes to washi; `aria-current` selection holds that washi and adds a 2px green spine on the left edge, with every caption keeping its normal color. The open variant swaps to dashed muted border, washi base, green stripe fill, and a green bold "OPEN SLOT" caption. Nodes with children carry a green "▸ N INSIDE" expander line beneath (9px/700, turns ink when expanded).
+The atomic unit across all three figures: white card, 1px solid ink border, left-aligned, stacked 11px/700 name over a 9px level caption (automation level, or "OPEN SLOT"). Hover washes to washi; `aria-current` selection inverts the node to solid ink with white text, a 2px green spine on the left edge, and captions dropped to muted. The open variant swaps to dashed muted border, washi base, green stripe fill, and a green bold "OPEN SLOT" caption. Nodes with children carry a green "▸ N INSIDE" expander line beneath (9px/700, turns ink when expanded).
 
 ### Figures
 - **Flow** — swimlanes: alternating white/washi stage bands with stacked stage-tab annotations (tab + "N ACT · N HANDOFF" micro-meta), 150px role gutter with lane name + note, bezier handoff edges (gray #666666 for handoffs, #bbbbbb same-role, 2px green for the constraint), white-bordered artifact labels pinned at edge midpoints (constraint labels get green border + ① glyph), idle cells hatched. The single constraint is restated in an ink-inverse chip fixed to the bottom-right corner of the viewport, its ① set in mint: the figure runs taller and wider than the screen, and a strip below the canvas could only be read after scrolling past everything it explains. The chip shows the ① alone and swaps to the full note on hover or keyboard focus — a swap, not a growth: a collapsed column of text is still a column of text, and animating it toward zero width wraps the note one character per line instead of hiding it. Both states are legible standing still, which is what this world asks of a state anyway. The constraint artifact label carries the same note in the same ink-and-mint panel, opened by hover or keyboard focus on the label itself: the reader asking why one label is marked is looking at the label, not at the corner. Sub-process expansion opens an absolutely positioned white inset (1px ink border, white halo) containing a recursive nested swimlane; deeper nests indent behind a 2px green left spine.
@@ -279,13 +284,13 @@ How the document page states a catalog (roles, harnesses, tooling, events, artif
 
 Events state an if and a then, so their usage tag speaks the playbook's event voice instead of the neutral filing one: green, 700, behind the 8×10 bolt. It is the same encoding the when-lines use, and the tag is naming the same thing — the tooling a condition fires.
 
-Roles are the exception, and the only catalog whose entries stack: the id leads as a 9px muted uppercase kicker — it is the key the YAML and the lens chips both speak — the name follows at the 16px subhead step, and the note sits under it at ≤40ch. Cells drop to min 280px, so the catalog runs more columns and each entry has a shape rather than a line. Roles earn it: they are the vertical axis every figure is drawn against, which no other catalog is.
+Roles are the exception, and the only catalog whose entries stack: the id leads as a 9px sub-color uppercase kicker, receding by case and 0.12em tracking rather than by a lighter gray — it is the key the YAML and the lens chips both speak — the name follows at the 16px subhead step, and the note sits under it at ≤40ch. Cells drop to min 280px, so the catalog runs more columns and each entry has a shape rather than a line. Roles earn it: they are the vertical axis every figure is drawn against, which no other catalog is.
 
 ### Process Switcher
 The process page's sibling navigation, a hairline-topped row under the display name: a quiet PROCESSES tab, one link per process in the team (10px/700 uppercase, 1px ink border, washi on hover, inverted to solid ink for `aria-current="page"`), and a right-aligned stage run of the current process. It is the filter-chip shape doing navigation, so the page's own position reads the same as an active filter. The masthead also carries an up-link to the document page ("↑ TEAM NAME", 10px uppercase, hairline underline that turns green on hover).
 
 ### Motion
-Two speeds only: 0.12s ease-out for hover washes and selection inversion on nodes, chips, and buttons (0.14s `--ease-out` on the process card's link, the one place a mark also moves — a 4px arrow slide); 0.28s `cubic-bezier(0.16, 1, 0.3, 1)` (`--ease-out`) for filter dim/undim opacity across lanes, edges, labels, and rows. No entrance animations, no transforms, no easing flourishes. Under `prefers-reduced-motion: reduce` every duration collapses to nothing: each state here is already legible standing still — a wash, an inversion, a green mark — so the transition only smooths the arrival and costs a reader nothing when removed.
+Two speeds only: 0.12s ease-out for hover washes and selection inversion on nodes, chips, and buttons (0.14s `--ease-out` on the process card's link, which recolors its name, underline, and arrow together and moves nothing); 0.28s `cubic-bezier(0.16, 1, 0.3, 1)` (`--ease-out`) for filter dim/undim opacity across lanes, edges, labels, and rows. No entrance animations, no transforms, no easing flourishes. Under `prefers-reduced-motion: reduce` every duration collapses to nothing: each state here is already legible standing still — a wash, an inversion, a green mark — so the transition only smooths the arrival and costs a reader nothing when removed.
 
 ## Do's and Don'ts
 

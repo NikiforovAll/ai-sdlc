@@ -179,6 +179,14 @@
       "micro": {
         "displayName": "Micro",
         "purpose": "Workhorse caption: chips, levels, stage meta, artifact labels, section labels."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "The process card's name — the one step between the stat numerals and the subhead."
+      },
+      "prose": {
+        "displayName": "Prose",
+        "purpose": "Drawer reading text only: description, \"why\" line, source note. A drawer is read, not scanned."
       }
     },
     "shadows": [
@@ -202,7 +210,7 @@
       {
         "name": "link-shift",
         "value": "0.14s cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Process-card link hover: name and arrow go green, arrow slides 4px right. The only mark in the system that moves."
+        "purpose": "Process-card link hover: name, underline, and arrow recolour to green together. Nothing moves."
       }
     ],
     "breakpoints": [
@@ -217,6 +225,14 @@
       {
         "name": "module-head-wrap",
         "value": "640px"
+      },
+      {
+        "name": "wide-zoom-1",
+        "value": "1600px"
+      },
+      {
+        "name": "wide-zoom-2",
+        "value": "1900px"
       }
     ]
   },
@@ -249,9 +265,9 @@
       "name": "Activity Node",
       "kind": "button",
       "refersTo": "activity-node",
-      "description": "Atomic process unit: ink-bordered card, name over level caption; washes to washi on hover, inverts to solid ink when selected (aria-current).",
+      "description": "Atomic process unit: ink-bordered card, name over level caption; washes to washi on hover, inverts to solid ink with a 2px green spine when selected (aria-current).",
       "html": "<button class=\"ds-node\"><span class=\"ds-node__name\">Write spec</span><span class=\"ds-node__level\">ASSISTED</span></button> <button class=\"ds-node\" aria-current=\"true\"><span class=\"ds-node__name\">Write spec</span><span class=\"ds-node__level\">ASSISTED</span></button>",
-      "css": ".ds-node { background: #ffffff; border: 1px solid #111111; border-radius: 0; padding: 7px 8px; text-align: left; display: flex; flex-direction: column; gap: 4px; width: 126px; min-height: 60px; cursor: pointer; font-family: inherit; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-node:hover { background: #f7f7f7; } .ds-node[aria-current='true'] { background: #111111; color: #ffffff; } .ds-node:focus-visible { outline: 2px solid #0f6b3c; outline-offset: 1px; } .ds-node__name { font-size: 11px; line-height: 13px; font-weight: 700; } .ds-node__level { font-size: 9px; letter-spacing: 0.06em; color: #666666; } .ds-node[aria-current='true'] .ds-node__level { color: #dadada; }"
+      "css": ".ds-node { background: #ffffff; border: 1px solid #111111; border-radius: 0; padding: 7px 8px; text-align: left; display: flex; flex-direction: column; gap: 4px; width: 126px; min-height: 60px; cursor: pointer; font-family: inherit; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-node:hover { background: #f7f7f7; } .ds-node[aria-current='true'] { background: #111111; color: #ffffff; border-left: 2px solid #0f6b3c; } .ds-node:focus-visible { outline: 2px solid #0f6b3c; outline-offset: 1px; } .ds-node__name { font-size: 11px; line-height: 13px; font-weight: 700; } .ds-node__level { font-size: 9px; letter-spacing: 0.06em; color: #666666; } .ds-node[aria-current='true'] .ds-node__level { color: #999999; }"
     },
     {
       "name": "Open Slot Node",
@@ -308,38 +324,56 @@
       "description": "Sibling navigation on a process page; the filter-chip shape doing navigation, current page inverted to ink.",
       "html": "<nav class=\"ds-switch\"><span class=\"ds-switch__tab\">Processes</span><a class=\"ds-switch__link\" href=\"/feature\" aria-current=\"page\">Feature</a><a class=\"ds-switch__link\" href=\"/bugfix\">Bugfix</a></nav>",
       "css": ".ds-switch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 8px; border-top: 1px solid var(--line, #dadada); background: #ffffff; } .ds-switch__tab { background: var(--washi, #f7f7f7); color: var(--sub, #666666); font-size: 10px; line-height: 1; font-weight: 700; letter-spacing: 0.08em; padding: 5px 8px 4px; text-transform: uppercase; } .ds-switch__link { border: 1px solid #111111; padding: 6px 10px 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; color: #111111; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-switch__link:hover { background: var(--washi, #f7f7f7); } .ds-switch__link[aria-current=\"page\"] { background: #111111; color: #ffffff; }"
+    },
+    {
+      "name": "Drawer",
+      "kind": "custom",
+      "refersTo": "drawer",
+      "description": "Fixed right detail panel opened from any node: no scrim, no slide, a 1px ink left edge, and prose at the 14px reading step.",
+      "html": "<aside class=\"ds-drawer\"><div class=\"ds-drawer__head\"><span class=\"ds-drawer__tab\">DETAIL</span><button class=\"ds-drawer__close\">CLOSE ✕</button></div><div class=\"ds-drawer__body\"><h2 class=\"ds-drawer__title\">Write spec</h2><p class=\"ds-drawer__prose\">The activity that turns an intent into a reviewable artifact.</p><div class=\"ds-drawer__section\"><span class=\"ds-drawer__label\">PRODUCES</span><span class=\"ds-drawer__prose\">spec.md</span></div></div></aside>",
+      "css": ".ds-drawer { width: min(400px, 94vw); background: #ffffff; border-left: 1px solid #111111; font-family: inherit; color: #111111; display: flex; flex-direction: column; } .ds-drawer__head { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #dadada; padding: 6px 8px 6px 6px; } .ds-drawer__tab { background: #0f6b3c; color: #ffffff; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; padding: 5px 8px 4px; text-transform: uppercase; } .ds-drawer__close { margin-left: auto; background: none; border: none; font: inherit; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #666666; cursor: pointer; } .ds-drawer__close:hover { color: #0f6b3c; } .ds-drawer__body { padding: 12px; display: flex; flex-direction: column; gap: 10px; } .ds-drawer__title { font-size: 16px; font-weight: 800; letter-spacing: 0.01em; text-transform: uppercase; margin: 0; } .ds-drawer__prose { font-size: 14px; line-height: 20px; margin: 0; } .ds-drawer__section { border-top: 1px solid #dadada; padding-top: 8px; display: flex; flex-direction: column; gap: 3px; } .ds-drawer__label { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #666666; font-weight: 600; }"
     }
   ],
   "narrative": {
     "northStar": "The Dense Mosaic",
-    "overview": "A whole reading lives on one screen: a full-bleed mosaic of hairline-ruled, tabbed modules packed edge to edge, in the spirit of Japanese contemporary high-density web design. It refuses the airy sidebar-and-cards internal-tool dashboard. Nothing floats, nothing is rounded, nothing wastes a pixel; density is a feature, and the 1px gray hairline is the primary structural material. The team document is two page types cut from the same mosaic: the document page is the catalog (stat strip, one card per process, the shared catalogs as ruled row lists), and a process page is the reading of one process (no document-wide stats, a process switcher instead, and the three figures). The page is a printed process figure that happens to be interactive: every module is a numbered figure with a green tab, an uppercase title, and a right-aligned micro-caption. Ink on paper carries all content; a single utility green appears only as tabs and signals. The system encodes meaning, not decoration: dashed + stripe = open slot, ① = the single constraint, a bolt = a workflow event, a ghost pane = filtered out, a 45° hatch = an idle band; horizontal order is ordinal, never time, and rework is assumed, never drawn.",
+    "overview": "A whole reading lives on one screen: a full-bleed mosaic of hairline-ruled, tabbed modules packed edge to edge, in the spirit of Japanese contemporary high-density web design. It refuses the airy sidebar-and-cards internal-tool dashboard. Nothing floats, nothing is rounded, nothing wastes a pixel; density is a feature, and the 1px gray hairline is the primary structural material.\n\nThe team document is two page types cut from the same mosaic. The **document page** is the catalog: the team's stat strip, one card per process, and the shared catalogs (roles, harnesses, tooling, events, artifacts) as ruled row lists. A **process page** is the reading of one process: no document-wide stats, a process switcher instead, and the three figures. Both are the same material at different zoom.\n\nThe page is a printed process figure that happens to be interactive. Every module is a named figure (FLOW / GRID / PLAYBOOK) with a green tab, an uppercase title, and a right-aligned micro-caption. Ink (#111111) on paper (#ffffff) carries all content; a single utility green appears only as tabs and signals; everything else is a gray. Interaction is stated in the materials themselves: hover washes to washi, selection inverts the node to solid ink and keeps its green spine on the reading edge, filtering dims to 22% opacity, and unfilled capability renders as a dashed, green-striped slot.\n\nThe system encodes meaning, not decoration. Dashed + stripe = open slot (the team's roadmap). ① = the single constraint. A bolt glyph = a workflow event. A ghost pane = filtered out of the lens. A 45° hatch = an idle band. Horizontal order is ordinal (topological), never time; rework is assumed and never drawn.",
     "keyCharacteristics": [
       "Edge-to-edge module mosaic ruled by 1px hairlines; zero border-radius, zero decorative shadows",
-      "One compact gothic (Archivo) at a strict 56/28/16/12/10/9 scale, tabular numerals everywhere",
-      "Green (#0f6b3c) reserved for tabs and semantic signals; ink inversion is the selection voice, washi wash the hover voice",
+      "One compact gothic (Archivo) at a strict 56/28/20/16/14/12/10/9 scale, tabular numerals everywhere",
+      "Green (#0f6b3c) reserved for tabs and semantic signals; a green spine on an ink-inverted node is the selection voice, washi wash alone the hover voice",
       "Dense micro-typography: uppercase labels, wide tracking, 9-10px captions doing real work",
       "Every visual device is a semantic encoding readable without a legend"
     ],
     "rules": [
       {
         "name": "The Green Is A Signal Rule",
-        "body": "Green never fills an area larger than a tab. It marks exactly six things: figure/section tabs, the active view, open slots, the ① constraint, workflow events, and expand/scroll affordances. A screen with green paragraphs or green panels is off-world.",
+        "body": "Green never fills an area larger than a tab. It marks exactly seven things: figure/section tabs, the active view, open slots, the ① constraint, workflow events, expand/scroll affordances, and the selection spine. A screen with green paragraphs or green panels is off-world.",
         "section": "colors"
       },
       {
         "name": "The Ink Inversion Rule",
-        "body": "Persistent state is spoken by inverting to solid ink with white text — aria-current selection, the active filter chip, the constraint strip. Transient hover only washes to washi; dashed open slots darken their border to ink instead, since their base is already washi. No tints, no glows, no colored highlights.",
+        "body": "A surface states what is in hand by inverting to solid ink with white text — the active filter chip, the current process in the switcher, the constraint strip, and the selected activity node. The active view button is the one exception, inverting to solid green instead, because it names which figure is being read rather than what is filtered out of it. Transient hover only washes to washi (dashed open slots darken their border to ink instead, since their base is already washi). No tints, no glows, no colored highlights.",
+        "section": "colors"
+      },
+      {
+        "name": "The Selection Mark Rule",
+        "body": "An `aria-current` node in any figure inverts to solid ink with white text and keeps its 2px signal-green spine on the left edge; captions inside it drop to muted, text that was green lifts to mint, and a selected open slot drops its stripe so the mark reads as one solid object. Lighter marks were tried first and failed the only test that matters: on a figure of a hundred nodes a washi fill — and even a surface fill inside a doubled ink border — had to be hunted for, and a mark the reader hunts for reads as a click that did nothing. The spine stays signal green rather than the mint variant even on ink, because a 2px border is read as a shape and does not owe the text-contrast the captions beside it do. The spine also stays at 2px — a 3px-or-heavier colored side border is the house tell of generated UI, and the detector flags it.",
         "section": "colors"
       },
       {
         "name": "The Strict Scale Rule",
-        "body": "Sizes come from 56/28/16/12/10/9 (plus the 11px node-title step). No intermediate sizes; hierarchy is carried by weight, case, and tracking.",
+        "body": "Sizes come from 56/28/20/16/14/12/10/9 (plus the 11px node-title step). No intermediate sizes; hierarchy is carried by weight, case, and tracking.",
         "section": "typography"
       },
       {
         "name": "The Uppercase Structure Rule",
-        "body": "Anything that names structure — tabs, titles, labels, levels, role names, OPEN SLOT — is uppercase with letter-spacing. Explanatory prose is never uppercase.",
+        "body": "Anything that names structure — tabs, titles, labels, levels, role names, \"OPEN SLOT\" — is uppercase with letter-spacing. Explanatory prose is never uppercase.",
         "section": "typography"
+      },
+      {
+        "name": "The Wide-Display Zoom Rule",
+        "body": "The scale is fixed px and nothing caps the width, so a wider display makes the document wider but never bigger — at ~1900px the 9-12px type does the same work at half the apparent size. Every page and every drawer therefore `zoom`s in two steps: 1.15 at ≥1600px, 1.25 at ≥1900px. The content lays out at width ÷ zoom and paints scaled up, which is exactly what a reader gets from browser zoom, so every ratio in this world survives it — that is why the fix is zoom and not a second set of larger type tokens, which would grow the type while leaving the 1px hairlines and 5-8px paddings behind and quietly change the density everything else is tuned against. The flow figure takes it too: its geometry is fixed inside its own scroller, so zoom hands it a narrower viewport to scroll rather than a different shape.",
+        "section": "layout"
       },
       {
         "name": "The Ordinal-Not-Time Rule",
@@ -349,11 +383,11 @@
       {
         "name": "The Shadowless Rule",
         "body": "Surfaces never lift. If two layers must separate, use a solid 1px ink border and, for true overlays only, the white halo.",
-        "section": "elevation"
+        "section": "elevation & depth"
       },
       {
         "name": "The Semantic Texture Rule",
-        "body": "Dashed border + green stripe fill = open slot = the team's roadmap; 45° gray hatch = idle band; ① = the single constraint; bolt = workflow event; ghost pane = outside the current lens. These encodings are reserved — never reuse them decoratively, and never invent a second texture for a new meaning without adding it here.",
+        "body": "Dashed border + green stripe fill = open slot = the team's roadmap; 45° gray hatch = idle band (\"empty but claimed\"); ① = the single constraint; bolt = workflow event; ghost pane = outside the current lens. These encodings are reserved — never reuse them decoratively, and never invent a second texture for a new meaning without adding it here.",
         "section": "shapes"
       }
     ],
@@ -362,15 +396,15 @@
       "Do speak state by ink inversion (#111111 bg, #ffffff text) and quiet hover by a washi wash; keep both at 0.12s ease-out.",
       "Do reuse the semantic encodings exactly: dashed+stripe open slot, ① constraint, SVG bolt event, ghost pane, 45° idle hatch, 22% filter dim.",
       "Do keep captions working: 9px uppercase micro-text with 0.04-0.1em tracking carries counts, sources, and derivations on every module.",
-      "Do let wide figures grow inside their own overflow-x: auto scroller with a green scroll hint at ≤900px; the page never scrolls horizontally.",
+      "Do let wide figures grow inside their own `overflow-x: auto` scroller with a green \"scroll →\" hint at ≤900px; the page never scrolls horizontally.",
       "Do divide a grid of peers (process cards, catalog rows) with a shared 1px hairline, not with borders and gaps; the seam is the divider.",
-      "Do state where a catalog entry is used in its row’s right-aligned micro tag, and say so plainly when nothing uses it (\"shelf inventory\", \"unused\", \"no play yet\")."
+      "Do state where a catalog entry is used in its row's right-aligned micro tag, and say so plainly when nothing uses it (\"shelf inventory\", \"unused\", \"no play yet\")."
     ],
     "donts": [
       "Don't round a corner, add a decorative shadow, or introduce a gradient; the only sanctioned shadow is the inset overlay's white halo.",
       "Don't use green as a fill, background wash, or body-text color; it is a tab-and-signal ink only, with #7fd6a8 as its sole on-ink variant.",
       "Don't imply time on any axis — no timelines, durations, dates, or drawn rework loops; sequence is topological order only.",
-      "Don't introduce a second typeface, an icon set, or sizes outside 56/28/16/12/10/9 (+11px node titles).",
+      "Don't introduce a second typeface, an icon set, or sizes outside 56/28/20/16/14/12/10/9 (+11px node titles).",
       "Don't float modules in whitespace or cap the page width; the mosaic runs edge to edge with only 8-10px seams of surface gray.",
       "Don't repeat document-wide totals on a process page; a process states its own counts, and the document page owns the team's stat strip."
     ]

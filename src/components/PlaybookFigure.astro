@@ -199,16 +199,30 @@ const rows = team.roles.map((role) => {
   .pb__item:hover {
     background: var(--washi);
   }
-  /* Same selection mark as the figures: washi plus a green spine, never an invert.
-     The event lines keep their own green because the text colour never changes. */
-  .pb__item[aria-current='true'] {
-    background: var(--washi);
-    border-left: 2px solid var(--accent);
-  }
-
   .pb__item--fill {
     border-style: solid;
     border-color: var(--line);
+  }
+  /* Same selection mark as the figures: an ink invert keeping the green spine. The
+     border is restated so a selected fill item takes the ink edge over its lighter
+     one. The event lines are text, so they lift to mint — the same signal at a
+     weight ink can carry. */
+  .pb__item[aria-current='true'] {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-left: 2px solid var(--accent);
+    color: var(--white);
+  }
+  .pb__item[aria-current='true'] .pb__itemsub,
+  .pb__item[aria-current='true'] .pb__when {
+    color: var(--muted);
+  }
+  .pb__item[aria-current='true'] .pb__when--event {
+    color: var(--accent-on-ink);
+  }
+  .pb__item[aria-current='true'] :global(.chip--muted) {
+    border-color: var(--muted);
+    color: var(--muted);
   }
   .pb__itemname {
     font-size: 11px;
