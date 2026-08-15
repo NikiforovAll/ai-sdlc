@@ -100,12 +100,12 @@ stages:
     name: Build
 ```
 
-**How it renders.** Stage bands across the top of FIG.01, spanning the columns their activities occupy; column headers in FIG.02.
+**How it renders.** A column per stage in FIG.02, and a kicker above the name on every FIG.01 node. FIG.01 does *not* band its columns by stage: a stage's activities land at whatever depths their dependencies dictate, and those ranges overlap between stages, so no band could cover one stage's boxes without covering another's. FIG.01's columns are ordinal steps; the stage rides on the box.
 
 **Invariants & non-meanings.**
 - A stage is a *label on activities*, not a container with rules. Nothing is enforced at stage boundaries; nothing "moves through" stages.
 - Stages do not order the flow. Order comes from artifacts (Layer 2). If a Verify activity consumes nothing from Build, nothing stops it starting first — and the figure will show that.
-- Declaration order is the display order of the bands.
+- Declaration order is the display order — FIG.02's column order, and the reading order of the catalog. It is *not* a claim that stage N finishes before stage N+1 starts; the ordinal columns routinely show two stages side by side.
 
 ---
 

@@ -1,0 +1,315 @@
+---
+// One process document: masthead, view/filter bar, the three figures, the drawer.
+// It is a component rather than a page body because the export composes several
+// of them into one file — see `_plans/spec-cli-layer.md`, D-CLI-5.
+import FlowFigure from './FlowFigure.astro';
+import GridFigure from './GridFigure.astro';
+import PlaybookFigure from './PlaybookFigure.astro';
+import Drawer from './Drawer.astro';
+import type { ProcessModel } from '../lib/docs';
+
+interface Props {
+  model: ProcessModel;
+  /** The export renders every document at once and shows one; a route shows its own. */
+  hidden?: boolean;
+  /** Set by the export, where every document shares one file and there are no routes. */
+  inline?: boolean;
+}
+const { model, hidden = false, inline = false } = Astro.props;
+const { slug, team, process, doc, file, siblings } = model;
+const docHref = (s: string) => (inline ? '#' : `/${s}`);
+
+const views = [
+  { id: 'flow', label: 'FLOW' },
+  { id: 'grid', label: 'GRID' },
+  { id: 'playbook', label: 'PLAYBOOK' },
+];
+---
+
+<section class="doc" data-doc={slug} data-doc-kind="process" hidden={hidden}>
+  <main data-role="" data-view="flow">
+    <header class="mast module">
+      <div class="mast__top">
+        <span class="tab">PROCESS</span>
+        <a class="mast__up" href={inline ? '#' : '/'} data-goto="">↑ {team.name}</a>
+        <span class="mast__file">content/teams/{file}</span>
+        <span class="mast__status">
+          {doc.activities.length} ACTIVITIES · {process.stages.length} STAGES
+        </span>
+      </div>
+      <div class="mast__main">
+        <h1 class="mast__name">{process.name}</h1>
+        {process.description && <p class="mast__desc">{process.description}</p>}
+      </div>
+      <nav class="mast__switch" aria-label="Process">
+        <span class="tab tab--quiet">PROCESSES</span>
+        {siblings.map((s) => (
+          <a
+            class="mast__proc"
+            href={docHref(s.slug)}
+            data-goto={s.slug}
+            aria-current={s.slug === slug ? 'page' : undefined}
+          >
+            {s.name}
+          </a>
+        ))}
+        <span class="mast__stagerun">
+          {process.stages.map((st, i) => (
+            <>
+              {i > 0 && <span class="mast__stagesep" aria-hidden="true">→</span>}
+              <span class="mast__stage">{st.name}</span>
+            </>
+          ))}
+        </span>
+      </nav>
+    </header>
+
+    <nav class="bar module" aria-label="View and filter">
+      <div class="bar__views" role="group" aria-label="View mode">
+        <span class="tab">VIEW</span>
+        {views.map((v) => (
+          <button class="bar__view" data-viewbtn={v.id} aria-pressed={v.id === 'flow' ? 'true' : 'false'}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+      <div class="bar__filter" role="group" aria-label="Filter by role">
+        <span class="tab tab--quiet">LENS</span>
+        <button class="filter__chip" data-filter="" aria-pressed="true">All roles</button>
+        {doc.roles.map((r) => (
+          <button class="filter__chip" data-filter={r.id} aria-pressed="false">{r.name}</button>
+        ))}
+        <span class="bar__readout" data-readout>all {doc.activities.length} activities in scope</span>
+      </div>
+    </nav>
+
+    <div data-viewpanel="flow">
+      <FlowFigure team={doc} docId={slug} />
+    </div>
+    <div data-viewpanel="grid">
+      <GridFigure team={doc} />
+    </div>
+    <div data-viewpanel="playbook">
+      <PlaybookFigure team={doc} />
+    </div>
+  </main>
+
+  <Drawer team={doc} />
+</section>
+
+<script>
+  // Root-scoped, initialized once per process document. The export puts four of
+  // these in one file, so nothing here may reach for a document-global singleton.
+  const escapers: (() => void)[] = [];
+
+  const init = (root: HTMLElement) => {
+    const main = root.querySelector('main')!;
+    const readout = root.querySelector<HTMLElement>('[data-readout]')!;
+    const acts = [...root.querySelectorAll<HTMLButtonElement>('button[data-act]')];
+    const tools = [...root.querySelectorAll<HTMLButtonElement>('button[data-tool]')];
+    const topActs = acts.filter((a) => a.dataset.depth === '0');
+    const total = new Set(topActs.map((a) => a.dataset.act)).size;
+
+    // View switcher
+    const setView = (id: string) => {
+      main.dataset.view = id;
+      for (const b of root.querySelectorAll<HTMLElement>('[data-viewbtn]')) {
+        b.setAttribute('aria-pressed', String(b.dataset.viewbtn === id));
+      }
+    };
+    for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-viewbtn]')) {
+      btn.addEventListener('click', () => setView(btn.dataset.viewbtn!));
+    }
+
+    // Role filter (counts top-level activities only)
+    for (const chip of root.querySelectorAll<HTMLButtonElement>('.filter__chip')) {
+      chip.addEventListener('click', () => {
+        const role = chip.dataset.filter ?? '';
+        main.dataset.role = role;
+        for (const c of root.querySelectorAll('.filter__chip')) {
+          c.setAttribute('aria-pressed', String(c === chip));
+        }
+        if (!role) {
+          readout.textContent = `all ${total} activities in scope`;
+        } else {
+          const inScope = new Set(
+            topActs.filter((a) => (a.dataset.roles ?? '').split(' ').includes(role)).map((a) => a.dataset.act)
+          ).size;
+          readout.textContent = `${chip.textContent?.trim()} — ${inScope} of ${total} activities in scope`;
+        }
+      });
+    }
+
+    // Drawer
+    const drawer = root.querySelector<HTMLElement>('[data-drawer]')!;
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-detail]')];
+    const openDrawer = (key: string) => {
+      for (const p of panels) p.hidden = p.dataset.detail !== key;
+      drawer.hidden = false;
+    };
+    const closeDrawer = () => {
+      drawer.hidden = true;
+      for (const a of [...acts, ...tools]) a.setAttribute('aria-current', 'false');
+    };
+    for (const btn of acts) {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.act!;
+        for (const a of acts) a.setAttribute('aria-current', String(a.dataset.act === id));
+        for (const s of tools) s.setAttribute('aria-current', 'false');
+        openDrawer(id);
+      });
+    }
+    for (const btn of tools) {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.tool!;
+        for (const s of tools) s.setAttribute('aria-current', String(s.dataset.tool === id));
+        for (const a of acts) a.setAttribute('aria-current', 'false');
+        openDrawer(`tool:${id}`);
+      });
+    }
+    root.querySelector('[data-drawer-close]')?.addEventListener('click', closeDrawer);
+    escapers.push(() => {
+      if (!drawer.hidden && !root.hidden) closeDrawer();
+    });
+
+    // A catalog link on the team document arrives as #act-<id> or #tool-<id> (a
+    // route) or as an `aisdlc:focus` event (the export, which has no routes).
+    // A hash is read, never written: a drawer opened by clicking a node is a
+    // reading position, not an address, and writing it would fill the history
+    // with noise.
+    const focus = (target: string) => {
+      const sep = target.indexOf('-');
+      const kind = target.slice(0, sep);
+      const id = target.slice(sep + 1);
+      const key = kind === 'tool' ? `tool:${id}` : kind === 'act' ? id : null;
+      if (!key || !panels.some((p) => p.dataset.detail === key)) return;
+      const btn = kind === 'tool'
+        ? tools.find((b) => b.dataset.tool === id)
+        : acts.find((b) => b.dataset.act === id);
+      if (btn) {
+        // The node may live in a view that is not showing — a tool only has a button
+        // in PLAYBOOK — so the link brings its own view with it.
+        const panel = btn.closest<HTMLElement>('[data-viewpanel]');
+        if (panel?.dataset.viewpanel) setView(panel.dataset.viewpanel);
+        // An artifact with no top-level producer points at a sub-activity, whose node
+        // sits in a collapsed inset — open every inset on the way down to it.
+        for (let el = btn.closest<HTMLElement>('[data-subflow-panel]'); el; el = el.parentElement?.closest<HTMLElement>('[data-subflow-panel]') ?? null) {
+          if (el.hidden) {
+            root
+              .querySelector<HTMLButtonElement>(`[data-expand="${CSS.escape(el.dataset.subflowPanel!)}"]`)
+              ?.click();
+          }
+        }
+        for (const b of [...acts, ...tools]) b.setAttribute('aria-current', 'false');
+        btn.setAttribute('aria-current', 'true');
+        btn.scrollIntoView({ block: 'center', inline: 'center' });
+      }
+      openDrawer(key);
+    };
+    root.addEventListener('aisdlc:focus', (e) => focus((e as CustomEvent<string>).detail));
+
+    // Sub-process expand/collapse
+    for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-expand]')) {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.expand!;
+        const panel = btn.parentElement?.querySelector<HTMLElement>(`[data-subflow-panel="${CSS.escape(id)}"]`)
+          ?? root.querySelector<HTMLElement>(`[data-subflow-panel="${CSS.escape(id)}"]`);
+        if (!panel) return;
+        const open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.textContent = btn.textContent!.replace(open ? '▸' : '▾', open ? '▾' : '▸');
+      });
+    }
+  };
+
+  const roots = [...document.querySelectorAll<HTMLElement>('[data-doc-kind="process"]')];
+  for (const root of roots) init(root);
+
+  // One listener for the page: only the showing document has a drawer to close.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    for (const escape of escapers) escape();
+  });
+
+  // A route holds exactly one process document, so the hash addresses it.
+  if (roots.length === 1) {
+    const root = roots[0];
+    const fromHash = () => {
+      const h = decodeURIComponent(location.hash.slice(1));
+      if (h) root.dispatchEvent(new CustomEvent('aisdlc:focus', { detail: h }));
+    };
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+  }
+</script>
+
+<style>
+  main[data-view='flow'] [data-viewpanel]:not([data-viewpanel='flow']),
+  main[data-view='grid'] [data-viewpanel]:not([data-viewpanel='grid']),
+  main[data-view='playbook'] [data-viewpanel]:not([data-viewpanel='playbook']) {
+    display: none;
+  }
+  .mast__up {
+    font-size: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    transition: border-color 0.12s var(--ease-out), color 0.12s var(--ease-out);
+  }
+  .mast__up:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .mast__switch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+    border-top: 1px solid var(--line);
+  }
+  .mast__proc {
+    border: 1px solid var(--ink);
+    padding: 6px 10px 5px;
+    font-size: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.12s ease-out, color 0.12s ease-out;
+  }
+  .mast__proc:hover {
+    background: var(--washi);
+  }
+  .mast__proc[aria-current='page'] {
+    background: var(--ink);
+    color: var(--white);
+  }
+  .mast__stagerun {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .mast__stage {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+  .mast__stagesep {
+    font-size: var(--micro);
+    color: var(--muted);
+  }
+  @media (max-width: 860px) {
+    .mast__stagerun {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+</style>

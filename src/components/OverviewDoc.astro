@@ -1,0 +1,450 @@
+---
+// The team document: masthead, stat strip, the process index, and the five
+// catalogs. A component rather than a page body because the export composes it
+// with every process document into one file — `_plans/spec-cli-layer.md`, D-CLI-5.
+import TeamDrawer from './TeamDrawer.astro';
+import type { OverviewModel, Use } from '../lib/docs';
+
+interface Props {
+  model: OverviewModel;
+  hidden?: boolean;
+  /** Set by the export, where every document shares one file and there are no routes. */
+  inline?: boolean;
+}
+const { model, hidden = false, inline = false } = Astro.props;
+const { teamId, team, procs, stats, artifactUse, harnessUse, toolUse, eventUse } = model;
+
+// The href carries the multi-page route; `data-goto` / `data-focus` carry the same
+// intent for the single-file export, where there is no route to point at and the
+// script answers the click instead.
+const useHref = (u: Use) => (inline ? '#' : `/${u.slug}${u.focus ? `#${u.focus}` : ''}`);
+const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
+---
+
+<section class="doc" data-doc="__team" data-doc-kind="overview" hidden={hidden}>
+  <main>
+    <header class="mast mast--line module">
+      <div class="mast__top">
+        <span class="tab">TEAM DOCUMENT</span>
+        <h1 class="mast__title">
+          <button
+            type="button"
+            class="mast__open"
+            data-open-team
+            aria-controls="team-drawer"
+            aria-expanded="false"
+          >
+            {team.name}<span class="mast__open-mark" aria-hidden="true">▸</span>
+          </button>
+        </h1>
+        <span class="mast__file">content/teams/{teamId}/</span>
+        <span class="mast__status">
+          VERSION {team.version} · STATUS <strong class:list={{ 'mast__living': team.status === 'living' }}>{team.status.toUpperCase()}</strong>
+        </span>
+      </div>
+
+      <dl class="mast__stats">
+        {stats.map((s) => (
+          <div class="mast__stat">
+            <dd class:list={['mast__stat-n', { 'mast__stat-n--open': s.open && s.n > 0 }]}>{s.n}</dd>
+            <dt class="mast__stat-label">{s.label}</dt>
+          </div>
+        ))}
+      </dl>
+    </header>
+
+    <section class="module" aria-label="Processes">
+      <div class="module__head">
+        <span class="tab">PROCESSES</span>
+        <span class="module__title">Ways Work Flows Through This Team</span>
+        <span class="module__meta">one file each · shared catalogs · open a process to read its figures</span>
+      </div>
+      <ul class="procs">
+        {procs.map((p) => (
+          <li class="proc">
+            <a class="proc__link" href={docHref(p.slug)} data-goto={p.slug}>
+              <span class="proc__name">{p.data.name}</span>
+              <span class="proc__go" aria-hidden="true">→</span>
+            </a>
+            {p.data.description && <p class="proc__desc">{p.data.description}</p>}
+            <ol class="proc__stages">
+              {p.data.stages.map((st) => <li class="proc__stage">{st.name}</li>)}
+            </ol>
+            <dl class="proc__nums">
+              <div><dd>{p.activities}</dd><dt>Activities</dt></div>
+              <div><dd>{p.data.stages.length}</dd><dt>Stages</dt></div>
+              <div><dd class:list={{ 'proc__open': p.open > 0 }}>{p.open}</dd><dt>Open slots</dt></div>
+            </dl>
+            {p.data.constraint && (
+              <p class="proc__constraint">
+                <span class="chip chip--inverse">① {team.artifacts.find((a) => a.id === p.data.constraint!.artifact)?.name ?? p.data.constraint.artifact}</span>
+                {p.data.constraint.note}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <div class="cats">
+      <section class="module cat" aria-label="Roles">
+        <div class="module__head">
+          <span class="tab">CATALOG</span>
+          <span class="module__title">Roles</span>
+          <span class="module__meta">the vertical axis of every figure</span>
+        </div>
+        <ul class="rows">
+          {team.roles.map((r) => (
+            <li class="row">
+              <span class="row__name">{r.name}</span>
+              <span class="row__id">{r.id}</span>
+              {r.note && <span class="row__note">{r.note}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="module cat" aria-label="Harnesses">
+        <div class="module__head">
+          <span class="tab">CATALOG</span>
+          <span class="module__title">Harnesses</span>
+          <span class="module__meta">runtimes capability can live in</span>
+        </div>
+        <ul class="rows">
+          {team.harnesses.map((h) => (
+            <li class="row">
+              <span class="row__name">{h.name}</span>
+              <span class="row__id">{h.id}</span>
+              {h.note && <span class="row__note">{h.note}</span>}
+              <span class="row__use">
+                {[...(harnessUse.get(h.id) ?? [])].join(' · ') || 'shelf inventory'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="module cat" aria-label="Tooling">
+        <div class="module__head">
+          <span class="tab">CATALOG</span>
+          <span class="module__title">Tooling</span>
+          <span class="module__meta">grouped by harness</span>
+        </div>
+        <div>
+          {team.harnesses.map((h) => {
+            const owned = team.tools.filter((s) => s.harness === h.id);
+            return owned.length === 0 ? null : (
+              <section class="tools__group">
+                <div class="tools__head">
+                  <span class="tools__harness">{h.name}</span>
+                  <span class="tools__count">{owned.length}</span>
+                </div>
+                <ul>
+                  {owned.map((s) => (
+                    <li class="tool">
+                      <span class="tool__name">{s.name}</span>
+                      <span class="chip chip--muted">{s.kind}</span>
+                      <span class="tool__when">
+                        {(toolUse.get(s.id) ?? []).length === 0 ? 'shelf inventory' : (toolUse.get(s.id) ?? []).map((u, i) => (
+                          <>
+                            {i > 0 && <span aria-hidden="true"> · </span>}
+                            <a class="row__go" href={useHref(u)} data-goto={u.slug} data-focus={u.focus}>{u.label}</a>
+                          </>
+                        ))}
+                      </span>
+                      {s.note && <span class="tool__note">{s.note}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      </section>
+
+      <section class="module cat" aria-label="Events">
+        <div class="module__head">
+          <span class="tab">CATALOG</span>
+          <span class="module__title">Events</span>
+          <span class="module__meta">conditions that trigger tooling</span>
+        </div>
+        <ul class="rows">
+          {team.events.map((e) => (
+            <li class="row">
+              <span class="row__name">{e.name}</span>
+              <span class="row__id">{e.id}</span>
+              {e.description && <span class="row__note">{e.description}</span>}
+              <span class="row__use">
+                {(eventUse.get(e.id) ?? []).length === 0 ? 'no play yet' : (eventUse.get(e.id) ?? []).map((u, i) => (
+                  <>
+                    {i > 0 && <span aria-hidden="true"> · </span>}
+                    <a class="row__go" href={useHref(u)} data-goto={u.slug} data-focus={u.focus}>{u.label}</a>
+                  </>
+                ))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="module cat" aria-label="Artifacts">
+        <div class="module__head">
+          <span class="tab">CATALOG</span>
+          <span class="module__title">Artifacts</span>
+          <span class="module__meta">the joints — every edge is one changing hands</span>
+        </div>
+        <ul class="rows rows--tight">
+          {team.artifacts.map((a) => (
+            <li class="row">
+              <span class="row__name">{a.name}</span>
+              <span class="row__id">{a.id}</span>
+              <span class="row__use">
+                {(artifactUse.get(a.id) ?? []).length === 0 ? 'unused' : (artifactUse.get(a.id) ?? []).map((u, i) => (
+                  <>
+                    {i > 0 && <span aria-hidden="true"> · </span>}
+                    <a class="row__go" href={useHref(u)} data-goto={u.slug} data-focus={u.focus}>{u.label}</a>
+                  </>
+                ))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  </main>
+  <TeamDrawer team={team} teamId={teamId} />
+</section>
+
+<style>
+  /* Every cell draws its own top and left rule, so a card that wraps to a second
+     row is separated from the row above it. The container is pulled 1px up and
+     left so the first row and column land on the module's own borders instead of
+     doubling them — this holds at any card count and any column count. */
+  .procs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    margin: -1px 0 0 -1px;
+  }
+  .proc {
+    padding: 14px 16px 16px;
+    border-left: 1px solid var(--line);
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .proc__link {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .proc__name {
+    font-size: var(--display-md);
+    line-height: 30px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.14s var(--ease-out), color 0.14s var(--ease-out);
+  }
+  .proc__go {
+    font-size: var(--subhead);
+    color: var(--muted);
+    transition: transform 0.14s var(--ease-out), color 0.14s var(--ease-out);
+  }
+  .proc__link:hover .proc__name {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .proc__link:hover .proc__go {
+    color: var(--accent);
+    transform: translateX(4px);
+  }
+  .proc__desc {
+    font-size: var(--body);
+    line-height: 17px;
+    color: var(--sub);
+    max-width: 56ch;
+  }
+  .proc__stages {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .proc__stage {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+  .proc__stage + .proc__stage::before {
+    content: '→';
+    margin-right: 5px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .proc__nums {
+    display: flex;
+    border-top: 1px solid var(--line);
+    margin-top: 2px;
+  }
+  .proc__nums > div {
+    padding: 7px 14px 6px 0;
+  }
+  .proc__nums dd {
+    font-size: var(--subhead);
+    font-weight: 800;
+    line-height: 20px;
+  }
+  .proc__open {
+    color: var(--accent);
+  }
+  .proc__nums dt {
+    font-size: var(--micro);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+  .proc__constraint {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-size: var(--label);
+    line-height: 15px;
+    color: var(--sub);
+    background: var(--washi);
+    padding: 7px 8px;
+  }
+  .proc__constraint .chip {
+    flex: none;
+  }
+
+  /* Five indexes of very unequal length (4, 3, 16, 4, 6 rows). A row grid pads
+     every short catalog out to the tallest one and orphans the fifth onto a row
+     of its own; column flow packs them, so the band ends where the content ends. */
+  .cats {
+    columns: 320px;
+    column-gap: 8px;
+  }
+  .cat {
+    break-inside: avoid;
+    margin-bottom: 8px;
+  }
+  /* Tooling is grouped by harness, so the harness leaves the row and becomes a
+     band; the entry then fits one catalog column like every other catalog. */
+  .tools__group {
+    border-bottom: 1px solid var(--line);
+  }
+  .tools__group:last-child {
+    border-bottom: none;
+  }
+  .tools__head {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 5px 8px 4px;
+    background: var(--washi);
+  }
+  .tools__harness {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .tools__count {
+    margin-left: auto;
+    font-size: var(--micro);
+    color: var(--sub);
+  }
+  .tool {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 5px 8px 4px;
+  }
+  .tool__name {
+    font-size: var(--body);
+    font-weight: 700;
+  }
+  .tool__note {
+    flex-basis: 100%;
+    font-size: var(--label);
+    line-height: 15px;
+    color: var(--sub);
+  }
+  .tool__when {
+    margin-left: auto;
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+  .rows {
+    display: flex;
+    flex-direction: column;
+  }
+  .row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 7px 8px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .rows--tight .row {
+    padding: 5px 8px 4px;
+  }
+  .row:last-child {
+    border-bottom: none;
+  }
+  .row:nth-child(even) {
+    background: var(--washi);
+  }
+  .row__name {
+    font-size: var(--body);
+    font-weight: 700;
+  }
+  .row__id {
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    color: var(--sub);
+  }
+  .row__note {
+    font-size: var(--label);
+    line-height: 15px;
+    color: var(--sub);
+    flex-basis: 100%;
+  }
+  .row__use {
+    margin-left: auto;
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sub);
+    white-space: nowrap;
+  }
+  /* A live relationship is a door; a dead one ("unused", "shelf inventory") stays
+     bare text in the same slot, so the two stop looking alike. */
+  .row__go {
+    color: var(--sub);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+  }
+  .row__go:hover,
+  .row__go:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  @media (max-width: 860px) {
+    .row__use {
+      margin-left: 0;
+      flex-basis: 100%;
+      white-space: normal;
+    }
+  }
+</style>

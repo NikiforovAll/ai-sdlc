@@ -18,6 +18,9 @@ roles:
   - id: operator
     name: Release Operator
     note: Owns the path to production.
+  - id: sre
+    name: On-Call Engineer
+    note: Owns service health while an incident is open.
 
 harnesses:
   - id: claude-code
@@ -29,6 +32,9 @@ harnesses:
   - id: ci
     name: CI Pipeline
     note: Build, test, and release automation.
+  - id: observability
+    name: Observability Stack
+    note: Metrics, logs, traces, and alert routing.
 
 events:
   - id: task-too-big
@@ -43,6 +49,12 @@ events:
   - id: cannot-reproduce
     name: Cannot reproduce
     description: The report does not reproduce on demand — the bug is a hypothesis until it does.
+  - id: impact-unbounded
+    name: Blast radius unknown
+    description: The signals do not yet say who is affected or how badly — severity cannot be set.
+  - id: mitigation-fails
+    name: Mitigation does not hold
+    description: The service recovers and degrades again — the mitigation treated a symptom.
 
 artifacts:
   - id: spec
@@ -77,68 +89,129 @@ artifacts:
     name: Root Cause
   - id: regression-test
     name: Regression Test
+  - id: incident-record
+    name: Incident Record
+  - id: impact-assessment
+    name: Impact Assessment
+  - id: status-update
+    name: Status Update
+  - id: mitigation
+    name: Mitigation
+  - id: postmortem
+    name: Postmortem
+  - id: follow-up-work
+    name: Follow-Up Work
 
-skills:
+# The shelf. Entries name themselves and the harness they run in — nothing more.
+# Where each is reached for is written on the activity that reaches for it.
+tools:
   - id: grill-me
     name: /grill-me
     harness: claude-code
-    tooling: interview skill
-    level: assisted
-    roles: [lead, engineer]
-    when:
-      - activity: write-spec
-      - activity: plan-work
-        event: spec-ambiguous
+    kind: interview skill
+    note: Interrogates a document until the unstated assumptions are on the page.
     refs: ["skills/grill-me"]
+
+  - id: spec-interview
+    name: /spec-interview
+    harness: claude-code
+    kind: interview skill
+    note: Turns a request into a written spec by asking, one question at a time.
+    refs: ["skills/spec-interview"]
 
   - id: wayfinder
     name: /wayfinder
     harness: claude-code
-    tooling: re-decomposition skill
-    level: assisted
-    roles: [engineer]
-    when:
-      - activity: implement
-        event: task-too-big
+    kind: re-decomposition skill
+    note: Re-cuts oversized work into tasks an agent can hold in one context.
     refs: ["skills/wayfinder"]
 
   - id: plan-mode
     name: Plan Mode
     harness: claude-code
-    tooling: built-in mode
-    level: assisted
-    roles: [engineer]
-    when:
-      - activity: plan-work
-      - activity: implement
-        event: task-too-big
+    kind: built-in mode
+    note: Reads and reasons without writing — the cheap place to be wrong.
 
-  - id: rovo-triage
-    name: Backlog Triage Agent
-    harness: jira-rovo
-    tooling: rovo agent
-    level: delegated-review
-    roles: [lead]
-    when:
-      - activity: write-spec
+  - id: agent-session
+    name: Agent Session
+    harness: claude-code
+    kind: agentic edit loop
+    note: The default working loop — explore, edit, run, repeat, under review.
+
+  - id: explore-subagent
+    name: Explore Subagent
+    harness: claude-code
+    kind: read-only search agent
+    note: Sweeps the codebase and returns the conclusion, not the file dumps.
+
+  - id: test-from-criteria
+    name: /test-from-criteria
+    harness: claude-code
+    kind: test authoring skill
+    note: Writes the suite from acceptance criteria, so criteria become gates.
+
+  - id: test-from-repro
+    name: /test-from-repro
+    harness: claude-code
+    kind: test authoring skill
+    note: Turns a reproduction into a regression test that fails before the fix.
+
+  - id: evidence-block
+    name: /evidence-block
+    harness: claude-code
+    kind: evidence assembly skill
+    note: Collects the proof a reviewer needs into one block they can read.
 
   - id: rework-loop
     name: /address-verdict
     harness: claude-code
-    tooling: rework skill
-    level: delegated-review
-    roles: [engineer]
-    when:
-      - activity: implement
-        event: rework-requested
+    kind: rework skill
+    note: Works a review verdict item by item instead of re-reading the diff.
 
   - id: bisect
     name: /bisect
     harness: claude-code
-    tooling: history search skill
-    level: delegated-review
-    roles: [engineer]
-    when:
-      - activity: locate-cause
-      - activity: reproduce-bug
-        event: cannot-reproduce
+    kind: history search skill
+    note: Searches history for the change that introduced the behaviour.
+
+  - id: postmortem-draft
+    name: /postmortem
+    harness: claude-code
+    kind: incident writeup skill
+    note: Drafts the timeline from the incident record while detail is recoverable.
+
+  - id: rovo-triage
+    name: Backlog Triage Agent
+    harness: jira-rovo
+    kind: rovo agent
+    note: Reads the backlog for what is already known about this work.
+
+  - id: rovo-followup
+    name: Follow-Up Agent
+    harness: jira-rovo
+    kind: rovo agent
+    note: Turns agreed actions into tracked work with owners.
+
+  - id: release-gate
+    name: Release Gate
+    harness: ci
+    kind: pipeline gate
+    note: Releases on green; a human can always hold the gate.
+
+  - id: alert-routing
+    name: Alert Routing
+    harness: observability
+    kind: paging rule
+    note: Puts a page in front of an owner and starts the clock.
+
+  - id: signal-correlation
+    name: Signal Correlation
+    harness: observability
+    kind: query agent
+    note: Reads metrics, logs, and traces together to say who is affected.
+
+  - id: recovery-check
+    name: Recovery Check
+    harness: observability
+    kind: signal check
+    note: Confirms the same signal that paged has gone quiet, and stayed quiet.

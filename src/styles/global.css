@@ -6,6 +6,8 @@
   --surface: #f2f2f2;
   --washi: #f7f7f7;
   --sub: #666666;
+  /* Non-text duty only: rules, dashed open-slot borders, arrow glyphs.
+     2.85:1 on white fails AA, so text never wears it — text stops at --sub. */
   --muted: #999999;
 
   --stripe: repeating-linear-gradient(
@@ -201,6 +203,55 @@ main {
   color: var(--accent);
 }
 
+/* The document page states its name inside the thin top line and puts the prose
+   behind the drawer, so the masthead costs one row instead of a display block. */
+.mast__title {
+  font-size: var(--subhead);
+  line-height: 20px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.mast__open {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1px;
+  transition: color 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.mast__open:hover,
+.mast__open:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.mast__open-mark {
+  font-size: var(--label);
+  line-height: 1;
+  color: var(--accent);
+}
+
+.mast__open:hover .mast__open-mark,
+.mast__open[aria-expanded='true'] .mast__open-mark {
+  color: inherit;
+}
+
+.mast--line .mast__file {
+  margin-left: auto;
+}
+
+.mast--line .mast__status {
+  margin-left: 0;
+}
+
+/* One rule, not two: the top line already closes with a hairline. */
+.mast--line .mast__stats {
+  border-top: none;
+}
+
 .mast__main {
   padding: 14px 16px 12px;
 }
@@ -273,8 +324,7 @@ main {
 
 .bar__view {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
   padding: 7px 12px 6px;
   border-left: 1px solid var(--line);
   font-size: var(--label);
@@ -291,18 +341,6 @@ main {
 .bar__view[aria-pressed='true'] {
   background: var(--accent);
   color: var(--white);
-}
-
-.bar__view-hint {
-  font-size: var(--micro);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: var(--sub);
-  text-transform: none;
-}
-
-.bar__view[aria-pressed='true'] .bar__view-hint {
-  color: rgba(255, 255, 255, 0.75);
 }
 
 .bar__filter {

@@ -5,18 +5,24 @@ import SubFlow from './SubFlow.astro';
 
 interface Props {
   team: Team;
+  /** Suffixes the SVG pattern id — the export holds one figure per process in one file. */
+  docId?: string;
 }
-const { team } = Astro.props;
+const { team, docId = 'doc' } = Astro.props;
 const d = derive(team);
+const hatchId = `idle-hatch-${docId}`;
 
 const GUTTER = 150;
-const BAND = 36;
+const BAND = 26;
 const COLW = 150;
-const LANEH = 96;
+const LANEH = 112;
 const NODEW = 126;
-const NODEH = 60;
-const STACK_GAP = 8;
-const EXPAND_H = 18;
+// NODEH is the layout unit, not a cap: a card grows with its name, so the stack
+// reserves the tallest a card gets (three name lines) rather than the shortest.
+const NODEH = 70;
+const NODEH_MAX = 90;
+const STACK_GAP = 10;
+const EXPAND_H = 22;
 
 const actById = new Map(d.placed.map((p) => [p.activity.id, p.activity]));
 const expandExtra = (id: string) => ((actById.get(id)?.activities?.length ?? 0) > 0 ? EXPAND_H : 0);
@@ -56,8 +62,8 @@ const pos = new Map(
     const k = stack.indexOf(p.activity.id);
     const n = stack.length;
     const spanH = laneHpx.slice(p.laneStart, p.laneEnd + 1).reduce((a, b) => a + b, 0);
-    const stackH = stack.reduce((a, id) => a + NODEH + expandExtra(id), 0) + (n - 1) * STACK_GAP;
-    const above = stack.slice(0, k).reduce((a, id) => a + NODEH + expandExtra(id) + STACK_GAP, 0);
+    const stackH = stack.reduce((a, id) => a + NODEH_MAX + expandExtra(id), 0) + (n - 1) * STACK_GAP;
+    const above = stack.slice(0, k).reduce((a, id) => a + NODEH_MAX + expandExtra(id) + STACK_GAP, 0);
     const y = laneY[p.laneStart]! + (spanH - stackH) / 2 + above;
     return [p.activity.id, { x, y, cy: y + NODEH / 2, p }];
   })
@@ -99,49 +105,51 @@ const labelEdges = [
     .values(),
 ];
 
-const stageMeta = d.stageSpans.map((s) => {
-  const own = d.placed.filter((p) => p.activity.stage === s.stage);
-  const outbound = d.edges.filter((e) => e.handoff && own.some((p) => p.activity.id === e.from));
-  return { ...s, acts: own.length, handoffs: outbound.length };
-});
+// A column is a step in the topological order — the only horizontal unit this
+// figure can honestly name. Stages are not drawn here: their activities interleave
+// across columns, so a stage band would sit above boxes of another stage. Stage
+// lives on each box, in GRID's columns, and in the drawer.
+const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? id;
+const steps = Array.from({ length: d.cols }, (_, c) => ({
+  col: c,
+  acts: d.placed.filter((p) => p.col === c).length,
+}));
 
-// Idle bands: stage×lane cells no activity touches get a quiet hatch so empty space reads as claimed.
-const idleCells = d.stageSpans.flatMap((s, si) =>
+// Idle cells: step×lane cells no activity touches get a quiet hatch so empty space reads as claimed.
+const idleCells = steps.flatMap((s) =>
   team.roles.flatMap((_, l) => {
-    const occupied = d.placed.some(
-      (p) => p.activity.stage === s.stage && p.laneStart <= l && l <= p.laneEnd
-    );
-    return occupied ? [] : [{ x: GUTTER + s.from * COLW, y: laneY[l]!, w: (s.to - s.from + 1) * COLW, h: laneHpx[l]!, last: si === d.stageSpans.length - 1 }];
+    const occupied = d.placed.some((p) => p.col === s.col && p.laneStart <= l && l <= p.laneEnd);
+    return occupied ? [] : [{ x: GUTTER + s.col * COLW, y: laneY[l]!, w: COLW, h: laneHpx[l]!, last: s.col === d.cols - 1 }];
   })
 );
 ---
 
-<section class="module fig" aria-label="Figure 01 — Flow">
+<section class="module fig" aria-label="Flow">
   <div class="module__head">
-    <span class="tab">FIG.01</span>
-    <span class="module__title">Flow — Who Hands What to Whom</span>
+    <span class="tab">FLOW</span>
+    <span class="module__title">Who Hands What to Whom</span>
     <span class="fig__scrollhint" aria-hidden="true">scroll →</span>
-    <span class="module__meta">x-order derived · topological · ordinal, not time</span>
+    <span class="module__meta">columns are steps · topological · ordinal, not time · stage sits on the box</span>
   </div>
   <div class="fig__scroll">
     <div class="fig__canvas" style={`min-width:${width}px;height:${height}px`}>
       <svg width="100%" height={height} role="img" aria-label="Activity flow: artifact handoffs between roles">
         <defs>
-          <pattern id="idle-hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+          <pattern id={hatchId} width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
             <line x1="0" y1="0" x2="0" y2="7" stroke="#e4e4e0" stroke-width="1" />
           </pattern>
         </defs>
-        {d.stageSpans.map((s, i) => (
+        {steps.map((s) => (
           <rect
-            x={GUTTER + s.from * COLW}
+            x={GUTTER + s.col * COLW}
             y={0}
-            width={i === d.stageSpans.length - 1 ? '100%' : (s.to - s.from + 1) * COLW}
+            width={s.col === d.cols - 1 ? '100%' : COLW}
             height={height}
-            fill={i % 2 ? '#f7f7f7' : '#ffffff'}
+            fill={s.col % 2 ? '#f7f7f7' : '#ffffff'}
           />
         ))}
         {idleCells.map((c) => (
-          <rect x={c.x} y={c.y} width={c.last ? '100%' : c.w} height={c.h} fill="url(#idle-hatch)" />
+          <rect x={c.x} y={c.y} width={c.last ? '100%' : c.w} height={c.h} fill={`url(#${hatchId})`} />
         ))}
         {team.roles.map((_, i) => (
           <line x1={0} x2="100%" y1={laneY[i]} y2={laneY[i]} stroke="#dadada" stroke-width="1" />
@@ -161,10 +169,10 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
         ))}
       </svg>
 
-      {stageMeta.map((s) => (
-        <div class="fig__stagehead" style={`left:${GUTTER + s.from * COLW + 8}px;top:4px;max-width:${(s.to - s.from + 1) * COLW - 16}px`}>
-          <span class="tab">{s.name}</span>
-          <span class="fig__stagemeta">{s.acts} ACT{s.handoffs ? ` · ${s.handoffs} HANDOFF` : ''}</span>
+      {steps.map((s) => (
+        <div class="fig__stephead" style={`left:${GUTTER + s.col * COLW + 8}px;top:4px;max-width:${COLW - 16}px`}>
+          <span class="tab">STEP {String(s.col + 1).padStart(2, '0')}</span>
+          <span class="fig__stepmeta">{s.acts} ACT</span>
         </div>
       ))}
 
@@ -190,22 +198,22 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
         const at = pos.get(p.activity.id)!;
         const kids = p.activity.activities?.length ?? 0;
         return (
-          <>
+          <div class="fig__node" style={`left:${at.x}px;top:${at.y}px;width:${NODEW}px`}>
             <button
               class={`fig__act${p.activity.tooling ? '' : ' fig__act--open'}`}
-              style={`left:${at.x}px;top:${at.y}px;width:${NODEW}px;min-height:${NODEH}px`}
+              style={`min-height:${NODEH}px`}
               data-act={p.activity.id}
               data-roles={p.activity.roles.join(' ')}
               data-depth="0"
               aria-label={`${p.activity.name} — details`}
             >
+              <span class="fig__act-stage">{stageName(p.activity.stage)}</span>
               <span class="fig__act-name">{p.activity.name}</span>
               <span class="fig__act-level">{p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}</span>
             </button>
             {kids > 0 && (
               <button
                 class="fig__expand"
-                style={`left:${at.x}px;top:${at.y + NODEH}px;width:${NODEW}px`}
                 data-expand={p.activity.id}
                 data-roles={p.activity.roles.join(' ')}
                 aria-expanded="false"
@@ -217,7 +225,6 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
             {kids > 0 && (
               <div
                 class="fig__inset"
-                style={`left:${at.x}px;top:${at.y + NODEH + 20}px`}
                 data-subflow-panel={p.activity.id}
                 data-roles={p.activity.roles.join(' ')}
                 hidden
@@ -229,7 +236,7 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
                 <SubFlow team={team} activities={p.activity.activities!} />
               </div>
             )}
-          </>
+          </div>
         );
       })}
     </div>
@@ -262,18 +269,18 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
       display: inline;
     }
   }
-  .fig__stagehead {
+  .fig__stephead {
     position: absolute;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
   }
-  .fig__stagemeta {
+  .fig__stepmeta {
     font-size: var(--micro);
     line-height: 1;
     letter-spacing: 0.08em;
-    color: var(--muted);
+    color: var(--sub);
     font-weight: 600;
     white-space: nowrap;
   }
@@ -298,16 +305,30 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
     line-height: 12px;
     color: var(--sub);
   }
-  .fig__act {
+  /* Card, expand toggle, and inset stack in flow inside one placed box — a name
+     that wraps to a third line pushes the toggle down instead of colliding with it. */
+  .fig__node {
     position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fig__act {
     background: var(--white);
     border: 1px solid var(--ink);
     padding: 7px 8px;
     text-align: left;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     transition: background 0.12s ease-out, color 0.12s ease-out, opacity 0.28s var(--ease-out);
+  }
+  .fig__act-stage {
+    font-size: var(--micro);
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sub);
   }
   .fig__act:hover {
     background: var(--washi);
@@ -331,19 +352,18 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
   .fig__act--open:hover {
     border-color: var(--ink);
   }
+  /* Selection marks, it does not shout: washi plus a green spine on the reading
+     edge. Inverting to solid ink turned the selected box into the loudest thing
+     on a page whose subject is the flow, not the cursor. */
   .fig__act[aria-current='true'] {
-    background: var(--ink);
-    color: var(--white);
-  }
-  .fig__act[aria-current='true'] .fig__act-level {
-    color: var(--line);
+    background: var(--washi);
+    border-left: 2px solid var(--accent);
   }
   .fig__act--open .fig__act-level {
     color: var(--accent);
     font-weight: 700;
   }
   .fig__expand {
-    position: absolute;
     z-index: 5;
     font-size: var(--micro);
     font-weight: 700;
@@ -358,6 +378,9 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
   }
   .fig__inset {
     position: absolute;
+    left: 0;
+    top: 100%;
+    margin-top: 2px;
     z-index: 6;
     background: var(--white);
     border: 1px solid var(--ink);
@@ -385,7 +408,7 @@ const idleCells = d.stageSpans.flatMap((s, si) =>
   .fig__inset-meta {
     margin-left: auto;
     font-size: var(--micro);
-    color: var(--muted);
+    color: var(--sub);
     letter-spacing: 0.04em;
   }
   .fig__edge,

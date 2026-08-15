@@ -1,0 +1,125 @@
+name: Incident
+description: >-
+  The interrupt path: a page becomes a bounded impact, a mitigation, a cause, and
+  a lesson. Service first, understanding second — the order is the point.
+
+stages:
+  - id: detect
+    name: Detect
+  - id: assess
+    name: Assess
+  - id: mitigate
+    name: Mitigate
+  - id: resolve
+    name: Resolve
+  - id: learn
+    name: Learn
+
+constraint:
+  artifact: mitigation
+  note: >-
+    Mitigation is the constraint: every minute spent understanding the cause is a
+    minute the service is still down. Restore first, diagnose after — the durable
+    fix rejoins the ordinary change path.
+
+activities:
+  - id: acknowledge-page
+    name: Acknowledge Page
+    stage: detect
+    roles: [sre]
+    produces: [incident-record]
+    why: An unacknowledged page has no owner, and an incident without an owner has no clock.
+    tooling:
+      tool: alert-routing
+      level: gated-autonomous
+      usage: |
+        Gated because the routing decides who wakes up. The rule runs on its own;
+        the roster it routes against is reviewed, not generated.
+
+  - id: bound-impact
+    name: Bound Impact
+    stage: assess
+    roles: [sre, operator]
+    consumes: [incident-record]
+    produces: [impact-assessment]
+    why: Severity decides who wakes up and how much risk the mitigation may carry.
+    tooling:
+      tool: signal-correlation
+      level: assisted
+
+  - id: communicate-status
+    name: Communicate Status
+    stage: assess
+    roles: [lead]
+    consumes: [impact-assessment]
+    produces: [status-update]
+    why: Silence during an incident is read as a larger incident.
+
+  - id: apply-mitigation
+    name: Apply Mitigation
+    stage: mitigate
+    roles: [sre, operator]
+    consumes: [impact-assessment]
+    produces: [mitigation]
+    why: The fastest action that returns the service to health, even if it is not the fix.
+    recommends:
+      - tool: signal-correlation
+        event: mitigation-fails
+        usage: >-
+          The service recovered and degraded again — the mitigation treated a
+          symptom. Re-read the signals together before trying a second one.
+
+  - id: confirm-recovery
+    name: Confirm Recovery
+    stage: mitigate
+    roles: [sre]
+    consumes: [mitigation]
+    produces: [evidence-pack]
+    why: Recovery is a measurement, not a feeling — the same signal that paged must go quiet.
+    tooling:
+      tool: recovery-check
+      level: delegated-review
+
+  - id: find-incident-cause
+    name: Find Cause
+    stage: resolve
+    roles: [sre, engineer]
+    consumes: [evidence-pack, incident-record]
+    produces: [root-cause]
+    why: With the service healthy the cause can be found without a clock on it.
+    tooling:
+      tool: explore-subagent
+      level: delegated-review
+    recommends:
+      - tool: postmortem-draft
+        usage: Drafts the timeline from the record while the cause is still being read.
+
+  - id: land-durable-fix
+    name: Land Durable Fix
+    stage: resolve
+    roles: [engineer]
+    consumes: [root-cause]
+    produces: [change-set]
+    why: The mitigation is debt until the change that replaces it ships on the ordinary gate.
+
+  - id: write-postmortem
+    name: Write Postmortem
+    stage: learn
+    roles: [sre, lead]
+    consumes: [root-cause, incident-record, status-update]
+    produces: [postmortem]
+    why: The account is written from the record, while the detail is still recoverable.
+    tooling:
+      tool: postmortem-draft
+      level: assisted
+
+  - id: queue-follow-up
+    name: Queue Follow-Up
+    stage: learn
+    roles: [lead]
+    consumes: [postmortem]
+    produces: [follow-up-work]
+    why: A postmortem that ends in prose and not in tracked work changes nothing.
+    tooling:
+      tool: rovo-followup
+      level: delegated-review

@@ -3,13 +3,23 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "bin": {
+    "ai-sdlc": "./bin/ai-sdlc.mjs"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "cli": "node bin/ai-sdlc.mjs",
+    "check": "node bin/ai-sdlc.mjs check content/teams/reference",
+    "export": "node bin/ai-sdlc.mjs export content/teams/reference --out _exports/reference.html"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.2.5",
-    "astro": "^5.13.0"
+    "astro": "^5.13.0",
+    "yaml": "^2.9.0"
   }
 }

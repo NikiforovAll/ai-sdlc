@@ -1,0 +1,12 @@
+---
+// The role lens is one rule per role, generated from the team's catalog. Every
+// process document on the page shares it, so the export emits it once.
+import { roleDimCss } from '../lib/docs';
+
+interface Props {
+  roles: { id: string }[];
+}
+const { roles } = Astro.props;
+---
+
+<style is:inline set:html={roleDimCss(roles)}></style>

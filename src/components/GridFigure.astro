@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { LEVEL_LABELS } from '../lib/derive';
+import { LEVEL_LABELS, toolOf } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -12,10 +12,10 @@ const cell = (roleId: string, stageId: string) =>
 const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.name ?? id;
 ---
 
-<section class="module grid" aria-label="Figure 02 — Stage by Role Grid">
+<section class="module grid" aria-label="Stage by Role Grid">
   <div class="module__head">
-    <span class="tab">FIG.02</span>
-    <span class="module__title">Grid — Capability Slots by Stage × Role</span>
+    <span class="tab">GRID</span>
+    <span class="module__title">Capability Slots by Stage × Role</span>
     <span class="grid__scrollhint" aria-hidden="true">scroll →</span>
     <span class="module__meta">dashed = open slot, waiting for tooling</span>
   </div>
@@ -57,7 +57,7 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
                       <span class="grid__act-fill">
                         {a.tooling ? (
                           <>
-                            <span class="grid__tool">{harnessName(a.tooling.harness)} · {a.tooling.tooling}</span>
+                            <span class="grid__tool">{harnessName(toolOf(team, a.tooling.tool).harness)} · {toolOf(team, a.tooling.tool).name}</span>
                             <span class="chip chip--muted">{LEVEL_LABELS[a.tooling.level]}</span>
                           </>
                         ) : (
@@ -159,9 +159,10 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
   .grid__act:hover {
     background: var(--washi);
   }
+  /* Same selection mark as the flow view: washi plus a green spine, never an invert. */
   .grid__act[aria-current='true'] {
-    background: var(--ink);
-    color: var(--white);
+    background: var(--washi);
+    border-left: 2px solid var(--accent);
   }
   .grid__act--open {
     border-style: dashed;
@@ -193,9 +194,6 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
     color: var(--accent);
     text-transform: uppercase;
   }
-  .grid__act[aria-current='true'] .grid__nested {
-    color: var(--line);
-  }
   .grid__act-name {
     font-size: 11px;
     line-height: 13px;
@@ -211,13 +209,6 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
     font-size: var(--micro);
     letter-spacing: 0.04em;
     color: var(--sub);
-  }
-  .grid__act[aria-current='true'] .grid__tool {
-    color: var(--line);
-  }
-  .grid__act[aria-current='true'] .chip--muted {
-    color: var(--line);
-    border-color: var(--sub);
   }
   .grid__open {
     font-size: var(--micro);

@@ -42,7 +42,7 @@ Two concepts: **Sub-activity** and **Sub-process**.
 **How it renders.** A parent with children carries a "▸ N INSIDE" expander beneath its caption. Expanding opens an inset panel in place — a nested swimlane using the same lanes as the figure around it, so a child's role is read off the same axis as its parent's. Deeper nests indent behind a green left spine.
 
 **Invariants & non-meanings.**
-- **No `stage`.** A child lives in its parent's stage, always. Stages label the coarse map; sub-activities are below that resolution, and letting a child leave its parent's stage would make the stage bands meaningless.
+- **No `stage`.** A child lives in its parent's stage, always. Stages label the coarse map; sub-activities are below that resolution, and letting a child leave its parent's stage would make the stage label meaningless at both levels.
 - **Roles come from the same team catalog**, and a child's roles need not match its parent's. That is how a handoff *inside* an activity becomes visible — the engineer writes the change, the reviewer checks it, and the nesting shows a boundary the parent node hides.
 - **Artifacts come from the same team catalog too.** There is no such thing as a private, sub-process-local artifact — if children pass something between them, it is declared like any other artifact. This is a deliberate cost: it keeps one producer per artifact true document-wide, and it forces intermediate things to be named rather than assumed.
 - **Fills and recommendations work identically at any depth.** A sub-activity with no `tooling:` is an open slot, dashed and green, exactly like a top-level one. That is the whole payoff of not inventing a separate "step" concept.

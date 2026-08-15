@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { LEVEL_LABELS } from '../lib/derive';
+import { LEVEL_LABELS, toolOf } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -8,27 +8,40 @@ interface Props {
 const { team } = Astro.props;
 
 const eventName = (id: string) => team.events.find((e) => e.id === id)?.name ?? id;
-const activityName = (id: string) => team.activities.find((a) => a.id === id)?.name ?? id;
 const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? id;
 
+// A role's playbook is read off the activities it owns — the catalog no longer
+// states roles, so recommendations inherit them from the work they annotate. One
+// button per tool, with a line per activity that reaches for it.
 const rows = team.roles.map((role) => {
-  const skills = team.skills.filter((s) => s.roles.includes(role.id));
-  const fills = team.activities.filter((a) => a.roles.includes(role.id) && a.tooling);
+  const owned = team.activities.filter((a) => a.roles.includes(role.id));
+  const fills = owned.filter((a) => a.tooling);
+  const byTool = new Map<string, { id: string; lines: { event?: string; activity: string }[] }>();
+  for (const a of owned) {
+    for (const r of a.recommends ?? []) {
+      const entry = byTool.get(r.tool) ?? { id: r.tool, lines: [] };
+      entry.lines.push({ event: r.event, activity: a.name });
+      byTool.set(r.tool, entry);
+    }
+  }
+  const tools = [...byTool.values()].map((e) => ({ ...toolOf(team, e.id), lines: e.lines }));
   const harnesses = team.harnesses.filter(
-    (h) => skills.some((s) => s.harness === h.id) || fills.some((a) => a.tooling!.harness === h.id)
+    (h) =>
+      tools.some((s) => s.harness === h.id) ||
+      fills.some((a) => toolOf(team, a.tooling!.tool).harness === h.id)
   );
-  return { role, skills, fills, harnesses };
+  return { role, tools, fills, harnesses };
 });
 ---
 
-<section class="module pb" aria-label="Figure 03 — Playbook">
+<section class="module pb" aria-label="Playbook">
   <div class="module__head">
-    <span class="tab">FIG.03</span>
-    <span class="module__title">Playbook — Harness + Tooling by Role</span>
-    <span class="module__meta">select a role above · skills fire on events, not just process position</span>
+    <span class="tab">PLAYBOOK</span>
+    <span class="module__title">Harness + Tooling by Role</span>
+    <span class="module__meta">select a role above · tooling fires on events, not just process position</span>
   </div>
 
-  {rows.map(({ role, skills, fills, harnesses }) => (
+  {rows.map(({ role, tools, fills, harnesses }) => (
     <div class="pb__role" data-roles={role.id}>
       <div class="pb__ghost" aria-hidden="true">
         <span class="pb__ghost-name">{role.name}</span>
@@ -37,7 +50,7 @@ const rows = team.roles.map((role) => {
       <div class="pb__rolehead">
         <span class="pb__rolename">{role.name}</span>
         <span class="pb__rolenote">{role.note}</span>
-        <span class="pb__count">{skills.length} SKILLS · {fills.length} TOOLED ACTIVITIES</span>
+        <span class="pb__count">{tools.length} TOOLS · {fills.length} TOOLED ACTIVITIES</span>
       </div>
       {harnesses.length === 0 && (
         <p class="pb__empty">No harness tooling recommended yet — this role's playbook is an open slot.</p>
@@ -49,33 +62,31 @@ const rows = team.roles.map((role) => {
               <span class="pb__harnessname">{h.name}</span>
               {h.note && <span class="pb__harnessnote">{h.note}</span>}
             </div>
-            {skills
+            {tools
               .filter((s) => s.harness === h.id)
               .map((s) => (
-                <button class="pb__item" data-skill={s.id} data-roles={s.roles.join(' ')} aria-label={`${s.name} — details`}>
+                <button class="pb__item" data-tool={s.id} data-roles={role.id} aria-label={`${s.name} — details`}>
                   <span class="pb__itemname">
                     {s.name}
-                    {s.level && <span class="chip chip--muted">{LEVEL_LABELS[s.level]}</span>}
                   </span>
-                  <span class="pb__itemsub">{s.tooling}</span>
-                  {s.when.map((w) => (
+                  <span class="pb__itemsub">{s.kind}</span>
+                  {s.lines.map((w) => (
                     <span class={`pb__when${w.event ? ' pb__when--event' : ''}`}>
                       {w.event && (
                         <svg class="pb__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>
                       )}
-                      {w.event ? eventName(w.event) : ''}
-                      {w.event && w.activity ? ' · ' : ''}
-                      {w.activity ? `during ${activityName(w.activity)}` : ''}
+                      {w.event ? `${eventName(w.event)} · ` : ''}
+                      during {w.activity}
                     </span>
                   ))}
                 </button>
               ))}
             {fills
-              .filter((a) => a.tooling!.harness === h.id)
+              .filter((a) => toolOf(team, a.tooling!.tool).harness === h.id)
               .map((a) => (
                 <button class="pb__item pb__item--fill" data-act={a.id} data-roles={a.roles.join(' ')} data-depth="pb" aria-label={`${a.name} — details`}>
                   <span class="pb__itemname">
-                    {a.tooling!.tooling}
+                    {toolOf(team, a.tooling!.tool).name}
                     <span class="chip chip--muted">{LEVEL_LABELS[a.tooling!.level]}</span>
                   </span>
                   <span class="pb__when">fills {a.name} · {stageName(a.stage)}</span>
@@ -108,12 +119,12 @@ const rows = team.roles.map((role) => {
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--sub);
   }
   .pb__ghost-note {
     font-size: var(--micro);
     letter-spacing: 0.05em;
-    color: var(--muted);
+    color: var(--sub);
     text-transform: uppercase;
   }
   .pb__rolehead {
@@ -137,7 +148,7 @@ const rows = team.roles.map((role) => {
     margin-left: auto;
     font-size: var(--micro);
     letter-spacing: 0.08em;
-    color: var(--muted);
+    color: var(--sub);
     font-weight: 600;
   }
   .pb__empty {
@@ -173,7 +184,7 @@ const rows = team.roles.map((role) => {
   }
   .pb__harnessnote {
     font-size: var(--micro);
-    color: var(--muted);
+    color: var(--sub);
   }
   .pb__item {
     border: 1px solid var(--ink);
@@ -188,10 +199,13 @@ const rows = team.roles.map((role) => {
   .pb__item:hover {
     background: var(--washi);
   }
+  /* Same selection mark as the figures: washi plus a green spine, never an invert.
+     The event lines keep their own green because the text colour never changes. */
   .pb__item[aria-current='true'] {
-    background: var(--ink);
-    color: var(--white);
+    background: var(--washi);
+    border-left: 2px solid var(--accent);
   }
+
   .pb__item--fill {
     border-style: solid;
     border-color: var(--line);
@@ -223,16 +237,5 @@ const rows = team.roles.map((role) => {
     height: 9px;
     margin-right: 3px;
     vertical-align: -1px;
-  }
-  .pb__item[aria-current='true'] .pb__itemsub,
-  .pb__item[aria-current='true'] .pb__when {
-    color: var(--line);
-  }
-  .pb__item[aria-current='true'] .pb__when--event {
-    color: #7fd6a8;
-  }
-  .pb__item[aria-current='true'] .chip--muted {
-    color: var(--line);
-    border-color: var(--sub);
   }
 </style>

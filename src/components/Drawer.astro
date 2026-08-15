@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { flatten, LEVEL_LABELS } from '../lib/derive';
+import { flatten, LEVEL_LABELS, toolOf, usesOfTool } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -14,11 +14,18 @@ const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? 
 const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.name ?? id;
 const eventName = (id: string) => team.events.find((e) => e.id === id)?.name ?? id;
 const activityLabel = (id: string) => flat.find((f) => f.activity.id === id)?.activity.name ?? id;
+// `usage` is authored as a markdown literal block. The drawer honours the one
+// piece of markdown the prose actually uses — the paragraph break — and folds
+// the soft wraps the YAML block preserved. Lists and emphasis wait for a renderer.
+const paragraphs = (text: string) =>
+  text.trim().split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' '));
 const producerOf = (art: string) => flat.find((f) => f.activity.produces.includes(art));
 const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? []).includes(art));
 ---
 
-<aside class="drawer" id="drawer" hidden aria-label="Detail drawer">
+<!-- Addressed by attribute, not id: the export puts one drawer per process document
+     in a single file, and an id can only name one of them. -->
+<aside class="drawer" data-drawer hidden aria-label="Detail drawer">
   <div class="module__head drawer__head">
     <span class="tab">DETAIL</span>
     <span class="module__title">Drill-Down</span>
@@ -97,10 +104,11 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
           {a.tooling ? (
             <div class="drawer__tooling">
               <p class="drawer__tool-line">
-                <span class="drawer__artifact">{harnessName(a.tooling.harness)} · {a.tooling.tooling}</span>
+                <span class="drawer__artifact">{harnessName(toolOf(team, a.tooling.tool).harness)} · {toolOf(team, a.tooling.tool).name}</span>
                 {a.tooling.asset && <span class="drawer__via"> · {a.tooling.asset}</span>}
               </p>
               <span class="chip">{LEVEL_LABELS[a.tooling.level]}</span>
+              {a.tooling.usage && paragraphs(a.tooling.usage).map((t) => <span class="drawer__usage">{t}</span>)}
               {(a.tooling.refs ?? []).length > 0 && (
                 <ul class="drawer__refs">
                   {a.tooling.refs!.map((ref) => (
@@ -125,71 +133,74 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
                 <li>
                   <span class="drawer__artifact">{c.name}</span>
                   <span class="drawer__via">
-                    {c.tooling ? ` ${harnessName(c.tooling.harness)} · ${c.tooling.tooling}` : ' open slot'}
+                    {c.tooling ? ` ${harnessName(toolOf(team, c.tooling.tool).harness)} · ${toolOf(team, c.tooling.tool).name}` : ' open slot'}
                   </span>
                 </li>
               ))}
             </ul>
-            <p class="drawer__none">Expand ▸ in FIG.01 to see it as a swimlane.</p>
+            <p class="drawer__none">Expand ▸ in the flow view to see it as a swimlane.</p>
           </div>
         )}
 
-        {team.skills.some((s) => s.when.some((w) => w.activity === a.id)) && (
+        {(a.recommends ?? []).length > 0 && (
           <div class="drawer__section">
-            <h4 class="drawer__label">Recommended skills here</h4>
+            <h4 class="drawer__label">Recommended tooling here</h4>
             <ul class="drawer__list">
-              {team.skills
-                .filter((s) => s.when.some((w) => w.activity === a.id))
-                .map((s) => (
-                  <li>
-                    <span class="drawer__artifact">{s.name}</span>
-                    <span class="drawer__via"> {harnessName(s.harness)}</span>
-                    {s.when
-                      .filter((w) => w.activity === a.id && w.event)
-                      .map((w) => (
-                        <span class="drawer__event"> <svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(w.event!)}</span>
-                      ))}
-                  </li>
-                ))}
+              {(a.recommends ?? []).map((r) => (
+                <li>
+                  <span class="drawer__artifact">{toolOf(team, r.tool).name}</span>
+                  <span class="drawer__via"> {harnessName(toolOf(team, r.tool).harness)}</span>
+                  {r.level && <span class="drawer__via"> · {LEVEL_LABELS[r.level]}</span>}
+                  {r.event && (
+                    <span class="drawer__event"> <svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(r.event)}</span>
+                  )}
+                  {r.usage && paragraphs(r.usage).map((t) => <span class="drawer__usage">{t}</span>)}
+                </li>
+              ))}
             </ul>
+            {a.tooling === undefined && (
+              <p class="drawer__none">Still an open slot — a recommendation says what is available, not how the work is done.</p>
+            )}
           </div>
         )}
       </div>
     ))}
 
-    {team.skills.map((s) => (
-      <div class="drawer__panel" data-detail={`skill:${s.id}`} hidden>
+    {team.tools.map((s) => {
+      const uses = usesOfTool(team, s.id);
+      return (
+      <div class="drawer__panel" data-detail={`tool:${s.id}`} hidden>
         <div class="drawer__title-row">
           <h3 class="drawer__name">{s.name}</h3>
         </div>
         <div class="drawer__chips">
           <span class="chip chip--inverse">{harnessName(s.harness)}</span>
-          {s.level && <span class="chip">{LEVEL_LABELS[s.level]}</span>}
-          {s.roles.map((r) => (
+          {[...new Set(uses.flatMap((u) => u.activity.roles))].map((r) => (
             <span class="chip">{roleName(r)}</span>
           ))}
         </div>
-        <p class="drawer__why">{s.tooling}</p>
+        <p class="drawer__why">{s.kind}</p>
+        {s.note && <p class="drawer__why">{s.note}</p>}
 
         <div class="drawer__section">
-          <h4 class="drawer__label">When</h4>
+          <h4 class="drawer__label">Reached for</h4>
           <ul class="drawer__list">
-            {s.when.map((w) => (
+            {uses.map(({ activity, rec }) => (
               <li>
-                {w.event && (
-                  <span class="drawer__event"><svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(w.event)}</span>
+                {rec?.event && (
+                  <span class="drawer__event"><svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(rec.event)} · </span>
                 )}
-                {w.event && w.activity && <span class="drawer__via"> · </span>}
-                {w.activity && (
-                  <span class="drawer__via">during <strong>{activityLabel(w.activity)}</strong></span>
-                )}
-                {w.note && <span class="drawer__via"> — {w.note}</span>}
+                <span class="drawer__via">
+                  {rec ? 'recommended in ' : 'fills '}
+                  <strong>{activityLabel(activity.id)}</strong>
+                </span>
+                {rec?.usage && paragraphs(rec.usage).map((t) => <span class="drawer__usage">{t}</span>)}
               </li>
             ))}
           </ul>
-          {s.when.some((w) => w.event) && (
+          {uses.some((u) => u.rec?.event) && (
             <p class="drawer__none">
-              Event-driven: this skill is reached for when the moment happens, not at a fixed step.
+              Event-driven: this tool is reached for when the moment happens, not at a fixed step.
             </p>
           )}
         </div>
@@ -205,7 +216,8 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
           </div>
         )}
       </div>
-    ))}
+      );
+    })}
   </div>
 </aside>
 
@@ -312,10 +324,19 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
     margin-right: 2px;
     vertical-align: -1px;
   }
+  /* The advice reads as prose under its line, not as another metadata column. */
+  .drawer__usage {
+    display: block;
+    font-size: var(--label);
+    line-height: 14px;
+    color: var(--sub);
+    margin-top: 2px;
+    max-width: 44ch;
+  }
   .drawer__none {
     font-size: var(--label);
     line-height: 14px;
-    color: var(--muted);
+    color: var(--sub);
     margin-top: 6px;
   }
   .drawer__tooling .chip {

@@ -28,10 +28,15 @@ activities:
     produces: [spec]
     why: Work without a written intent gets re-litigated at review time.
     tooling:
-      harness: claude-code
-      tooling: /spec-interview
+      tool: spec-interview
       level: assisted
-      refs: ["skills/spec-interview"]
+    recommends:
+      - tool: grill-me
+        usage: >-
+          Pressure-test the intent before it is written down — a spec that
+          survives interrogation gets re-litigated less at review time.
+      - tool: rovo-triage
+        usage: Pull what the backlog already knows, so the spec starts from it.
 
   - id: plan-work
     name: Plan Work
@@ -41,9 +46,14 @@ activities:
     produces: [work-plan]
     why: A shared plan is the cheapest place to catch a wrong decomposition.
     tooling:
-      harness: claude-code
-      tooling: plan mode
+      tool: plan-mode
       level: delegated-review
+    recommends:
+      - tool: grill-me
+        event: spec-ambiguous
+        usage: >-
+          Two readings of the spec survived contact with the plan. Resolve them
+          by interrogation before decomposing against the wrong one.
 
   - id: write-acceptance-criteria
     name: Write Acceptance Criteria
@@ -61,9 +71,26 @@ activities:
     produces: [change-set]
     why: The change itself — scoped by the plan, aimed at the criteria.
     tooling:
-      harness: claude-code
-      tooling: agent session
+      tool: agent-session
       level: delegated-review
+      usage: |
+        Runs the whole inner loop under review: explore, edit, run the tests,
+        repeat. The engineer reads every diff before it becomes a change set.
+    recommends:
+      - tool: wayfinder
+        level: assisted
+        event: task-too-big
+        usage: >-
+          Stop and re-decompose rather than pushing on. Solves the sunk-cost
+          drift where a half-built oversized task gets finished anyway.
+      - tool: plan-mode
+        event: task-too-big
+        usage: Drop out of writing and re-read the ground before re-cutting the work.
+      - tool: rework-loop
+        event: rework-requested
+        usage: >-
+          Work the verdict item by item. Rework is not a loop in the flow — it
+          is a moment here, with a play attached.
     activities:
       - id: break-down
         name: Break Down Task
@@ -72,8 +99,7 @@ activities:
         produces: [task-list]
         why: A task the agent can hold in one context is a task that ships.
         tooling:
-          harness: claude-code
-          tooling: plan mode
+          tool: plan-mode
           level: assisted
       - id: write-change
         name: Write Change
@@ -87,8 +113,7 @@ activities:
             roles: [engineer]
             produces: [context-notes]
             tooling:
-              harness: claude-code
-              tooling: explore subagent
+              tool: explore-subagent
               level: delegated-review
           - id: edit-test-loop
             name: Edit + Test Loop
@@ -96,8 +121,7 @@ activities:
             consumes: [context-notes]
             produces: [draft-change]
             tooling:
-              harness: claude-code
-              tooling: agent session
+              tool: agent-session
               level: delegated-review
       - id: self-review
         name: Self-Review
@@ -114,9 +138,13 @@ activities:
     produces: [test-suite]
     why: Criteria that never became tests are opinions, not gates.
     tooling:
-      harness: claude-code
-      tooling: /test-from-criteria
+      tool: test-from-criteria
       level: delegated-review
+      usage: |
+        Generates the suite from the acceptance criteria, one test per criterion.
+
+        Solves the drift where tests get written from the change instead of the
+        criteria — the suite then proves conformance, not behaviour.
 
   - id: assemble-evidence
     name: Assemble Evidence
@@ -126,8 +154,7 @@ activities:
     produces: [evidence-pack]
     why: Reviewers approve on vibes when the proof is scattered across tools.
     tooling:
-      harness: claude-code
-      tooling: /evidence-block
+      tool: evidence-block
       level: delegated-review
 
   - id: review-conformance
@@ -154,6 +181,5 @@ activities:
     produces: [release]
     why: The pipeline releases on green; a human can always hold the gate.
     tooling:
-      harness: ci
-      tooling: release gate
+      tool: release-gate
       level: gated-autonomous

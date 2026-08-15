@@ -39,7 +39,7 @@ For every artifact in an activity's `consumes:`, the composer finds the activity
 
 **How it's derived.** For each edge, compare role lists: if the producing activity and the consuming activity have no role in common, the edge is a handoff. An engineer passing a change-set to a reviewer is a handoff; an engineer's task-list feeding the engineer's own write-change is not.
 
-**How it renders.** A distinct edge treatment in FIG.01; the "N HANDOFF" count in each stage band's caption; the handoffs stat in the masthead (marked *derived*).
+**How it renders.** A distinct edge treatment in FIG.01; the handoffs stat in the masthead (marked *derived*).
 
 **Invariants & non-meanings.**
 - A handoff is not a bad thing to be minimized to zero — it's a *cost to be spent deliberately*. The review handoff is the point of having a reviewer.
@@ -53,9 +53,9 @@ For every artifact in an activity's `consumes:`, the composer finds the activity
 
 **Why it exists.** A figure needs an x-axis, and the honest one is dependency depth: everything an activity transitively needs sits somewhere to its left. Anything more (dates, durations, swim-by-sprint) would smuggle in claims the document doesn't make.
 
-**How it's derived.** Longest-path layering: activities consuming nothing (or only outside inputs) sit in column 0; every other activity sits one column right of the deepest producer it consumes from. Stage bands then span the columns their activities landed in.
+**How it's derived.** Longest-path layering: activities consuming nothing (or only outside inputs) sit in column 0; every other activity sits one column right of the deepest producer it consumes from.
 
-**How it renders.** The column grid of FIG.01, and the stage bands' widths. The figure's own caption states the contract: *x-order derived · topological · ordinal, not time*.
+**How it renders.** The column grid of FIG.01, headed one step per column (`STEP 01`, `STEP 02`, …). The column is the figure's only horizontal unit — nothing else is allowed to claim an x-range, because nothing else has one. The figure's own caption states the contract: *columns are steps · topological · ordinal, not time*.
 
 **Invariants & non-meanings.**
 - **Ordinal, never time.** Column width means nothing; two activities in one column are not simultaneous; a five-column process is not longer-running than a three-column one. No dates, durations, or deadlines exist anywhere in the model.

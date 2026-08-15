@@ -1,0 +1,171 @@
+---
+import type { Team } from '../lib/derive';
+
+interface Props {
+  team: Team;
+  teamId: string;
+}
+const { team, teamId } = Astro.props;
+// The description is authored as a YAML block, so it keeps the soft wraps the
+// block preserved. Fold them the way the activity drawer does.
+const paragraphs = (text: string) =>
+  text.trim().split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' '));
+---
+
+<aside class="tdrawer" id="team-drawer" hidden aria-label="Team document detail">
+  <div class="module__head tdrawer__head">
+    <span class="tab">DETAIL</span>
+    <span class="module__title">Team Document</span>
+    <button class="tdrawer__close" data-team-drawer-close aria-label="Close detail drawer">CLOSE ✕</button>
+  </div>
+
+  <div class="tdrawer__body">
+    <h3 class="tdrawer__name">{team.name}</h3>
+    <div class="tdrawer__chips">
+      <span class="chip chip--inverse">VERSION {team.version}</span>
+      <span class:list={['chip', { 'tdrawer__chip-living': team.status === 'living' }]}>
+        {team.status.toUpperCase()}
+      </span>
+    </div>
+
+    {team.description && (
+      <div class="tdrawer__section">
+        <h4 class="tdrawer__label">About</h4>
+        {paragraphs(team.description).map((p) => <p class="tdrawer__prose">{p}</p>)}
+      </div>
+    )}
+
+    <div class="tdrawer__section">
+      <h4 class="tdrawer__label">Source</h4>
+      <p class="tdrawer__path">content/teams/{teamId}/</p>
+      <p class="tdrawer__none">
+        One folder is one team: the document plus one file per process. The page has no
+        write path — the editor is the editor.
+      </p>
+    </div>
+  </div>
+</aside>
+
+<script>
+  const drawer = document.getElementById('team-drawer');
+  const openers = document.querySelectorAll<HTMLButtonElement>('[data-open-team]');
+  if (drawer && openers.length) {
+    let opener: HTMLButtonElement | null = null;
+
+    const setOpen = (open: boolean) => {
+      drawer.hidden = !open;
+      for (const b of openers) b.setAttribute('aria-expanded', String(open));
+    };
+    const close = () => {
+      setOpen(false);
+      // The drawer is opened from a single line of chrome; without this the focus
+      // ring lands at the top of the document and the reader loses their place.
+      opener?.focus();
+      opener = null;
+    };
+
+    for (const btn of openers) {
+      btn.addEventListener('click', () => {
+        opener = btn;
+        setOpen(true);
+        drawer.querySelector<HTMLButtonElement>('[data-team-drawer-close]')?.focus();
+      });
+    }
+    drawer.querySelector('[data-team-drawer-close]')?.addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !drawer.hidden) close();
+    });
+    // There is no scrim to click, so the page itself dismisses: anything outside
+    // the panel that is not the control that opened it closes the reading.
+    document.addEventListener('click', (e) => {
+      if (drawer.hidden) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest('#team-drawer') || t?.closest('[data-open-team]')) return;
+      setOpen(false);
+      opener = null;
+    });
+  }
+</script>
+
+<style>
+  .tdrawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(400px, 94vw);
+    background: var(--white);
+    border-left: 1px solid var(--ink);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+  }
+  .tdrawer[hidden] {
+    display: none;
+  }
+  .tdrawer__head {
+    background: var(--white);
+  }
+  .tdrawer__close {
+    margin-left: auto;
+    font-size: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 3px 4px;
+  }
+  .tdrawer__close:hover {
+    color: var(--accent);
+  }
+  .tdrawer__body {
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .tdrawer__name {
+    font-size: var(--subhead);
+    line-height: 20px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  .tdrawer__chips {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 7px;
+  }
+  .tdrawer__chip-living {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .tdrawer__section {
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+    margin-top: 12px;
+  }
+  .tdrawer__label {
+    font-size: var(--micro);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sub);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .tdrawer__prose {
+    font-size: var(--body);
+    line-height: 17px;
+  }
+  .tdrawer__prose + .tdrawer__prose {
+    margin-top: 8px;
+  }
+  .tdrawer__path {
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .tdrawer__none {
+    font-size: var(--label);
+    line-height: 14px;
+    color: var(--sub);
+    margin-top: 6px;
+    max-width: 44ch;
+  }
+</style>

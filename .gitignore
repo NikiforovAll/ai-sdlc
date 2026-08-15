@@ -1,7 +1,9 @@
 node_modules/
 dist/
+_exports/
 .astro/
 .impeccable/review/
+.impeccable/critique/
 .playwright-cli/
 _scratchpads/
 

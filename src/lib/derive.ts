@@ -1,8 +1,10 @@
 import type { CollectionEntry } from 'astro:content';
-import type { SubActivity } from '../content.config';
+import type { Recommendation, SubActivity } from './schema';
 
 export type TeamDoc = CollectionEntry<'teams'>['data'];
 export type ProcessDoc = CollectionEntry<'processes'>['data'];
+export type Tool = TeamDoc['tools'][number];
+export type { Recommendation };
 
 // The figures read one process at a time, against the team's shared catalogs.
 // `Team` is that merged reading — the shape every figure component takes.
@@ -30,17 +32,42 @@ export interface Derived {
   edges: Edge[];
   placed: Placed[];
   cols: number;
-  stageSpans: { stage: string; name: string; from: number; to: number }[];
-  handoffCount: number;
-  openSlots: number;
 }
 
-// Skills are a team catalog, but a process page should only show the plays that
-// touch it: an unbound skill (no activity named) applies anywhere.
+// Every use of a tool — a fill or a recommendation — names it by id. Resolving
+// through the catalog is what keeps the two from drifting apart: an id with no
+// entry is a content error, not a blank line in a figure.
+export function toolOf(team: Pick<TeamDoc, 'tools'>, id: string): Tool {
+  const t = team.tools.find((x) => x.id === id);
+  if (!t) throw new Error(`unknown tool "${id}" — no entry in the team's tools: catalog`);
+  return t;
+}
+
+// A use of a tool, read back from the activity side: the drawer and the playbook
+// both need "where is this reached for", which the catalog deliberately no longer says.
+export interface ToolUse {
+  activity: AnyActivity;
+  rec?: Recommendation;
+}
+
+export function usesOfTool(team: Team, id: string): ToolUse[] {
+  return flatten(team)
+    .flatMap(({ activity }) => [
+      ...(activity.tooling?.tool === id ? [{ activity }] : []),
+      ...(activity.recommends ?? [])
+        .filter((r) => r.tool === id)
+        .map((rec) => ({ activity, rec })),
+    ]);
+}
+
+// Tooling is a team catalog, but a process page should only show the entries the
+// process actually reaches for — as a fill, or as a recommendation on one of its
+// activities. The rest of the shelf stays on the team document.
 export function view(team: TeamDoc, process: ProcessDoc): Team {
-  const ids = new Set<string>();
+  const used = new Set<string>();
   const walk = (a: AnyActivity) => {
-    ids.add(a.id);
+    if (a.tooling) used.add(a.tooling.tool);
+    for (const r of a.recommends ?? []) used.add(r.tool);
     for (const c of a.activities ?? []) walk(c);
   };
   for (const a of process.activities) walk(a);
@@ -50,9 +77,7 @@ export function view(team: TeamDoc, process: ProcessDoc): Team {
     stages: process.stages,
     activities: process.activities,
     constraint: process.constraint,
-    skills: team.skills.filter(
-      (s) => !s.when.length || s.when.some((w) => !w.activity || ids.has(w.activity))
-    ),
+    tools: team.tools.filter((t) => used.has(t.id)),
   };
 }
 
@@ -108,39 +133,10 @@ export function derive(team: Team): Derived {
 
   const cols = Math.max(...placed.map((p) => p.col)) + 1;
 
-  const stageIndex = new Map(team.stages.map((s, i) => [s.id, i]));
-  const stageSpans = team.stages
-    .map((s) => {
-      const own = placed.filter((p) => p.activity.stage === s.id);
-      if (!own.length) return null;
-      return {
-        stage: s.id,
-        name: s.name,
-        from: Math.min(...own.map((p) => p.col)),
-        to: Math.max(...own.map((p) => p.col)),
-      };
-    })
-    .filter((s): s is NonNullable<typeof s> => s !== null)
-    .sort((a, b) => (stageIndex.get(a.stage) ?? 0) - (stageIndex.get(b.stage) ?? 0));
-
-  return {
-    edges,
-    placed,
-    cols,
-    stageSpans,
-    handoffCount: edges.filter((e) => e.handoff).length,
-    openSlots: countOpenSlots(team.activities),
-  };
-}
-
-// An open slot at any depth is still a gap in the roadmap, so the count recurses.
-export function countOpenSlots(activities: AnyActivity[]): number {
-  let n = 0;
-  for (const a of activities) {
-    if (!a.tooling) n++;
-    n += countOpenSlots(a.activities ?? []);
-  }
-  return n;
+  // No stage spans: a stage's activities can sit at interleaved depths (incident's
+  // `resolve` and `learn` both reach column 5), so a stage has no contiguous column
+  // range to band. FLOW groups by column; GRID is where stage is a column.
+  return { edges, placed, cols };
 }
 
 // Ordinal layering of a sub-process, over the children's own artifact edges.

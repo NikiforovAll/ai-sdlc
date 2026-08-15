@@ -47,7 +47,7 @@ Two concepts: **Recommendation** and **Event**.
 - **`level` is optional here**, unlike on a fill. Omitting it says "reach for this", not "reach for this at this degree of delegation" — the tool is the advice, the ladder is not always part of it.
 - A recommendation adds no edges, no columns, nothing to Layer 2's derivation. It annotates an activity; it never creates flow.
 
-> **Schema status.** The current schema carries the v2 top-level `skills:` catalog with its own ids and a `when:` list pointing at activities. The inversion is decided (D17) and lands with the model-v3 migration; this doc describes the target model.
+> **Schema status.** Built. The D17 inversion landed on 2026-08-15 with the model-v3 migration: the tool's `when:` list is gone, `recommends:` lives on the activity, the tool gained `note`, and the catalog no longer states roles. What used to be read off the catalog is now derived from the activity side — a role's playbook comes from the activities it owns, and a tool's drawer lists every activity that fills with it or recommends it. One deliberate gap: `usage` is authored as markdown but rendered as paragraphs only; lists and emphasis wait for a renderer.
 
 ---
 

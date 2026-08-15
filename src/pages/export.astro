@@ -1,0 +1,93 @@
+---
+// Every document in one page. `ai-sdlc export` builds this route and then folds
+// the stylesheets and the font into it, producing one self-contained file that
+// opens from `file://` with every interaction intact (D-CLI-3, D-CLI-4).
+import Layout from '../layouts/Layout.astro';
+import OverviewDoc from '../components/OverviewDoc.astro';
+import ProcessDoc from '../components/ProcessDoc.astro';
+import RoleDimStyle from '../components/RoleDimStyle.astro';
+import { overviewModel, processModels } from '../lib/docs';
+
+const [overview, processes] = await Promise.all([overviewModel(), processModels()]);
+---
+
+<Layout title={`${overview.team.name} — ai-sdlc`} description={overview.team.description}>
+  <RoleDimStyle roles={overview.team.roles} />
+
+  <nav class="switch module" aria-label="Document">
+    <span class="tab">DOCUMENT</span>
+    <button class="switch__doc" data-goto="" aria-pressed="true">{overview.team.name}</button>
+    {processes.map((p) => (
+      <button class="switch__doc" data-goto={p.slug} aria-pressed="false">{p.process.name}</button>
+    ))}
+    <span class="switch__note">one file · {processes.length + 1} documents · exported from ai-sdlc</span>
+  </nav>
+
+  <OverviewDoc model={overview} inline />
+  {processes.map((p) => <ProcessDoc model={p} hidden inline />)}
+</Layout>
+
+<script>
+  // There are no routes inside one file, so every link that named one becomes a
+  // document switch. `data-goto` carries the target ('' is the team document) and
+  // `data-focus` the drawer key the process document should open on arrival.
+  const TEAM = '__team';
+  const docs = new Map(
+    [...document.querySelectorAll<HTMLElement>('[data-doc]')].map((el) => [el.dataset.doc!, el])
+  );
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('.switch__doc')];
+
+  const show = (name: string, focus?: string) => {
+    const key = name || TEAM;
+    const target = docs.get(key);
+    if (!target) return;
+    for (const [id, el] of docs) el.hidden = id !== key;
+    for (const b of buttons) b.setAttribute('aria-pressed', String((b.dataset.goto || TEAM) === key));
+    window.scrollTo(0, 0);
+    if (focus) target.dispatchEvent(new CustomEvent('aisdlc:focus', { detail: focus }));
+  };
+
+  for (const el of document.querySelectorAll<HTMLElement>('[data-goto]')) {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      show(el.dataset.goto!, el.dataset.focus);
+    });
+  }
+</script>
+
+<style>
+  .switch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--white);
+  }
+  .switch__doc {
+    border: 1px solid var(--ink);
+    padding: 6px 10px 5px;
+    font-size: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 0.12s ease-out, color 0.12s ease-out;
+  }
+  .switch__doc:hover {
+    background: var(--washi);
+  }
+  .switch__doc[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--white);
+  }
+  .switch__note {
+    margin-left: auto;
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+</style>

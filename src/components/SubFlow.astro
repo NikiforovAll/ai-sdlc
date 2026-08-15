@@ -97,9 +97,10 @@ const cols = [...Array(d.cols).keys()];
   .subflow__act:hover {
     background: var(--washi);
   }
+  /* Same selection mark as the parent flow: washi plus a green spine, never an invert. */
   .subflow__act[aria-current='true'] {
-    background: var(--ink);
-    color: var(--white);
+    background: var(--washi);
+    border-left: 2px solid var(--accent);
   }
   .subflow__act--open {
     border-style: dashed;
@@ -123,9 +124,6 @@ const cols = [...Array(d.cols).keys()];
     font-size: var(--micro);
     letter-spacing: 0.06em;
     color: var(--sub);
-  }
-  .subflow__act[aria-current='true'] .subflow__level {
-    color: var(--line);
   }
   .subflow__expand {
     font-size: var(--micro);

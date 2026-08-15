@@ -29,8 +29,7 @@ activities:
     produces: [bug-report]
     why: An untriaged report is a rumour; triage decides whether it is work at all.
     tooling:
-      harness: jira-rovo
-      tooling: rovo agent
+      tool: rovo-triage
       level: delegated-review
 
   - id: reproduce-bug
@@ -40,6 +39,12 @@ activities:
     consumes: [bug-report]
     produces: [reproduction]
     why: A bug you cannot reproduce on demand is a hypothesis, and fixes to hypotheses do not hold.
+    recommends:
+      - tool: bisect
+        event: cannot-reproduce
+        usage: >-
+          Let history say when the behaviour changed — the first good build is a
+          reproduction recipe when the report is not one.
 
   - id: locate-cause
     name: Locate Cause
@@ -49,9 +54,11 @@ activities:
     produces: [root-cause]
     why: The first place the symptom appears is rarely the place the defect lives.
     tooling:
-      harness: claude-code
-      tooling: explore subagent
+      tool: explore-subagent
       level: delegated-review
+    recommends:
+      - tool: bisect
+        usage: The commit that introduced the symptom names the code that owns it.
 
   - id: write-regression-test
     name: Write Regression Test
@@ -61,8 +68,7 @@ activities:
     produces: [regression-test]
     why: The test is written from the reproduction, before the fix, or it only proves the fix compiles.
     tooling:
-      harness: claude-code
-      tooling: /test-from-repro
+      tool: test-from-repro
       level: delegated-review
 
   - id: apply-fix
@@ -73,8 +79,7 @@ activities:
     produces: [change-set]
     why: The narrowest change that turns the regression test green.
     tooling:
-      harness: claude-code
-      tooling: agent session
+      tool: agent-session
       level: delegated-review
 
   - id: assemble-fix-evidence
@@ -85,8 +90,7 @@ activities:
     produces: [evidence-pack]
     why: The proof a bugfix needs is narrow — the test failed before and passes after.
     tooling:
-      harness: claude-code
-      tooling: /evidence-block
+      tool: evidence-block
       level: delegated-review
 
   - id: review-fix
@@ -105,6 +109,5 @@ activities:
     produces: [release]
     why: A bugfix ships on the same gate as anything else; urgency is not an exemption.
     tooling:
-      harness: ci
-      tooling: release gate
+      tool: release-gate
       level: gated-autonomous
