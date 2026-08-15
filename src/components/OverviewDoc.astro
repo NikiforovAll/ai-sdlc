@@ -443,11 +443,13 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
     display: block;
     padding: 9px 10px 10px;
   }
+  /* The kicker recedes by case and tracking, not by a lighter gray: at 9px on
+     white the muted step is 2.85:1, and this id is the key the YAML and the lens
+     chips both speak. It keeps the base row id's sub color. */
   .rows--stack .row__id {
     display: block;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--muted);
     margin-bottom: 3px;
   }
   .rows--stack .row__name {
