@@ -518,6 +518,22 @@ const idleCells = steps.flatMap((s) =>
     font-weight: 700;
     cursor: help;
   }
+  /* Selection reads the same here as on an activity node — inverted ink — because
+     it answers the same question. It also answers a second one the activity mark
+     cannot: an artifact is drawn once per edge that carries it, so marking the key
+     rather than the label lights every hand-off of the same document at once. */
+  .fig__artifact[aria-current='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--white);
+    z-index: 24;
+  }
+  .fig__artifact[aria-current='true'] .fig__one {
+    color: var(--accent-on-ink);
+  }
+  .fig__lane-name[aria-current='true'] {
+    color: var(--accent);
+  }
   /* The label carries the ① but not the sentence behind it, so the note opens
      from the label itself as well as from the corner chip — the reader asking
      "why is this one marked?" is looking at the label, not the corner.

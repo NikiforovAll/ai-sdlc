@@ -151,6 +151,22 @@ const views = [
       });
     }
 
+    // The mark is one reading position, and it lands on every node that names the
+    // entry rather than on the one that was clicked: an artifact is drawn once per
+    // edge that moves it, a role once per lane, so marking a single node would
+    // leave the reader with the other appearances of the same thing unmarked.
+    const doors = [...root.querySelectorAll<HTMLElement>('[data-detail-key]')].filter(
+      (el) => !el.closest('[data-drawer]')
+    );
+    const clearMarks = () => {
+      for (const b of [...acts, ...tools, ...doors]) b.setAttribute('aria-current', 'false');
+    };
+    // Same rule for an activity, which is drawn once per view — the flow, the
+    // grid and the playbook each hold a node for it.
+    const markAct = (id: string) => {
+      for (const a of acts) if (a.dataset.act === id) a.setAttribute('aria-current', 'true');
+    };
+
     // Drawer
     const drawer = root.querySelector<HTMLElement>('[data-drawer]')!;
     const procOpen = root.querySelector<HTMLButtonElement>('[data-open-process]');
@@ -172,7 +188,7 @@ const views = [
       drawer.hidden = true;
       nav.clear();
       main.removeAttribute('data-drawer-open');
-      for (const a of [...acts, ...tools]) a.setAttribute('aria-current', 'false');
+      clearMarks();
       procOpen?.setAttribute('aria-expanded', 'false');
     };
 
@@ -217,15 +233,15 @@ const views = [
         track.scrollLeft += delta / (trackBox.width / track.clientWidth || 1);
       });
     procOpen?.addEventListener('click', () => {
-      for (const b of [...acts, ...tools]) b.setAttribute('aria-current', 'false');
+      clearMarks();
       openDrawer('__process');
       drawer.querySelector<HTMLButtonElement>('[data-drawer-close]')?.focus();
     });
     for (const btn of acts) {
       btn.addEventListener('click', () => {
         const id = btn.dataset.act!;
-        for (const a of acts) a.setAttribute('aria-current', String(a.dataset.act === id));
-        for (const s of tools) s.setAttribute('aria-current', 'false');
+        clearMarks();
+        markAct(id);
         openDrawer(id);
         bringIntoView(btn, 'nudge');
       });
@@ -233,8 +249,8 @@ const views = [
     for (const btn of tools) {
       btn.addEventListener('click', () => {
         const id = btn.dataset.tool!;
-        for (const s of tools) s.setAttribute('aria-current', String(s.dataset.tool === id));
-        for (const a of acts) a.setAttribute('aria-current', 'false');
+        clearMarks();
+        for (const s of tools) if (s.dataset.tool === id) s.setAttribute('aria-current', 'true');
         openDrawer(`tool:${id}`);
         bringIntoView(btn, 'nudge');
       });
@@ -249,11 +265,18 @@ const views = [
       const key = el?.dataset.detailKey;
       if (!key || !nav.has(key)) return;
       const deeper = Boolean(el!.closest('[data-drawer]')) && !drawer.hidden;
-      for (const b of [...acts, ...tools]) b.setAttribute('aria-current', 'false');
       // A key that names an activity has a node on the page, so the link moves the
       // selection there as well as the panel — otherwise the drawer changes under
       // the reader while the marked node still points at where they came from.
       const btn = acts.find((b) => b.dataset.act === key);
+      // A step taken from inside the drawer onto an entry with no node of its own —
+      // a harness, an event — leaves the mark where it is: BACK returns to the panel
+      // it came from, and that panel's node is still the reading position.
+      const marks = doors.filter((d) => d.dataset.detailKey === key);
+      if (btn || marks.length || !deeper) {
+        clearMarks();
+        for (const m of marks) m.setAttribute('aria-current', 'true');
+      }
       if (btn) {
         const panel = btn.closest<HTMLElement>('[data-viewpanel]');
         if (panel?.dataset.viewpanel) setView(panel.dataset.viewpanel);
@@ -311,7 +334,7 @@ const views = [
               ?.click();
           }
         }
-        for (const b of [...acts, ...tools]) b.setAttribute('aria-current', 'false');
+        clearMarks();
         btn.setAttribute('aria-current', 'true');
       }
       // The drawer opens first: it takes the right edge of the window, and the
