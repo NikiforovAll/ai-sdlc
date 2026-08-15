@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { flatten, LEVEL_LABELS, toolOf, usesOfTool } from '../lib/derive';
+import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, toolOf, usesOfTool } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -138,7 +138,22 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
                 <span class="drawer__artifact">{harnessName(toolOf(team, a.tooling.tool).harness)} · {toolOf(team, a.tooling.tool).name}</span>
                 {a.tooling.asset && <span class="drawer__via"> · {a.tooling.asset}</span>}
               </p>
-              <span class="chip">{LEVEL_LABELS[a.tooling.level]}</span>
+              <div class="drawer__ladder">
+                <span class="chip">{LEVEL_LABELS[a.tooling.level]}</span>
+                <span class="drawer__ladder-steps" aria-hidden="true">
+                  {LEVEL_ORDER.map((step) => (
+                    <span
+                      class={`drawer__ladder-step${
+                        LEVEL_ORDER.indexOf(a.tooling!.level) >= LEVEL_ORDER.indexOf(step)
+                          ? ' drawer__ladder-step--on'
+                          : ''
+                      }`}
+                    />
+                  ))}
+                </span>
+                <span class="drawer__ladder-loop">{LEVEL_NOTES[a.tooling.level].loop}</span>
+              </div>
+              <p class="drawer__ladder-note">{LEVEL_NOTES[a.tooling.level].note}</p>
               {a.tooling.usage && paragraphs(a.tooling.usage).map((t) => <span class="drawer__usage">{t}</span>)}
               {(a.tooling.refs ?? []).length > 0 && (
                 <ul class="drawer__refs">
@@ -362,6 +377,40 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
     vertical-align: -1px;
   }
   /* The advice reads as prose under its line, not as another metadata column. */
+  /* The figure can only show where a fill sits on the ladder. The drawer is where
+     the reader has stopped to ask what that position means, so the same four steps
+     are repeated here with the loop position spelled out beside them. */
+  .drawer__ladder {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .drawer__ladder-steps {
+    display: flex;
+    gap: 2px;
+  }
+  .drawer__ladder-step {
+    width: 12px;
+    height: 3px;
+    background: var(--line);
+  }
+  .drawer__ladder-step--on {
+    background: var(--accent);
+  }
+  .drawer__ladder-loop {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--sub);
+  }
+  .drawer__ladder-note {
+    font-size: var(--label);
+    line-height: 14px;
+    color: var(--sub);
+    max-width: 44ch;
+    margin-top: 4px;
+  }
   .drawer__usage {
     display: block;
     font-size: var(--label);

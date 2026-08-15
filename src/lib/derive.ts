@@ -184,9 +184,36 @@ export function flatten(team: Team): FlatActivity[] {
   return out;
 }
 
+// The levels are an ordinal ramp, not a set: a figure can draw the level as a
+// position on the scale rather than spend a text row on its name.
+export const LEVEL_ORDER = ['manual', 'assisted', 'delegated-review', 'gated-autonomous'];
+
 export const LEVEL_LABELS: Record<string, string> = {
   manual: 'MANUAL',
   assisted: 'ASSISTED',
   'delegated-review': 'DELEGATED + REVIEW',
   'gated-autonomous': 'GATED AUTO',
+};
+
+/* The ladder measures delegation, not maturity, so the reader needs the loop
+   position to read a level correctly — a figure can show where a fill sits on
+   the scale but not what standing there means. Wording follows the steps table
+   in docs/ontology/03-capability-fills.md. */
+export const LEVEL_NOTES: Record<string, { loop: string; note: string }> = {
+  manual: {
+    loop: 'NO LOOP',
+    note: 'The human does the work; no capability is involved.',
+  },
+  assisted: {
+    loop: 'HUMAN IN THE LOOP',
+    note: 'The human does the work and steers throughout; the tool drafts and accelerates inside that loop.',
+  },
+  'delegated-review': {
+    loop: 'HUMAN ON THE LOOP',
+    note: 'The tool does the work and hands it back; the human reviews the result.',
+  },
+  'gated-autonomous': {
+    loop: 'HUMAN AT THE GATE',
+    note: 'The tool does the work and proceeds unless stopped; the human holds the gate.',
+  },
 };

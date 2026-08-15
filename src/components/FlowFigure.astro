@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { derive, LEVEL_LABELS } from '../lib/derive';
+import { derive, LEVEL_LABELS, LEVEL_ORDER } from '../lib/derive';
 import SubFlow from './SubFlow.astro';
 
 interface Props {
@@ -214,8 +214,23 @@ const idleCells = steps.flatMap((s) =>
             >
               <span class="fig__act-stage">{stageName(p.activity.stage)}</span>
               <span class="fig__act-name">{p.activity.name}</span>
-              <span class="fig__act-level">{p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}</span>
+              <span class="fig__act-level">
+                <span class="fig__act-level-name">
+                  {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
+                </span>
+                <span
+                  class={`fig__act-track${p.activity.tooling ? '' : ' fig__act-track--open'}`}
+                  aria-hidden="true"
+                  style={`--lv:${
+                    p.activity.tooling ? LEVEL_ORDER.indexOf(p.activity.tooling.level) : 0
+                  }`}
+                >
+                  <span class="fig__act-fill" />
+                </span>
+              </span>
             </button>
+
+
             {kids > 0 && (
               <button
                 class="fig__expand"
@@ -358,10 +373,37 @@ const idleCells = steps.flatMap((s) =>
     line-height: 13px;
     font-weight: 700;
   }
+  /* The level names itself and shows its place: the word answers "which level",
+     the 2px track under it answers "how far along the ramp" without spending a
+     second row. The word sits a step under --micro because at this size the track
+     carries the scan and the text is only read on the card you stopped at. */
   .fig__act-level {
-    font-size: var(--micro);
-    letter-spacing: 0.06em;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    line-height: 1;
+    font-size: 8px;
+    letter-spacing: 0.08em;
     color: var(--sub);
+  }
+  .fig__act-track {
+    height: 2px;
+    background: var(--line);
+  }
+  .fig__act-fill {
+    display: block;
+    height: 100%;
+    width: calc((var(--lv) + 1) / 4 * 100%);
+    background: var(--accent);
+  }
+  .fig__act-track--open .fig__act-fill {
+    width: 0;
+  }
+  .fig__act[aria-current='true'] .fig__act-track {
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .fig__act[aria-current='true'] .fig__act-fill {
+    background: var(--accent-on-ink);
   }
   .fig__act--open:hover {
     border-color: var(--ink);
