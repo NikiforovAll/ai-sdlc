@@ -3,6 +3,7 @@ dist/
 _exports/
 _examples/
 .astro/
+.aisdlc-roots/
 .impeccable/review/
 .impeccable/critique/
 .playwright-cli/

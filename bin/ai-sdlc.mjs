@@ -15,11 +15,12 @@
 // Neither asks a question: the interview lives in the `map-team` skill, because
 // the model is a graph and a prompt sequence can only walk a list (D-AUTH-1).
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
 const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -55,11 +56,11 @@ async function teamDirOf(positional) {
 
 // Astro renders this package's components, with the team folder injected by
 // environment — the content root is a variable, not the cwd (D-CLI-2).
-function astro(args, teamDir, extraEnv = {}) {
+function astro(args, teamDir, extraEnv = {}, root = PKG_ROOT) {
   return new Promise((done, fail) => {
     const child = spawn(
       process.execPath,
-      [join(PKG_ROOT, 'node_modules', 'astro', 'astro.js'), ...args, '--root', PKG_ROOT],
+      [join(PKG_ROOT, 'node_modules', 'astro', 'astro.js'), ...args, '--root', root],
       {
         stdio: 'inherit',
         env: { ...process.env, AISDLC_TEAM_DIR: teamDir, ...extraEnv },
@@ -120,12 +121,41 @@ async function cmdStatus(positionals) {
   reportStatus(await describeTeam(teamDir));
 }
 
+// Astro keeps its content store in `<root>/.astro`, and that store holds one
+// team — so two servers sharing this package as their root each overwrite the
+// other's team on sync, and both pages end up rendering whichever folder synced
+// last. Each team therefore gets a root of its own: an empty directory with a
+// config that points `srcDir` back here, which is all a root has to be.
+async function serveRoot(teamDir) {
+  const key = createHash('sha1').update(teamDir).digest('hex').slice(0, 8);
+  // Inside the package, not the temp dir: a root elsewhere on disk has no
+  // `node_modules` above it, and Vite resolves the package's own dependencies by
+  // walking up from the root.
+  const dir = join(PKG_ROOT, '.aisdlc-roots', `${basename(teamDir)}-${key}`);
+  await mkdir(dir, { recursive: true });
+  // Same 8.3 short-name trap as the team folder: the watcher asserts on a path
+  // that does not match the directory it registered, and `%TEMP%` is where
+  // Windows still hands out `NIKIFO~1`.
+  const root = realpathSync.native(dir);
+  const url = (p) => JSON.stringify(pathToFileURL(join(PKG_ROOT, p)).href);
+  await writeFile(
+    join(root, 'astro.config.mjs'),
+    [
+      `import base from ${url('astro.config.mjs')};`,
+      `export default { ...base, srcDir: ${JSON.stringify(join(PKG_ROOT, 'src'))} };`,
+      '',
+    ].join('\n'),
+    'utf8'
+  );
+  return root;
+}
+
 async function cmdServe(positionals, values) {
   const teamDir = await teamDirOf(positionals[0]);
   const args = ['dev'];
   if (values.port) args.push('--port', String(values.port));
   if (values.host) args.push('--host');
-  await astro(args, teamDir);
+  await astro(args, teamDir, {}, await serveRoot(teamDir));
 }
 
 async function cmdExport(positionals, values) {
