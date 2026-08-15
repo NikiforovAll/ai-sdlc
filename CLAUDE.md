@@ -26,7 +26,9 @@ The folder name is the team id and each process file name is its process id — 
 
 ## Verifying a change
 
-`npx astro build` is the gate. There is no test suite and no linter, so a clean build reporting the expected page count (5 for the reference team) is the evidence that a change holds. `node bin/ai-sdlc.mjs check <team-dir>` validates YAML alone, without booting Astro.
+`npx astro build` is the gate. There is no test suite and no linter, so a clean build reporting the expected page count (5 for the reference team, 3 for a folder from `ai-sdlc new`) is the evidence that a change holds. `node bin/ai-sdlc.mjs check <team-dir>` validates YAML alone, without booting Astro.
+
+`check` and `status` answer different questions and only one is a gate: `check` is schema-only and exits non-zero, `status` inventories how complete a document is and always exits 0. An id an activity references but no catalog defines belongs to `status` — it is schema-legal, so `check` passes it, and unless it is a **tool** id (which fails the build) the only symptom is an arrow that never draws.
 
 Edit source with the Edit tool. `sed -i` writes a temp file and renames it over the original, which breaks the Astro dev-server watcher: the browser keeps serving the previous CSS while the file on disk is already correct, so computed styles read from the page disagree with the source for reasons unrelated to the change being made.
 

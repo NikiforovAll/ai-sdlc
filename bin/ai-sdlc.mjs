@@ -1,16 +1,22 @@
 #!/usr/bin/env node
 // The CLI layer — see `_plans/spec-cli-layer.md`.
 //
+//   ai-sdlc new    <team-dir> [--name <team name>]
 //   ai-sdlc serve  <team-dir> [--port <n>] [--host]
 //   ai-sdlc export <team-dir> [--out <file>]
 //   ai-sdlc check  <team-dir>
+//   ai-sdlc status <team-dir>
 //
-// `<team-dir>` is required in all three. No default and no cwd sniffing: the CLI
-// is always explicit about what it renders, and `npm run dev` stays the repo's
-// own entry point.
+// `<team-dir>` is required in all of them. No default and no cwd sniffing: the
+// CLI is always explicit about what it renders, and `npm run dev` stays the
+// repo's own entry point.
+//
+// `new` and `status` are the authoring layer — see `_plans/spec-authoring.md`.
+// Neither asks a question: the interview lives in the `map-team` skill, because
+// the model is a graph and a prompt sequence can only walk a list (D-AUTH-1).
 import { spawn } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,9 +26,11 @@ const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const USAGE = `ai-sdlc — render a team's delivery process document
 
+  ai-sdlc new    <team-dir> [--name <team name>]    write a skeleton team folder
   ai-sdlc serve  <team-dir> [--port <n>] [--host]   mapping-session surface, hot reload
   ai-sdlc export <team-dir> [--out <file>]          one self-contained HTML file
   ai-sdlc check  <team-dir>                         validate the YAML, print errors
+  ai-sdlc status <team-dir>                         how far along the document is
 
 <team-dir> holds team.yaml and processes/*.yaml.`;
 
@@ -60,6 +68,56 @@ function astro(args, teamDir, extraEnv = {}) {
     child.on('error', fail);
     child.on('exit', (code) => (code === 0 ? done() : fail(new Error(`astro exited ${code}`))));
   });
+}
+
+// `acme-delivery` → `Acme Delivery`. The folder name is the team id either way;
+// this only supplies a readable `name:` when --name is not given.
+const titleCase = (slug) =>
+  slug
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
+
+// The skeleton is the smallest team the schema accepts and the renderer draws
+// (D-AUTH-2): one role, one artifact, one stage, one open activity. It is not
+// impressive, and that is the point — nothing on the page is a stranger's
+// process for the team to argue with.
+async function cmdNew(positionals, values) {
+  if (!positionals[0]) die(`missing <team-dir>\n\n${USAGE}`);
+  const dir = resolve(positionals[0]);
+
+  const existing = await readdir(dir).catch(() => null);
+  if (existing?.length) die(`"${dir}" already has files in it — new writes into an empty folder`);
+
+  const name = values.name ?? titleCase(basename(dir));
+  const templates = join(PKG_ROOT, 'templates');
+
+  const team = (await readFile(join(templates, 'team.yaml'), 'utf8')).replace('name: New Team', `name: ${name}`);
+  const process_ = await readFile(join(templates, 'processes', 'delivery.yaml'), 'utf8');
+
+  await mkdir(join(dir, 'processes'), { recursive: true });
+  await writeFile(join(dir, 'team.yaml'), team, 'utf8');
+  await writeFile(join(dir, 'processes', 'delivery.yaml'), process_, 'utf8');
+
+  const here = basename(dir);
+  console.log(
+    [
+      `${here}/`,
+      `  team.yaml                  ${name} — 1 role, 1 artifact, empty catalogs`,
+      `  processes/delivery.yaml    1 stage, 1 activity, no tooling`,
+      '',
+      'next',
+      `  ai-sdlc serve ${positionals[0]}      render it, and leave this running`,
+      `  claude → /map-team           map the team into it while the page redraws`,
+    ].join('\n')
+  );
+}
+
+async function cmdStatus(positionals) {
+  const teamDir = await teamDirOf(positionals[0]);
+  const { describeTeam, reportStatus } = await import('./status.mjs');
+  reportStatus(await describeTeam(teamDir));
 }
 
 async function cmdServe(positionals, values) {
@@ -117,11 +175,14 @@ const { values, positionals } = parseArgs({
     port: { type: 'string' },
     host: { type: 'boolean' },
     out: { type: 'string' },
+    name: { type: 'string' },
   },
 });
 
 try {
-  if (command === 'serve') await cmdServe(positionals, values);
+  if (command === 'new') await cmdNew(positionals, values);
+  else if (command === 'status') await cmdStatus(positionals);
+  else if (command === 'serve') await cmdServe(positionals, values);
   else if (command === 'export') await cmdExport(positionals, values);
   else if (command === 'check') await cmdCheck(positionals);
   else die(`unknown command "${command}"\n\n${USAGE}`);

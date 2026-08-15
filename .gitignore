@@ -1,6 +1,7 @@
 node_modules/
 dist/
 _exports/
+_examples/
 .astro/
 .impeccable/review/
 .impeccable/critique/

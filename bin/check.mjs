@@ -8,6 +8,7 @@ import { teamSchema, processSchema } from '../src/lib/schema.ts';
 
 export async function checkTeam(teamDir) {
   const problems = [];
+  const docs = [];
 
   const run = async (file, schema) => {
     let data;
@@ -15,7 +16,7 @@ export async function checkTeam(teamDir) {
       data = parse(await readFile(file, 'utf8'));
     } catch (err) {
       problems.push({ file, path: '', message: err.message.split('\n')[0] });
-      return;
+      return null;
     }
     const result = schema.safeParse(data);
     if (!result.success) {
@@ -23,9 +24,13 @@ export async function checkTeam(teamDir) {
         problems.push({ file, path: issue.path.join('.'), message: issue.message });
       }
     }
+    return data;
   };
 
-  await run(join(teamDir, 'team.yaml'), teamSchema);
+  // The raw parse is returned alongside the verdict so `status` can describe a
+  // document without parsing it a second time — including one that fails the
+  // schema, which during authoring is the normal state.
+  const team = await run(join(teamDir, 'team.yaml'), teamSchema);
 
   const procDir = join(teamDir, 'processes');
   let files = [];
@@ -39,14 +44,17 @@ export async function checkTeam(teamDir) {
   if (files.length === 0 && problems.every((p) => p.file !== procDir)) {
     problems.push({ file: procDir, path: '', message: 'no process files' });
   }
-  for (const f of files) await run(join(procDir, f), processSchema);
+  for (const f of files) {
+    const data = await run(join(procDir, f), processSchema);
+    docs.push({ id: f.replace(/\.yaml$/, ''), file: join(procDir, f), data });
+  }
 
-  return { problems };
+  return { problems, team, docs };
 }
 
 // A team folder outside the cwd relativizes into a stack of `..`; the absolute
 // path is the shorter and clearer address there.
-const address = (file) => {
+export const address = (file) => {
   const rel = relative(process.cwd(), file);
   return !rel || rel.startsWith('..') ? file : rel;
 };

@@ -4,6 +4,8 @@
 
 A team document is one YAML file describing how a team delivers changes and where AI is utilized. Everything you see rendered is either **authored** (you wrote it) or **derived** (the composer computed it from what you wrote). The ontology docs walk the model in dependency order — each layer only uses vocabulary defined before it.
 
+> **These docs are a reference, not a prerequisite.** Nobody reads five documents before starting. To author a new team, run `ai-sdlc new <dir>` and then the `map-team` skill, which teaches the vocabulary by translating a team's own sentences into it during the mapping session. Come back here afterwards, when you are maintaining the document rather than writing it. See `_plans/spec-authoring.md`.
+
 ```mermaid
 flowchart TB
   subgraph L1["Layer 1 — Process spine (authored)"]

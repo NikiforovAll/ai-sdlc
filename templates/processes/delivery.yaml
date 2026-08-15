@@ -1,0 +1,35 @@
+# One process: a named way work flows through this team.
+#
+# The file name is the process id — this file renders at /delivery. Rename the
+# file to rename the process. Add a second file here for a second way work
+# flows (a bugfix path, an incident path); each gets its own page.
+
+name: Delivery
+
+# Stages label activities with a coarse phase. They are a map, never a gate —
+# nothing is enforced by a stage, and activities in the same stage can sit at
+# different depths in the flow.
+stages:
+  - id: build
+    name: Build
+
+# The activity is the atomic unit: who does it, where it sits, what it takes in
+# and what it leaves behind. Everything else in the figures is derived from
+# these four facts.
+activities:
+  - id: make-change
+    name: Make a Change
+    stage: build
+    roles: [engineer]
+    produces: [change-set]
+
+    # Two fields worth knowing about before you need them:
+    #
+    #   why:      one sentence on why this activity exists. It reads in the drawer.
+    #   tooling:  { tool: <id>, level: manual | assisted | delegated-review |
+    #              gated-autonomous } — what does this work today. Leave it off
+    #              and the activity draws dashed: an open slot.
+    #
+    # A `consumes:` list turns this into a flow. The moment a second activity
+    # consumes `change-set`, an arrow appears between them, and if the two
+    # activities share no role that arrow is a handoff.

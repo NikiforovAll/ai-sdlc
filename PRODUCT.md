@@ -12,7 +12,7 @@ Astro with content collections (decided pre-init as D3 in `_scratchpads/design/d
 
 ## Users
 
-- **Coach / process designer** — authors a team's process YAML and runs live mapping sessions: edits the YAML on a screen-share while the rendered site hot-reloads beside it. The site has no write path; the editor is the editor.
+- **Coach / process designer** — authors a team's process YAML and runs live mapping sessions: edits the YAML on a screen-share while the rendered site hot-reloads beside it. The site has no write path; the editor is the editor. A new team starts from `ai-sdlc new <dir>` (a minimal renderable skeleton) and the `map-team` skill, which conducts the session's interview and writes the YAML as the team talks — see `_plans/spec-authoring.md`.
 - **Team members** — read the rendered site to understand how their project works and how AI is utilized: which activities exist, who does them, what artifacts flow between them, which capability slots are filled with tools and which are open.
 
 ## Product Purpose
