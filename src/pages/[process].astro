@@ -1,0 +1,288 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import FlowFigure from '../components/FlowFigure.astro';
+import GridFigure from '../components/GridFigure.astro';
+import PlaybookFigure from '../components/PlaybookFigure.astro';
+import Drawer from '../components/Drawer.astro';
+import { view } from '../lib/derive';
+
+export async function getStaticPaths() {
+  const teams = await getCollection('teams');
+  const processes = await getCollection('processes');
+  return processes.map((p) => {
+    const [teamId, slug] = p.id.split('/');
+    const teamEntry = teams.find((t) => t.id === teamId)!;
+    return {
+      params: { process: slug },
+      props: {
+        slug,
+        teamId,
+        team: teamEntry.data,
+        process: p.data,
+        siblings: processes
+          .filter((s) => s.id.startsWith(`${teamId}/`))
+          .map((s) => ({ slug: s.id.split('/')[1], name: s.data.name })),
+      },
+    };
+  });
+}
+
+const { slug, teamId, team, process, siblings } = Astro.props;
+const doc = view(team, process);
+
+const dimCss = doc.roles
+  .map(
+    (r) =>
+      `main[data-role="${r.id}"] [data-roles]:not([data-roles~="${r.id}"]){opacity:.22;}` +
+      `main[data-role="${r.id}"] button[data-roles]:not([data-roles~="${r.id}"]){pointer-events:none;}` +
+      // Playbook is a per-role reading surface: non-matching roles collapse to a ghost pane instead of dimming.
+      `main[data-role="${r.id}"] .pb__role:not([data-roles~="${r.id}"]) > :not(.pb__ghost){display:none;}` +
+      `main[data-role="${r.id}"] .pb__role:not([data-roles~="${r.id}"]) .pb__ghost{display:flex;}` +
+      `main[data-role="${r.id}"] .pb__role:not([data-roles~="${r.id}"]){opacity:1;}`
+  )
+  .join('\n');
+
+const views = [
+  { id: 'flow', label: 'FLOW', hint: 'FIG.01 swimlanes' },
+  { id: 'grid', label: 'GRID', hint: 'FIG.02 stage × role' },
+  { id: 'playbook', label: 'PLAYBOOK', hint: 'FIG.03 harness by role' },
+];
+
+const file = `content/teams/${teamId}/processes/${slug}.yaml`;
+---
+
+<Layout title={`${process.name} — ${team.name}`} description={process.description}>
+  <style is:inline set:html={dimCss}></style>
+
+  <main data-role="" data-view="flow">
+    <header class="mast module">
+      <div class="mast__top">
+        <span class="tab">PROCESS</span>
+        <a class="mast__up" href="/">↑ {team.name}</a>
+        <span class="mast__file">{file}</span>
+        <span class="mast__status">
+          {doc.activities.length} ACTIVITIES · {process.stages.length} STAGES
+        </span>
+      </div>
+      <div class="mast__main">
+        <h1 class="mast__name">{process.name}</h1>
+        {process.description && <p class="mast__desc">{process.description}</p>}
+      </div>
+      <nav class="mast__switch" aria-label="Process">
+        <span class="tab tab--quiet">PROCESSES</span>
+        {siblings.map((s) => (
+          <a
+            class="mast__proc"
+            href={`/${s.slug}`}
+            aria-current={s.slug === slug ? 'page' : undefined}
+          >
+            {s.name}
+          </a>
+        ))}
+        <span class="mast__stagerun">
+          {process.stages.map((st, i) => (
+            <>
+              {i > 0 && <span class="mast__stagesep" aria-hidden="true">→</span>}
+              <span class="mast__stage">{st.name}</span>
+            </>
+          ))}
+        </span>
+      </nav>
+    </header>
+
+    <nav class="bar module" aria-label="View and filter">
+      <div class="bar__views" role="group" aria-label="View mode">
+        <span class="tab">VIEW</span>
+        {views.map((v) => (
+          <button class="bar__view" data-viewbtn={v.id} aria-pressed={v.id === 'flow' ? 'true' : 'false'}>
+            {v.label}
+            <span class="bar__view-hint">{v.hint}</span>
+          </button>
+        ))}
+      </div>
+      <div class="bar__filter" role="group" aria-label="Filter by role">
+        <span class="tab tab--quiet">LENS</span>
+        <button class="filter__chip" data-filter="" aria-pressed="true">All roles</button>
+        {doc.roles.map((r) => (
+          <button class="filter__chip" data-filter={r.id} aria-pressed="false">{r.name}</button>
+        ))}
+        <span class="bar__readout" id="filter-readout">all {doc.activities.length} activities in scope</span>
+      </div>
+    </nav>
+
+    <div data-viewpanel="flow">
+      <FlowFigure team={doc} />
+    </div>
+    <div data-viewpanel="grid">
+      <GridFigure team={doc} />
+    </div>
+    <div data-viewpanel="playbook">
+      <PlaybookFigure team={doc} />
+    </div>
+
+    <footer class="foot">
+      <p>
+        Rendered from <strong>{file}</strong> over the catalogs in <strong>content/teams/{teamId}/team.yaml</strong> —
+        edit either and save; the page hot-reloads. Sequence is ordinal (topological order of artifact edges),
+        never time. Rework is assumed, not drawn. Skills fire on workflow events, not just process position.
+      </p>
+    </footer>
+  </main>
+
+  <Drawer team={doc} />
+
+  <script>
+    const main = document.querySelector('main')!;
+    const readout = document.getElementById('filter-readout')!;
+    const acts = [...document.querySelectorAll<HTMLButtonElement>('button[data-act]')];
+    const skills = [...document.querySelectorAll<HTMLButtonElement>('button[data-skill]')];
+    const topActs = acts.filter((a) => a.dataset.depth === '0');
+    const total = new Set(topActs.map((a) => a.dataset.act)).size;
+
+    // View switcher
+    for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-viewbtn]')) {
+      btn.addEventListener('click', () => {
+        main.dataset.view = btn.dataset.viewbtn!;
+        for (const b of document.querySelectorAll('[data-viewbtn]')) {
+          b.setAttribute('aria-pressed', String(b === btn));
+        }
+      });
+    }
+
+    // Role filter (counts top-level activities only)
+    for (const chip of document.querySelectorAll<HTMLButtonElement>('.filter__chip')) {
+      chip.addEventListener('click', () => {
+        const role = chip.dataset.filter ?? '';
+        main.dataset.role = role;
+        for (const c of document.querySelectorAll('.filter__chip')) {
+          c.setAttribute('aria-pressed', String(c === chip));
+        }
+        if (!role) {
+          readout.textContent = `all ${total} activities in scope`;
+        } else {
+          const inScope = new Set(
+            topActs.filter((a) => (a.dataset.roles ?? '').split(' ').includes(role)).map((a) => a.dataset.act)
+          ).size;
+          readout.textContent = `${chip.textContent?.trim()} — ${inScope} of ${total} activities in scope`;
+        }
+      });
+    }
+
+    // Drawer
+    const drawer = document.getElementById('drawer')!;
+    const panels = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
+    const openDrawer = (key: string) => {
+      for (const p of panels) p.hidden = p.dataset.detail !== key;
+      drawer.hidden = false;
+    };
+    const closeDrawer = () => {
+      drawer.hidden = true;
+      for (const a of [...acts, ...skills]) a.setAttribute('aria-current', 'false');
+    };
+    for (const btn of acts) {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.act!;
+        for (const a of acts) a.setAttribute('aria-current', String(a.dataset.act === id));
+        for (const s of skills) s.setAttribute('aria-current', 'false');
+        openDrawer(id);
+      });
+    }
+    for (const btn of skills) {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.skill!;
+        for (const s of skills) s.setAttribute('aria-current', String(s.dataset.skill === id));
+        for (const a of acts) a.setAttribute('aria-current', 'false');
+        openDrawer(`skill:${id}`);
+      });
+    }
+    document.querySelector('[data-drawer-close]')?.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !drawer.hidden) closeDrawer();
+    });
+
+    // Sub-process expand/collapse
+    for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-expand]')) {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.expand!;
+        const panel = btn.parentElement?.querySelector<HTMLElement>(`[data-subflow-panel="${CSS.escape(id)}"]`)
+          ?? document.querySelector<HTMLElement>(`[data-subflow-panel="${CSS.escape(id)}"]`);
+        if (!panel) return;
+        const open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.textContent = btn.textContent!.replace(open ? '▸' : '▾', open ? '▾' : '▸');
+      });
+    }
+  </script>
+</Layout>
+
+<style>
+  main[data-view='flow'] [data-viewpanel]:not([data-viewpanel='flow']),
+  main[data-view='grid'] [data-viewpanel]:not([data-viewpanel='grid']),
+  main[data-view='playbook'] [data-viewpanel]:not([data-viewpanel='playbook']) {
+    display: none;
+  }
+  .mast__up {
+    font-size: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    transition: border-color 0.12s var(--ease-out), color 0.12s var(--ease-out);
+  }
+  .mast__up:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .mast__switch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+    border-top: 1px solid var(--line);
+  }
+  .mast__proc {
+    border: 1px solid var(--ink);
+    padding: 6px 10px 5px;
+    font-size: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.12s ease-out, color 0.12s ease-out;
+  }
+  .mast__proc:hover {
+    background: var(--washi);
+  }
+  .mast__proc[aria-current='page'] {
+    background: var(--ink);
+    color: var(--white);
+  }
+  .mast__stagerun {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .mast__stage {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+  .mast__stagesep {
+    font-size: var(--micro);
+    color: var(--muted);
+  }
+  @media (max-width: 860px) {
+    .mast__stagerun {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+</style>

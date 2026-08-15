@@ -1,0 +1,144 @@
+name: Reference Delivery Team
+description: >-
+  A vendor-neutral reference for how a small product team delivers changes and
+  where AI is utilized. Copy this folder, rename the team, and fill the open slots.
+version: "0.3"
+status: living
+
+roles:
+  - id: lead
+    name: Product Lead
+    note: Owns intent — what to build and why.
+  - id: engineer
+    name: Engineer
+    note: Owns the change and its proof.
+  - id: reviewer
+    name: Reviewer
+    note: Owns conformance — the change matches the intent.
+  - id: operator
+    name: Release Operator
+    note: Owns the path to production.
+
+harnesses:
+  - id: claude-code
+    name: Claude Code
+    note: Agentic CLI — skills, plan mode, subagents.
+  - id: jira-rovo
+    name: Jira + Rovo
+    note: Work tracking with Rovo agents.
+  - id: ci
+    name: CI Pipeline
+    note: Build, test, and release automation.
+
+events:
+  - id: task-too-big
+    name: Task bigger than planned
+    description: Mid-task the work turns out larger than its plan — stop and re-decompose before pushing on.
+  - id: spec-ambiguous
+    name: Spec is ambiguous
+    description: Two readings of the spec survive contact with the work.
+  - id: rework-requested
+    name: Rework requested
+    description: The review verdict comes back with required changes.
+  - id: cannot-reproduce
+    name: Cannot reproduce
+    description: The report does not reproduce on demand — the bug is a hypothesis until it does.
+
+artifacts:
+  - id: spec
+    name: Spec
+  - id: work-plan
+    name: Work Plan
+  - id: acceptance-criteria
+    name: Acceptance Criteria
+  - id: task-list
+    name: Task List
+  - id: context-notes
+    name: Context Notes
+  - id: draft-change
+    name: Draft Change
+  - id: change-set
+    name: Change Set
+  - id: test-suite
+    name: Test Suite
+  - id: evidence-pack
+    name: Evidence Pack
+  - id: review-verdict
+    name: Review Verdict
+  - id: release-candidate
+    name: Release Candidate
+  - id: release
+    name: Release
+  - id: bug-report
+    name: Bug Report
+  - id: reproduction
+    name: Reproduction
+  - id: root-cause
+    name: Root Cause
+  - id: regression-test
+    name: Regression Test
+
+skills:
+  - id: grill-me
+    name: /grill-me
+    harness: claude-code
+    tooling: interview skill
+    level: assisted
+    roles: [lead, engineer]
+    when:
+      - activity: write-spec
+      - activity: plan-work
+        event: spec-ambiguous
+    refs: ["skills/grill-me"]
+
+  - id: wayfinder
+    name: /wayfinder
+    harness: claude-code
+    tooling: re-decomposition skill
+    level: assisted
+    roles: [engineer]
+    when:
+      - activity: implement
+        event: task-too-big
+    refs: ["skills/wayfinder"]
+
+  - id: plan-mode
+    name: Plan Mode
+    harness: claude-code
+    tooling: built-in mode
+    level: assisted
+    roles: [engineer]
+    when:
+      - activity: plan-work
+      - activity: implement
+        event: task-too-big
+
+  - id: rovo-triage
+    name: Backlog Triage Agent
+    harness: jira-rovo
+    tooling: rovo agent
+    level: delegated-review
+    roles: [lead]
+    when:
+      - activity: write-spec
+
+  - id: rework-loop
+    name: /address-verdict
+    harness: claude-code
+    tooling: rework skill
+    level: delegated-review
+    roles: [engineer]
+    when:
+      - activity: implement
+        event: rework-requested
+
+  - id: bisect
+    name: /bisect
+    harness: claude-code
+    tooling: history search skill
+    level: delegated-review
+    roles: [engineer]
+    when:
+      - activity: locate-cause
+      - activity: reproduce-bug
+        event: cannot-reproduce

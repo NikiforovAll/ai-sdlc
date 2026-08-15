@@ -1,0 +1,6 @@
+{
+  "files": ["src/components/DevLive.astro"],
+  "insertBefore": "<!-- live-inject-anchor -->",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

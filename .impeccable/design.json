@@ -1,0 +1,378 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-15T00:00:00Z",
+  "title": "Design System: ai-sdlc composer",
+  "extensions": {
+    "colorMeta": {
+      "signal-green": {
+        "role": "primary",
+        "displayName": "Signal Green",
+        "canonical": "#0f6b3c",
+        "tonalRamp": [
+          "oklch(20% 0.07 155)",
+          "oklch(30% 0.09 155)",
+          "oklch(40% 0.1 155)",
+          "oklch(50% 0.1 155)",
+          "oklch(62% 0.1 155)",
+          "oklch(74% 0.09 155)",
+          "oklch(86% 0.07 155)",
+          "oklch(95% 0.03 155)"
+        ]
+      },
+      "mint-on-ink": {
+        "role": "primary",
+        "displayName": "Mint On Ink",
+        "canonical": "#7fd6a8",
+        "tonalRamp": [
+          "oklch(25% 0.06 155)",
+          "oklch(38% 0.08 155)",
+          "oklch(50% 0.1 155)",
+          "oklch(62% 0.11 155)",
+          "oklch(72% 0.11 155)",
+          "oklch(80% 0.1 155)",
+          "oklch(88% 0.07 155)",
+          "oklch(95% 0.04 155)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111111",
+        "tonalRamp": [
+          "#111111",
+          "#2b2b2b",
+          "#444444",
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#f7f7f7"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#e4e4e0",
+          "#f2f2f2",
+          "#f7f7f7",
+          "#ffffff"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#dadada",
+        "tonalRamp": [
+          "#444444",
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#e4e4e0",
+          "#f2f2f2",
+          "#f7f7f7"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#f2f2f2",
+        "tonalRamp": [
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#e4e4e0",
+          "#f2f2f2",
+          "#f7f7f7",
+          "#ffffff"
+        ]
+      },
+      "washi": {
+        "role": "neutral",
+        "displayName": "Washi",
+        "canonical": "#f7f7f7",
+        "tonalRamp": [
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#e4e4e0",
+          "#f2f2f2",
+          "#f7f7f7",
+          "#ffffff"
+        ]
+      },
+      "sub": {
+        "role": "neutral",
+        "displayName": "Sub Text",
+        "canonical": "#666666",
+        "tonalRamp": [
+          "#111111",
+          "#2b2b2b",
+          "#444444",
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#f2f2f2"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Text",
+        "canonical": "#999999",
+        "tonalRamp": [
+          "#111111",
+          "#2b2b2b",
+          "#444444",
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#f2f2f2"
+        ]
+      },
+      "hatch": {
+        "role": "neutral",
+        "displayName": "Idle Hatch",
+        "canonical": "#e4e4e0",
+        "tonalRamp": [
+          "#666666",
+          "#999999",
+          "#bbbbbb",
+          "#dadada",
+          "#e4e4e0",
+          "#f2f2f2",
+          "#f7f7f7",
+          "#ffffff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Masthead name only — the team on the document page, the process on a process page; uppercase, tight leading."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Stat-strip numerals and process-card names (tabular)."
+      },
+      "subhead": {
+        "displayName": "Subhead",
+        "purpose": "Drawer titles and playbook role names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose: descriptions, drawer why-text; 11px/700 step for node titles."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Tabs, module titles, view buttons, filter chips; uppercase, tracked."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Workhorse caption: chips, levels, stage meta, artifact labels, section labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "inset-halo",
+        "value": "0 0 0 6px rgba(255, 255, 255, 0.94)",
+        "purpose": "White halo on the sub-process inset overlay; separates it from occluded lane content. The only shadow in the system."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "0.28s filter dim/undim opacity transitions on lanes, edges, labels, rows."
+      },
+      {
+        "name": "state-shift",
+        "value": "0.12s ease-out",
+        "purpose": "Washi hover wash and aria-current ink inversion on nodes, chips, view buttons."
+      },
+      {
+        "name": "link-shift",
+        "value": "0.14s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Process-card link hover: name and arrow go green, arrow slides 4px right. The only mark in the system that moves."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "figure-scroll-hint",
+        "value": "900px"
+      },
+      {
+        "name": "masthead-reflow",
+        "value": "860px"
+      },
+      {
+        "name": "module-head-wrap",
+        "value": "640px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Tab",
+      "kind": "chip",
+      "refersTo": "tab",
+      "description": "Signature green block label naming every module, figure, and stage band.",
+      "html": "<span class=\"ds-tab\">FIG.01</span>",
+      "css": ".ds-tab { display: inline-flex; align-items: center; gap: 6px; background: var(--accent, #0f6b3c); color: #ffffff; font-size: 10px; line-height: 1; font-weight: 700; letter-spacing: 0.08em; padding: 5px 8px 4px; text-transform: uppercase; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "9px uppercase metadata tag; muted and inverse variants.",
+      "html": "<span class=\"ds-chip\">Assisted</span> <span class=\"ds-chip ds-chip--muted\">Assisted</span> <span class=\"ds-chip ds-chip--inverse\">Build</span>",
+      "css": ".ds-chip { display: inline-block; border: 1px solid #111111; font-size: 9px; line-height: 1; font-weight: 600; letter-spacing: 0.06em; padding: 3px 5px 2px; text-transform: uppercase; white-space: nowrap; } .ds-chip--muted { border-color: #dadada; color: #666666; } .ds-chip--inverse { background: #111111; border-color: #111111; color: #ffffff; }"
+    },
+    {
+      "name": "Module",
+      "kind": "card",
+      "refersTo": "module",
+      "description": "Hairline-framed white panel with tabbed head row; the mosaic's building block.",
+      "html": "<section class=\"ds-module\"><div class=\"ds-module__head\"><span class=\"ds-tab\">FIG.02</span><span class=\"ds-module__title\">Grid — Capability Slots</span><span class=\"ds-module__meta\">dashed = open slot</span></div><div style=\"padding:10px 12px;font-size:12px;\">Module body</div></section>",
+      "css": ".ds-module { background: #ffffff; border: 1px solid #dadada; } .ds-module__head { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #dadada; padding: 6px 8px 6px 6px; } .ds-module__title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; } .ds-module__meta { margin-left: auto; font-size: 9px; letter-spacing: 0.06em; color: #666666; text-transform: uppercase; } .ds-tab { display: inline-flex; align-items: center; background: #0f6b3c; color: #ffffff; font-size: 10px; line-height: 1; font-weight: 700; letter-spacing: 0.08em; padding: 5px 8px 4px; text-transform: uppercase; }"
+    },
+    {
+      "name": "Activity Node",
+      "kind": "button",
+      "refersTo": "activity-node",
+      "description": "Atomic process unit: ink-bordered card, name over level caption; washes to washi on hover, inverts to solid ink when selected (aria-current).",
+      "html": "<button class=\"ds-node\"><span class=\"ds-node__name\">Write spec</span><span class=\"ds-node__level\">ASSISTED</span></button> <button class=\"ds-node\" aria-current=\"true\"><span class=\"ds-node__name\">Write spec</span><span class=\"ds-node__level\">ASSISTED</span></button>",
+      "css": ".ds-node { background: #ffffff; border: 1px solid #111111; border-radius: 0; padding: 7px 8px; text-align: left; display: flex; flex-direction: column; gap: 4px; width: 126px; min-height: 60px; cursor: pointer; font-family: inherit; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-node:hover { background: #f7f7f7; } .ds-node[aria-current='true'] { background: #111111; color: #ffffff; } .ds-node:focus-visible { outline: 2px solid #0f6b3c; outline-offset: 1px; } .ds-node__name { font-size: 11px; line-height: 13px; font-weight: 700; } .ds-node__level { font-size: 9px; letter-spacing: 0.06em; color: #666666; } .ds-node[aria-current='true'] .ds-node__level { color: #dadada; }"
+    },
+    {
+      "name": "Open Slot Node",
+      "kind": "button",
+      "refersTo": "activity-node-open",
+      "description": "Unfilled capability: dashed border, green stripe over washi, green OPEN SLOT caption. Reads as roadmap.",
+      "html": "<button class=\"ds-node ds-node--open\"><span class=\"ds-node__name\">Perf audit</span><span class=\"ds-node__level ds-node__level--open\">OPEN SLOT</span></button>",
+      "css": ".ds-node { background: #ffffff; border: 1px solid #111111; border-radius: 0; padding: 7px 8px; text-align: left; display: flex; flex-direction: column; gap: 4px; width: 126px; min-height: 60px; cursor: pointer; font-family: inherit; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-node--open { border-style: dashed; border-color: #999999; background-color: #f7f7f7; background-image: repeating-linear-gradient(135deg, transparent 0, transparent 5px, rgba(15, 107, 60, 0.12) 5px, rgba(15, 107, 60, 0.12) 6px); } .ds-node--open:hover { border-color: #111111; } .ds-node--open[aria-current='true'] { background-color: #111111; background-image: none; color: #ffffff; }.ds-node__name { font-size: 11px; line-height: 13px; font-weight: 700; } .ds-node__level { font-size: 9px; letter-spacing: 0.06em; color: #666666; } .ds-node__level--open { color: #0f6b3c; font-weight: 700; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "button",
+      "refersTo": "filter-chip",
+      "description": "Role-lens toggle: ink border, washi hover, inverts to solid ink when pressed.",
+      "html": "<button class=\"ds-filter\" aria-pressed=\"false\">Backend</button> <button class=\"ds-filter\" aria-pressed=\"true\">All roles</button>",
+      "css": ".ds-filter { border: 1px solid #111111; border-radius: 0; background: #ffffff; color: #111111; padding: 6px 10px 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-filter:hover { background: #f7f7f7; } .ds-filter[aria-pressed='true'] { background: #111111; color: #ffffff; } .ds-filter:focus-visible { outline: 2px solid #0f6b3c; outline-offset: 1px; }"
+    },
+    {
+      "name": "View Button",
+      "kind": "nav",
+      "refersTo": "view-button-active",
+      "description": "Two-line view switcher: tracked label over 9px hint; active = solid green.",
+      "html": "<div style=\"display:flex;border:1px solid #dadada;\"><button class=\"ds-view\" aria-pressed=\"true\">FLOW<span class=\"ds-view__hint\">FIG.01 swimlanes</span></button><button class=\"ds-view\" aria-pressed=\"false\">GRID<span class=\"ds-view__hint\">FIG.02 stage × role</span></button></div>",
+      "css": ".ds-view { display: flex; flex-direction: column; gap: 1px; padding: 7px 12px 6px; border: none; border-left: 1px solid #dadada; background: #ffffff; color: #111111; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-align: left; cursor: pointer; font-family: inherit; text-transform: uppercase; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-view:first-child { border-left: none; } .ds-view:hover { background: #f7f7f7; } .ds-view[aria-pressed='true'] { background: #0f6b3c; color: #ffffff; } .ds-view__hint { font-size: 9px; font-weight: 400; letter-spacing: 0.04em; color: #666666; text-transform: none; } .ds-view[aria-pressed='true'] .ds-view__hint { color: rgba(255, 255, 255, 0.75); }"
+    },
+    {
+      "name": "Constraint Strip",
+      "kind": "custom",
+      "refersTo": "chip-inverse",
+      "description": "Ink-inverse full-width strip restating the single constraint; the mint ① is the marker.",
+      "html": "<p class=\"ds-constraint\"><span class=\"ds-constraint__one\">①</span>The spec is the constraint: nothing ships without consuming it.</p>",
+      "css": ".ds-constraint { background: #111111; color: #ffffff; padding: 9px 12px; font-size: 11px; line-height: 15px; margin: 0; } .ds-constraint__one { margin-right: 6px; color: #7fd6a8; font-weight: 700; font-size: 12px; }"
+    },
+    {
+      "name": "Process Card",
+      "kind": "card",
+      "refersTo": "process-card",
+      "description": "Document-page entry to one process: display name, description, stage run, counts, constraint.",
+      "html": "<a class=\"ds-proc\" href=\"/feature\"><span class=\"ds-proc__link\"><span class=\"ds-proc__name\">Feature</span><span class=\"ds-proc__go\" aria-hidden=\"true\">→</span></span><span class=\"ds-proc__desc\">The long path: an intent becomes a spec, a plan, a change, proof, and a release.</span><span class=\"ds-proc__stages\"><span class=\"ds-proc__stage\">Define</span><span class=\"ds-proc__stage\">Plan</span><span class=\"ds-proc__stage\">Build</span></span><span class=\"ds-proc__nums\"><span><span class=\"ds-proc__n\">14</span><span class=\"ds-proc__t\">Activities</span></span><span><span class=\"ds-proc__n\">5</span><span class=\"ds-proc__t\">Stages</span></span><span><span class=\"ds-proc__n ds-proc__n--open\">5</span><span class=\"ds-proc__t\">Open slots</span></span></span></a>",
+      "css": ".ds-proc { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 16px; background: #ffffff; color: #111111; text-decoration: none; border-left: 1px solid var(--line, #dadada); } .ds-proc__link { display: flex; align-items: baseline; gap: 10px; } .ds-proc__name { font-size: 28px; line-height: 30px; font-weight: 800; letter-spacing: -0.01em; text-transform: uppercase; border-bottom: 2px solid transparent; transition: border-color 0.14s cubic-bezier(0.16,1,0.3,1), color 0.14s cubic-bezier(0.16,1,0.3,1); } .ds-proc__go { font-size: 16px; color: var(--muted, #999999); transition: transform 0.14s cubic-bezier(0.16,1,0.3,1), color 0.14s cubic-bezier(0.16,1,0.3,1); } .ds-proc:hover .ds-proc__name, .ds-proc:focus-visible .ds-proc__name { color: var(--accent, #0f6b3c); border-color: var(--accent, #0f6b3c); } .ds-proc:hover .ds-proc__go { color: var(--accent, #0f6b3c); transform: translateX(4px); } .ds-proc__desc { font-size: 12px; line-height: 17px; color: var(--sub, #666666); max-width: 56ch; } .ds-proc__stages { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; } .ds-proc__stage { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sub, #666666); } .ds-proc__stage + .ds-proc__stage::before { content: \"\\2192\"; margin-right: 5px; color: var(--muted, #999999); font-weight: 400; } .ds-proc__nums { display: flex; border-top: 1px solid var(--line, #dadada); margin-top: 2px; } .ds-proc__nums > span { padding: 7px 14px 6px 0; } .ds-proc__n { display: block; font-size: 16px; font-weight: 800; line-height: 20px; } .ds-proc__n--open { color: var(--accent, #0f6b3c); } .ds-proc__t { display: block; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sub, #666666); }"
+    },
+    {
+      "name": "Catalog Row",
+      "kind": "custom",
+      "refersTo": "catalog-row",
+      "description": "One entry in a document-page catalog: name, id, note, and a right-aligned tag saying where it is used.",
+      "html": "<div class=\"ds-rows\"><div class=\"ds-row\"><span class=\"ds-row__name\">Evidence Pack</span><span class=\"ds-row__id\">evidence-pack</span><span class=\"ds-row__use\">Feature · Bugfix</span></div><div class=\"ds-row\"><span class=\"ds-row__name\">Release Candidate</span><span class=\"ds-row__id\">release-candidate</span><span class=\"ds-row__use\">Shelf inventory</span></div></div>",
+      "css": ".ds-rows { display: flex; flex-direction: column; } .ds-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 7px 8px 6px; border-bottom: 1px solid var(--line, #dadada); } .ds-row:last-child { border-bottom: none; } .ds-row:nth-child(even) { background: var(--washi, #f7f7f7); } .ds-row__name { font-size: 12px; font-weight: 700; color: #111111; } .ds-row__id { font-size: 9px; letter-spacing: 0.06em; color: var(--muted, #999999); } .ds-row__use { margin-left: auto; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sub, #666666); white-space: nowrap; }"
+    },
+    {
+      "name": "Process Switcher",
+      "kind": "nav",
+      "refersTo": "process-switch",
+      "description": "Sibling navigation on a process page; the filter-chip shape doing navigation, current page inverted to ink.",
+      "html": "<nav class=\"ds-switch\"><span class=\"ds-switch__tab\">Processes</span><a class=\"ds-switch__link\" href=\"/feature\" aria-current=\"page\">Feature</a><a class=\"ds-switch__link\" href=\"/bugfix\">Bugfix</a></nav>",
+      "css": ".ds-switch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 8px; border-top: 1px solid var(--line, #dadada); background: #ffffff; } .ds-switch__tab { background: var(--washi, #f7f7f7); color: var(--sub, #666666); font-size: 10px; line-height: 1; font-weight: 700; letter-spacing: 0.08em; padding: 5px 8px 4px; text-transform: uppercase; } .ds-switch__link { border: 1px solid #111111; padding: 6px 10px 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; color: #111111; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-switch__link:hover { background: var(--washi, #f7f7f7); } .ds-switch__link[aria-current=\"page\"] { background: #111111; color: #ffffff; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Dense Mosaic",
+    "overview": "A whole reading lives on one screen: a full-bleed mosaic of hairline-ruled, tabbed modules packed edge to edge, in the spirit of Japanese contemporary high-density web design. It refuses the airy sidebar-and-cards internal-tool dashboard. Nothing floats, nothing is rounded, nothing wastes a pixel; density is a feature, and the 1px gray hairline is the primary structural material. The team document is two page types cut from the same mosaic: the document page is the catalog (stat strip, one card per process, the shared catalogs as ruled row lists), and a process page is the reading of one process (no document-wide stats, a process switcher instead, and the three figures). The page is a printed process figure that happens to be interactive: every module is a numbered figure with a green tab, an uppercase title, and a right-aligned micro-caption. Ink on paper carries all content; a single utility green appears only as tabs and signals. The system encodes meaning, not decoration: dashed + stripe = open slot, ① = the single constraint, a bolt = a workflow event, a ghost pane = filtered out, a 45° hatch = an idle band; horizontal order is ordinal, never time, and rework is assumed, never drawn.",
+    "keyCharacteristics": [
+      "Edge-to-edge module mosaic ruled by 1px hairlines; zero border-radius, zero decorative shadows",
+      "One compact gothic (Archivo) at a strict 56/28/16/12/10/9 scale, tabular numerals everywhere",
+      "Green (#0f6b3c) reserved for tabs and semantic signals; ink inversion is the selection voice, washi wash the hover voice",
+      "Dense micro-typography: uppercase labels, wide tracking, 9-10px captions doing real work",
+      "Every visual device is a semantic encoding readable without a legend"
+    ],
+    "rules": [
+      {
+        "name": "The Green Is A Signal Rule",
+        "body": "Green never fills an area larger than a tab. It marks exactly six things: figure/section tabs, the active view, open slots, the ① constraint, workflow events, and expand/scroll affordances. A screen with green paragraphs or green panels is off-world.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Inversion Rule",
+        "body": "Persistent state is spoken by inverting to solid ink with white text — aria-current selection, the active filter chip, the constraint strip. Transient hover only washes to washi; dashed open slots darken their border to ink instead, since their base is already washi. No tints, no glows, no colored highlights.",
+        "section": "colors"
+      },
+      {
+        "name": "The Strict Scale Rule",
+        "body": "Sizes come from 56/28/16/12/10/9 (plus the 11px node-title step). No intermediate sizes; hierarchy is carried by weight, case, and tracking.",
+        "section": "typography"
+      },
+      {
+        "name": "The Uppercase Structure Rule",
+        "body": "Anything that names structure — tabs, titles, labels, levels, role names, OPEN SLOT — is uppercase with letter-spacing. Explanatory prose is never uppercase.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ordinal-Not-Time Rule",
+        "body": "Horizontal position encodes dependency order only. Nothing may imply duration, dates, or a timeline; rework loops are assumed to exist and are never drawn.",
+        "section": "layout"
+      },
+      {
+        "name": "The Shadowless Rule",
+        "body": "Surfaces never lift. If two layers must separate, use a solid 1px ink border and, for true overlays only, the white halo.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Semantic Texture Rule",
+        "body": "Dashed border + green stripe fill = open slot = the team's roadmap; 45° gray hatch = idle band; ① = the single constraint; bolt = workflow event; ghost pane = outside the current lens. These encodings are reserved — never reuse them decoratively, and never invent a second texture for a new meaning without adding it here.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do frame every new surface as a tabbed module: green tab, uppercase 10px title, 9px right-aligned meta, 1px hairline frame and internal rules.",
+      "Do speak state by ink inversion (#111111 bg, #ffffff text) and quiet hover by a washi wash; keep both at 0.12s ease-out.",
+      "Do reuse the semantic encodings exactly: dashed+stripe open slot, ① constraint, SVG bolt event, ghost pane, 45° idle hatch, 22% filter dim.",
+      "Do keep captions working: 9px uppercase micro-text with 0.04-0.1em tracking carries counts, sources, and derivations on every module.",
+      "Do let wide figures grow inside their own overflow-x: auto scroller with a green scroll hint at ≤900px; the page never scrolls horizontally.",
+      "Do divide a grid of peers (process cards, catalog rows) with a shared 1px hairline, not with borders and gaps; the seam is the divider.",
+      "Do state where a catalog entry is used in its row’s right-aligned micro tag, and say so plainly when nothing uses it (\"shelf inventory\", \"unused\", \"no play yet\")."
+    ],
+    "donts": [
+      "Don't round a corner, add a decorative shadow, or introduce a gradient; the only sanctioned shadow is the inset overlay's white halo.",
+      "Don't use green as a fill, background wash, or body-text color; it is a tab-and-signal ink only, with #7fd6a8 as its sole on-ink variant.",
+      "Don't imply time on any axis — no timelines, durations, dates, or drawn rework loops; sequence is topological order only.",
+      "Don't introduce a second typeface, an icon set, or sizes outside 56/28/16/12/10/9 (+11px node titles).",
+      "Don't float modules in whitespace or cap the page width; the mosaic runs edge to edge with only 8-10px seams of surface gray.",
+      "Don't repeat document-wide totals on a process page; a process states its own counts, and the document page owns the team's stat strip."
+    ]
+  }
+}

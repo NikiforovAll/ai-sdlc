@@ -1,0 +1,349 @@
+---
+import type { Team } from '../lib/derive';
+import { flatten, LEVEL_LABELS } from '../lib/derive';
+
+interface Props {
+  team: Team;
+}
+const { team } = Astro.props;
+const flat = flatten(team);
+
+const artifactName = (id: string) => team.artifacts.find((a) => a.id === id)?.name ?? id;
+const roleName = (id: string) => team.roles.find((r) => r.id === id)?.name ?? id;
+const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? id;
+const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.name ?? id;
+const eventName = (id: string) => team.events.find((e) => e.id === id)?.name ?? id;
+const activityLabel = (id: string) => flat.find((f) => f.activity.id === id)?.activity.name ?? id;
+const producerOf = (art: string) => flat.find((f) => f.activity.produces.includes(art));
+const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? []).includes(art));
+---
+
+<aside class="drawer" id="drawer" hidden aria-label="Detail drawer">
+  <div class="module__head drawer__head">
+    <span class="tab">DETAIL</span>
+    <span class="module__title">Drill-Down</span>
+    <button class="drawer__close" data-drawer-close aria-label="Close detail drawer">CLOSE ✕</button>
+  </div>
+
+  <div class="drawer__body">
+    {flat.map(({ activity: a, stage, parent, depth }) => (
+      <div class="drawer__panel" data-detail={a.id} hidden>
+        {parent && (
+          <p class="drawer__crumb">
+            {depth > 1 ? '… → ' : ''}inside <strong>{parent.name}</strong>
+          </p>
+        )}
+        <div class="drawer__title-row">
+          <h3 class="drawer__name">{a.name}</h3>
+        </div>
+        <div class="drawer__chips">
+          <span class="chip chip--inverse">{stageName(stage)}</span>
+          {a.roles.map((r) => (
+            <span class="chip">{roleName(r)}</span>
+          ))}
+        </div>
+        {a.why && <p class="drawer__why">{a.why}</p>}
+
+        <div class="drawer__section">
+          <h4 class="drawer__label">Consumes</h4>
+          {(a.consumes ?? []).length ? (
+            <ul class="drawer__list">
+              {(a.consumes ?? []).map((art) => {
+                const from = producerOf(art);
+                const handoff = from && !from.activity.roles.some((r) => a.roles.includes(r));
+                return (
+                  <li>
+                    <span class="drawer__artifact">{artifactName(art)}</span>
+                    {from && (
+                      <span class="drawer__via">
+                        ← {from.activity.name}
+                        {handoff && <span class="drawer__handoff"> · handoff</span>}
+                        {team.constraint?.artifact === art && <span class="drawer__one"> ①</span>}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p class="drawer__none">Nothing — this is a source activity.</p>
+          )}
+        </div>
+
+        <div class="drawer__section">
+          <h4 class="drawer__label">Produces</h4>
+          <ul class="drawer__list">
+            {a.produces.map((art) => {
+              const consumers = consumersOf(art).filter((c) => c.activity.id !== a.id);
+              return (
+                <li>
+                  <span class="drawer__artifact">{artifactName(art)}</span>
+                  {consumers.length > 0 ? (
+                    <span class="drawer__via">
+                      → {consumers.map((c) => c.activity.name).join(', ')}
+                      {team.constraint?.artifact === art && <span class="drawer__one"> ①</span>}
+                    </span>
+                  ) : (
+                    <span class="drawer__via">→ leaves the process</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div class="drawer__section">
+          <h4 class="drawer__label">Tooling</h4>
+          {a.tooling ? (
+            <div class="drawer__tooling">
+              <p class="drawer__tool-line">
+                <span class="drawer__artifact">{harnessName(a.tooling.harness)} · {a.tooling.tooling}</span>
+                {a.tooling.asset && <span class="drawer__via"> · {a.tooling.asset}</span>}
+              </p>
+              <span class="chip">{LEVEL_LABELS[a.tooling.level]}</span>
+              {(a.tooling.refs ?? []).length > 0 && (
+                <ul class="drawer__refs">
+                  {a.tooling.refs!.map((ref) => (
+                    <li>{ref}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <p class="drawer__open-slot">
+              <span class="drawer__open-mark">OPEN SLOT</span>
+              Capability defined, tooling unfilled. Open slots are the team's roadmap.
+            </p>
+          )}
+        </div>
+
+        {(a.activities?.length ?? 0) > 0 && (
+          <div class="drawer__section">
+            <h4 class="drawer__label">Sub-process</h4>
+            <ul class="drawer__list">
+              {a.activities!.map((c) => (
+                <li>
+                  <span class="drawer__artifact">{c.name}</span>
+                  <span class="drawer__via">
+                    {c.tooling ? ` ${harnessName(c.tooling.harness)} · ${c.tooling.tooling}` : ' open slot'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p class="drawer__none">Expand ▸ in FIG.01 to see it as a swimlane.</p>
+          </div>
+        )}
+
+        {team.skills.some((s) => s.when.some((w) => w.activity === a.id)) && (
+          <div class="drawer__section">
+            <h4 class="drawer__label">Recommended skills here</h4>
+            <ul class="drawer__list">
+              {team.skills
+                .filter((s) => s.when.some((w) => w.activity === a.id))
+                .map((s) => (
+                  <li>
+                    <span class="drawer__artifact">{s.name}</span>
+                    <span class="drawer__via"> {harnessName(s.harness)}</span>
+                    {s.when
+                      .filter((w) => w.activity === a.id && w.event)
+                      .map((w) => (
+                        <span class="drawer__event"> <svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(w.event!)}</span>
+                      ))}
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    ))}
+
+    {team.skills.map((s) => (
+      <div class="drawer__panel" data-detail={`skill:${s.id}`} hidden>
+        <div class="drawer__title-row">
+          <h3 class="drawer__name">{s.name}</h3>
+        </div>
+        <div class="drawer__chips">
+          <span class="chip chip--inverse">{harnessName(s.harness)}</span>
+          {s.level && <span class="chip">{LEVEL_LABELS[s.level]}</span>}
+          {s.roles.map((r) => (
+            <span class="chip">{roleName(r)}</span>
+          ))}
+        </div>
+        <p class="drawer__why">{s.tooling}</p>
+
+        <div class="drawer__section">
+          <h4 class="drawer__label">When</h4>
+          <ul class="drawer__list">
+            {s.when.map((w) => (
+              <li>
+                {w.event && (
+                  <span class="drawer__event"><svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(w.event)}</span>
+                )}
+                {w.event && w.activity && <span class="drawer__via"> · </span>}
+                {w.activity && (
+                  <span class="drawer__via">during <strong>{activityLabel(w.activity)}</strong></span>
+                )}
+                {w.note && <span class="drawer__via"> — {w.note}</span>}
+              </li>
+            ))}
+          </ul>
+          {s.when.some((w) => w.event) && (
+            <p class="drawer__none">
+              Event-driven: this skill is reached for when the moment happens, not at a fixed step.
+            </p>
+          )}
+        </div>
+
+        {(s.refs ?? []).length > 0 && (
+          <div class="drawer__section">
+            <h4 class="drawer__label">Refs</h4>
+            <ul class="drawer__refs">
+              {s.refs!.map((ref) => (
+                <li>{ref}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+</aside>
+
+<style>
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(400px, 94vw);
+    background: var(--white);
+    border-left: 1px solid var(--ink);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+  }
+  .drawer[hidden] {
+    display: none;
+  }
+  .drawer__head {
+    background: var(--white);
+  }
+  .drawer__close {
+    margin-left: auto;
+    font-size: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 3px 4px;
+  }
+  .drawer__close:hover {
+    color: var(--accent);
+  }
+  .drawer__body {
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .drawer__crumb {
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .drawer__name {
+    font-size: var(--subhead);
+    line-height: 20px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .drawer__chips {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 7px;
+  }
+  .drawer__why {
+    margin-top: 9px;
+    font-size: var(--body);
+    line-height: 17px;
+  }
+  .drawer__section {
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+    margin-top: 12px;
+  }
+  .drawer__label {
+    font-size: var(--micro);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sub);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .drawer__list {
+    list-style: none;
+  }
+  .drawer__list li + li {
+    margin-top: 5px;
+  }
+  .drawer__artifact {
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .drawer__via {
+    font-size: var(--label);
+    color: var(--sub);
+  }
+  .drawer__handoff {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .drawer__one {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .drawer__event {
+    font-size: var(--label);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .drawer__bolt {
+    width: 7px;
+    height: 9px;
+    margin-right: 2px;
+    vertical-align: -1px;
+  }
+  .drawer__none {
+    font-size: var(--label);
+    line-height: 14px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .drawer__tooling .chip {
+    margin-top: 6px;
+  }
+  .drawer__tool-line {
+    font-size: 11px;
+  }
+  .drawer__refs {
+    list-style: none;
+    margin-top: 4px;
+  }
+  .drawer__refs li {
+    font-size: var(--label);
+    color: var(--sub);
+  }
+  .drawer__open-slot {
+    font-size: 11px;
+    line-height: 15px;
+    color: var(--sub);
+    max-width: 40ch;
+  }
+  .drawer__open-mark {
+    display: block;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-size: var(--micro);
+    margin-bottom: 4px;
+  }
+</style>

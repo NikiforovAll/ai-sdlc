@@ -1,0 +1,231 @@
+---
+import type { Team } from '../lib/derive';
+import { LEVEL_LABELS } from '../lib/derive';
+
+interface Props {
+  team: Team;
+}
+const { team } = Astro.props;
+
+const cell = (roleId: string, stageId: string) =>
+  team.activities.filter((a) => a.stage === stageId && a.roles.includes(roleId));
+const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.name ?? id;
+---
+
+<section class="module grid" aria-label="Figure 02 — Stage by Role Grid">
+  <div class="module__head">
+    <span class="tab">FIG.02</span>
+    <span class="module__title">Grid — Capability Slots by Stage × Role</span>
+    <span class="grid__scrollhint" aria-hidden="true">scroll →</span>
+    <span class="module__meta">dashed = open slot, waiting for tooling</span>
+  </div>
+  <div class="grid__scroll">
+    <table class="grid__table">
+      <thead>
+        <tr>
+          <th class="grid__corner" scope="col"><span class="grid__corner-label">Role ↓ / Stage →</span></th>
+          {team.stages.map((s) => (
+            <th scope="col" class="grid__stage"><span class="tab">{s.name}</span></th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {team.roles.map((r) => (
+          <tr data-roles={r.id}>
+            <th scope="row" class="grid__role">
+              <span class="grid__role-name">{r.name}</span>
+              <span class="grid__role-note">{r.note}</span>
+            </th>
+            {team.stages.map((s) => {
+              const acts = cell(r.id, s.id);
+              return (
+                <td class="grid__cell">
+                  {acts.map((a) => (
+                    <button
+                      class={`grid__act${a.tooling ? '' : ' grid__act--open'}`}
+                      data-act={a.id}
+                      data-roles={a.roles.join(' ')}
+                      data-depth="0"
+                      aria-label={`${a.name} — details`}
+                    >
+                      <span class="grid__act-name">
+                        {a.name}
+                        {(a.activities?.length ?? 0) > 0 && (
+                          <span class="grid__nested">▸ {a.activities!.length} inside</span>
+                        )}
+                      </span>
+                      <span class="grid__act-fill">
+                        {a.tooling ? (
+                          <>
+                            <span class="grid__tool">{harnessName(a.tooling.harness)} · {a.tooling.tooling}</span>
+                            <span class="chip chip--muted">{LEVEL_LABELS[a.tooling.level]}</span>
+                          </>
+                        ) : (
+                          <span class="grid__open">OPEN SLOT</span>
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<style>
+  .grid__scroll {
+    overflow-x: auto;
+  }
+  .grid__table {
+    width: 100%;
+    min-width: 860px;
+    border-collapse: collapse;
+  }
+  .grid__table th,
+  .grid__table td {
+    border: 1px solid var(--line);
+    vertical-align: top;
+    text-align: left;
+  }
+  .grid__table tr > *:first-child {
+    border-left: none;
+  }
+  .grid__table tr > *:last-child {
+    border-right: none;
+  }
+  .grid__table thead th {
+    border-top: none;
+  }
+  .grid__table tbody tr:last-child > * {
+    border-bottom: none;
+  }
+  .grid__corner {
+    width: 150px;
+    padding: 6px 10px;
+    background: var(--washi);
+  }
+  .grid__corner-label {
+    font-size: var(--micro);
+    letter-spacing: 0.08em;
+    color: var(--sub);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .grid__stage {
+    padding: 6px 8px;
+    background: var(--washi);
+  }
+  .grid__role {
+    width: 150px;
+    padding: 8px 10px;
+  }
+  .grid__role-name {
+    display: block;
+    font-size: var(--body);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .grid__role-note {
+    display: block;
+    margin-top: 3px;
+    font-size: var(--micro);
+    line-height: 12px;
+    color: var(--sub);
+    font-weight: 400;
+  }
+  .grid__cell {
+    padding: 6px;
+    min-width: 132px;
+  }
+  .grid__act {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    text-align: left;
+    background: var(--white);
+    border: 1px solid var(--ink);
+    padding: 7px 8px;
+    transition: background 0.12s ease-out, color 0.12s ease-out, opacity 0.16s ease-out;
+  }
+  .grid__act + .grid__act {
+    margin-top: 6px;
+  }
+  .grid__act:hover {
+    background: var(--washi);
+  }
+  .grid__act[aria-current='true'] {
+    background: var(--ink);
+    color: var(--white);
+  }
+  .grid__act--open {
+    border-style: dashed;
+    border-color: var(--muted);
+    background-color: var(--washi);
+    background-image: var(--stripe);
+  }
+  .grid__act--open:hover {
+    border-color: var(--ink);
+  }
+  .grid__scrollhint {
+    display: none;
+    font-size: var(--micro);
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  @media (max-width: 900px) {
+    .grid__scrollhint {
+      display: inline;
+    }
+  }
+  .grid__nested {
+    margin-left: 6px;
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .grid__act[aria-current='true'] .grid__nested {
+    color: var(--line);
+  }
+  .grid__act-name {
+    font-size: 11px;
+    line-height: 13px;
+    font-weight: 700;
+  }
+  .grid__act-fill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .grid__tool {
+    font-size: var(--micro);
+    letter-spacing: 0.04em;
+    color: var(--sub);
+  }
+  .grid__act[aria-current='true'] .grid__tool {
+    color: var(--line);
+  }
+  .grid__act[aria-current='true'] .chip--muted {
+    color: var(--line);
+    border-color: var(--sub);
+  }
+  .grid__open {
+    font-size: var(--micro);
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  tr[data-roles] {
+    transition: opacity 0.28s var(--ease-out);
+  }
+</style>

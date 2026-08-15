@@ -1,0 +1,146 @@
+---
+import type { Team, SubActivity } from '../lib/derive';
+import { deriveSub, LEVEL_LABELS } from '../lib/derive';
+
+interface Props {
+  team: Team;
+  activities: SubActivity[];
+}
+const { team, activities } = Astro.props;
+const d = deriveSub(activities);
+
+const rolesUsed = team.roles.filter((r) => activities.some((a) => a.roles.includes(r.id)));
+const cell = (roleId: string, col: number) =>
+  d.placed.filter((p) => p.col === col && p.activity.roles[0] === roleId);
+const cols = [...Array(d.cols).keys()];
+---
+
+<div class="subflow" style={`--subcols:${d.cols}`}>
+  {rolesUsed.map((r) => (
+    <div class="subflow__row" data-roles={r.id}>
+      <span class="subflow__role">{r.name}</span>
+      {cols.map((c) => (
+        <div class="subflow__cell">
+          {cell(r.id, c).map((p) => (
+            <>
+              <button
+                class={`subflow__act${p.activity.tooling ? '' : ' subflow__act--open'}`}
+                data-act={p.activity.id}
+                data-roles={p.activity.roles.join(' ')}
+                data-depth="sub"
+                aria-label={`${p.activity.name} — details`}
+              >
+                <span class="subflow__name">{p.activity.name}</span>
+                <span class="subflow__level">
+                  {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
+                </span>
+              </button>
+              {(p.activity.activities?.length ?? 0) > 0 && (
+                <button class="subflow__expand" data-expand={p.activity.id} aria-expanded="false">
+                  ▸ {p.activity.activities!.length} inside
+                </button>
+              )}
+              {(p.activity.activities?.length ?? 0) > 0 && (
+                <div class="subflow__nest" data-subflow-panel={p.activity.id} hidden>
+                  <Astro.self team={team} activities={p.activity.activities!} />
+                </div>
+              )}
+            </>
+          ))}
+        </div>
+      ))}
+    </div>
+  ))}
+</div>
+
+<style>
+  .subflow {
+    display: flex;
+    flex-direction: column;
+  }
+  .subflow__row {
+    display: grid;
+    grid-template-columns: 92px repeat(var(--subcols), minmax(116px, max-content));
+    gap: 6px;
+    padding: 6px 0;
+    align-items: start;
+    transition: opacity 0.28s var(--ease-out);
+  }
+  .subflow__row + .subflow__row {
+    border-top: 1px solid var(--line);
+  }
+  .subflow__role {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sub);
+    padding-top: 8px;
+  }
+  .subflow__cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  .subflow__act {
+    background: var(--white);
+    border: 1px solid var(--ink);
+    padding: 6px 7px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+    transition: background 0.12s ease-out, color 0.12s ease-out, opacity 0.28s var(--ease-out);
+  }
+  .subflow__act:hover {
+    background: var(--washi);
+  }
+  .subflow__act[aria-current='true'] {
+    background: var(--ink);
+    color: var(--white);
+  }
+  .subflow__act--open {
+    border-style: dashed;
+    border-color: var(--muted);
+    background-color: var(--washi);
+    background-image: var(--stripe);
+  }
+  .subflow__act--open:hover {
+    border-color: var(--ink);
+  }
+  .subflow__act--open .subflow__level {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .subflow__name {
+    font-size: var(--label);
+    line-height: 12px;
+    font-weight: 700;
+  }
+  .subflow__level {
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    color: var(--sub);
+  }
+  .subflow__act[aria-current='true'] .subflow__level {
+    color: var(--line);
+  }
+  .subflow__expand {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 2px 0;
+  }
+  .subflow__expand[aria-expanded='true'] {
+    color: var(--ink);
+  }
+  .subflow__nest {
+    border-left: 2px solid var(--accent);
+    padding-left: 8px;
+    margin-top: 2px;
+  }
+</style>

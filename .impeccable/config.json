@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "11px",
+        "createdAt": "2026-08-14T08:30:28.335Z",
+        "reason": "established node-title step used across FlowFigure/GridFigure/Drawer/PlaybookFigure since the v1 build; intentional intermediate between 12 body and 10 label"
+      }
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+name: Bugfix
+description: >-
+  The short path: a report becomes a reproduction, a cause, a guarded fix, and a
+  release. No spec, no planning — the bug is the spec.
+
+stages:
+  - id: triage
+    name: Triage
+  - id: diagnose
+    name: Diagnose
+  - id: fix
+    name: Fix
+  - id: verify
+    name: Verify
+  - id: ship
+    name: Ship
+
+constraint:
+  artifact: reproduction
+  note: >-
+    Everything downstream is cheap once the bug reproduces on demand, and
+    guesswork until it does. The reproduction is where this path is won or lost.
+
+activities:
+  - id: triage-bug
+    name: Triage Report
+    stage: triage
+    roles: [lead]
+    produces: [bug-report]
+    why: An untriaged report is a rumour; triage decides whether it is work at all.
+    tooling:
+      harness: jira-rovo
+      tooling: rovo agent
+      level: delegated-review
+
+  - id: reproduce-bug
+    name: Reproduce
+    stage: diagnose
+    roles: [engineer]
+    consumes: [bug-report]
+    produces: [reproduction]
+    why: A bug you cannot reproduce on demand is a hypothesis, and fixes to hypotheses do not hold.
+
+  - id: locate-cause
+    name: Locate Cause
+    stage: diagnose
+    roles: [engineer]
+    consumes: [reproduction]
+    produces: [root-cause]
+    why: The first place the symptom appears is rarely the place the defect lives.
+    tooling:
+      harness: claude-code
+      tooling: explore subagent
+      level: delegated-review
+
+  - id: write-regression-test
+    name: Write Regression Test
+    stage: fix
+    roles: [engineer]
+    consumes: [reproduction]
+    produces: [regression-test]
+    why: The test is written from the reproduction, before the fix, or it only proves the fix compiles.
+    tooling:
+      harness: claude-code
+      tooling: /test-from-repro
+      level: delegated-review
+
+  - id: apply-fix
+    name: Apply Fix
+    stage: fix
+    roles: [engineer]
+    consumes: [root-cause, regression-test]
+    produces: [change-set]
+    why: The narrowest change that turns the regression test green.
+    tooling:
+      harness: claude-code
+      tooling: agent session
+      level: delegated-review
+
+  - id: assemble-fix-evidence
+    name: Assemble Evidence
+    stage: verify
+    roles: [engineer]
+    consumes: [change-set, regression-test]
+    produces: [evidence-pack]
+    why: The proof a bugfix needs is narrow — the test failed before and passes after.
+    tooling:
+      harness: claude-code
+      tooling: /evidence-block
+      level: delegated-review
+
+  - id: review-fix
+    name: Review Fix
+    stage: verify
+    roles: [reviewer]
+    consumes: [evidence-pack, bug-report]
+    produces: [review-verdict]
+    why: The review asks one question — does this close the reported bug without widening the blast radius.
+
+  - id: ship-fix
+    name: Ship Fix
+    stage: ship
+    roles: [operator]
+    consumes: [review-verdict, change-set]
+    produces: [release]
+    why: A bugfix ships on the same gate as anything else; urgency is not an exemption.
+    tooling:
+      harness: ci
+      tooling: release gate
+      level: gated-autonomous

@@ -1,0 +1,159 @@
+name: Feature
+description: >-
+  The long path: an intent becomes a spec, a plan, a change, proof, and a release.
+
+stages:
+  - id: define
+    name: Define
+  - id: plan
+    name: Plan
+  - id: build
+    name: Build
+  - id: verify
+    name: Verify
+  - id: ship
+    name: Ship
+
+constraint:
+  artifact: evidence-pack
+  note: >-
+    The evidence handoff is the system's constraint: everything upstream of it
+    moves faster than the reviewer can absorb proof. Improve here first.
+
+activities:
+  - id: write-spec
+    name: Write Spec
+    stage: define
+    roles: [lead]
+    produces: [spec]
+    why: Work without a written intent gets re-litigated at review time.
+    tooling:
+      harness: claude-code
+      tooling: /spec-interview
+      level: assisted
+      refs: ["skills/spec-interview"]
+
+  - id: plan-work
+    name: Plan Work
+    stage: plan
+    roles: [lead, engineer]
+    consumes: [spec]
+    produces: [work-plan]
+    why: A shared plan is the cheapest place to catch a wrong decomposition.
+    tooling:
+      harness: claude-code
+      tooling: plan mode
+      level: delegated-review
+
+  - id: write-acceptance-criteria
+    name: Write Acceptance Criteria
+    stage: plan
+    roles: [reviewer]
+    consumes: [spec]
+    produces: [acceptance-criteria]
+    why: Review against criteria written before the change, not after it.
+
+  - id: implement
+    name: Implement
+    stage: build
+    roles: [engineer]
+    consumes: [work-plan, acceptance-criteria]
+    produces: [change-set]
+    why: The change itself — scoped by the plan, aimed at the criteria.
+    tooling:
+      harness: claude-code
+      tooling: agent session
+      level: delegated-review
+    activities:
+      - id: break-down
+        name: Break Down Task
+        roles: [engineer]
+        consumes: [work-plan]
+        produces: [task-list]
+        why: A task the agent can hold in one context is a task that ships.
+        tooling:
+          harness: claude-code
+          tooling: plan mode
+          level: assisted
+      - id: write-change
+        name: Write Change
+        roles: [engineer]
+        consumes: [task-list]
+        produces: [draft-change]
+        why: The inner loop — explore, edit, test, repeat.
+        activities:
+          - id: explore
+            name: Explore Codebase
+            roles: [engineer]
+            produces: [context-notes]
+            tooling:
+              harness: claude-code
+              tooling: explore subagent
+              level: delegated-review
+          - id: edit-test-loop
+            name: Edit + Test Loop
+            roles: [engineer]
+            consumes: [context-notes]
+            produces: [draft-change]
+            tooling:
+              harness: claude-code
+              tooling: agent session
+              level: delegated-review
+      - id: self-review
+        name: Self-Review
+        roles: [engineer]
+        consumes: [draft-change]
+        produces: [change-set]
+        why: The author reads the diff as a reviewer before the reviewer must.
+
+  - id: write-tests
+    name: Write Tests
+    stage: build
+    roles: [engineer]
+    consumes: [acceptance-criteria]
+    produces: [test-suite]
+    why: Criteria that never became tests are opinions, not gates.
+    tooling:
+      harness: claude-code
+      tooling: /test-from-criteria
+      level: delegated-review
+
+  - id: assemble-evidence
+    name: Assemble Evidence
+    stage: verify
+    roles: [engineer]
+    consumes: [change-set, test-suite]
+    produces: [evidence-pack]
+    why: Reviewers approve on vibes when the proof is scattered across tools.
+    tooling:
+      harness: claude-code
+      tooling: /evidence-block
+      level: delegated-review
+
+  - id: review-conformance
+    name: Review Conformance
+    stage: verify
+    roles: [reviewer]
+    consumes: [evidence-pack, acceptance-criteria]
+    produces: [review-verdict]
+    why: The review judges evidence against criteria — not the diff against taste.
+
+  - id: prepare-release
+    name: Prepare Release
+    stage: ship
+    roles: [operator]
+    consumes: [review-verdict, change-set]
+    produces: [release-candidate]
+    why: A verdict is not a deployable; someone assembles what actually ships.
+
+  - id: ship
+    name: Ship
+    stage: ship
+    roles: [operator]
+    consumes: [release-candidate]
+    produces: [release]
+    why: The pipeline releases on green; a human can always hold the gate.
+    tooling:
+      harness: ci
+      tooling: release gate
+      level: gated-autonomous

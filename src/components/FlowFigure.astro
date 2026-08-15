@@ -1,0 +1,431 @@
+---
+import type { Team } from '../lib/derive';
+import { derive, LEVEL_LABELS } from '../lib/derive';
+import SubFlow from './SubFlow.astro';
+
+interface Props {
+  team: Team;
+}
+const { team } = Astro.props;
+const d = derive(team);
+
+const GUTTER = 150;
+const BAND = 36;
+const COLW = 150;
+const LANEH = 96;
+const NODEW = 126;
+const NODEH = 60;
+const STACK_GAP = 8;
+const EXPAND_H = 18;
+
+const actById = new Map(d.placed.map((p) => [p.activity.id, p.activity]));
+const expandExtra = (id: string) => ((actById.get(id)?.activities?.length ?? 0) > 0 ? EXPAND_H : 0);
+
+// Two parallel activities can land on the same (column, lane) slot; lanes grow
+// to hold their deepest stack instead of letting nodes overlap.
+const slotKey = (p: (typeof d.placed)[number]) => `${p.col}:${p.laneStart}:${p.laneEnd}`;
+const slots = new Map<string, string[]>();
+for (const p of d.placed) {
+  const k = slotKey(p);
+  slots.set(k, [...(slots.get(k) ?? []), p.activity.id]);
+}
+const laneUnits = team.roles.map((_, l) => {
+  let units = 1;
+  for (const p of d.placed) {
+    if (p.laneStart === p.laneEnd && p.laneStart === l) {
+      units = Math.max(units, slots.get(slotKey(p))!.length);
+    }
+  }
+  return units;
+});
+const laneY: number[] = [];
+let acc = BAND;
+for (const u of laneUnits) {
+  laneY.push(acc);
+  acc += u * LANEH;
+}
+const laneHpx = laneUnits.map((u) => u * LANEH);
+
+const width = GUTTER + d.cols * COLW;
+const height = acc;
+
+const pos = new Map(
+  d.placed.map((p) => {
+    const x = GUTTER + p.col * COLW + (COLW - NODEW) / 2;
+    const stack = slots.get(slotKey(p))!;
+    const k = stack.indexOf(p.activity.id);
+    const n = stack.length;
+    const spanH = laneHpx.slice(p.laneStart, p.laneEnd + 1).reduce((a, b) => a + b, 0);
+    const stackH = stack.reduce((a, id) => a + NODEH + expandExtra(id), 0) + (n - 1) * STACK_GAP;
+    const above = stack.slice(0, k).reduce((a, id) => a + NODEH + expandExtra(id) + STACK_GAP, 0);
+    const y = laneY[p.laneStart]! + (spanH - stackH) / 2 + above;
+    return [p.activity.id, { x, y, cy: y + NODEH / 2, p }];
+  })
+);
+
+const bezier = (t: number, a: number, c1: number, c2: number, b: number) =>
+  (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * c1 + 3 * (1 - t) * t ** 2 * c2 + t ** 3 * b;
+
+const paths = d.edges.map((e) => {
+  const a = pos.get(e.from)!;
+  const b = pos.get(e.to)!;
+  const x1 = a.x + NODEW;
+  const y1 = a.cy;
+  const x2 = b.x;
+  const y2 = b.cy;
+  const mx = (x1 + x2) / 2;
+  const t = 0.5;
+  return {
+    ...e,
+    d: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`,
+    mx: bezier(t, x1, mx, mx, x2),
+    my: bezier(t, y1, y1, y2, y2),
+    roles: [...new Set([...team.activities.find((t2) => t2.id === e.from)!.roles, ...team.activities.find((t2) => t2.id === e.to)!.roles])].join(' '),
+  };
+});
+
+const artifactName = (id: string) => team.artifacts.find((a) => a.id === id)?.name ?? id;
+
+// One label per (producer, artifact) — fan-out edges share it; keep the lowest, clearest spot.
+const labelEdges = [
+  ...paths
+    .filter((e) => e.handoff)
+    .reduce((m, e) => {
+      const k = `${e.from}:${e.artifact}`;
+      const prev = m.get(k);
+      if (!prev || e.my > prev.my) m.set(k, e);
+      return m;
+    }, new Map<string, (typeof paths)[number]>())
+    .values(),
+];
+
+const stageMeta = d.stageSpans.map((s) => {
+  const own = d.placed.filter((p) => p.activity.stage === s.stage);
+  const outbound = d.edges.filter((e) => e.handoff && own.some((p) => p.activity.id === e.from));
+  return { ...s, acts: own.length, handoffs: outbound.length };
+});
+
+// Idle bands: stage×lane cells no activity touches get a quiet hatch so empty space reads as claimed.
+const idleCells = d.stageSpans.flatMap((s, si) =>
+  team.roles.flatMap((_, l) => {
+    const occupied = d.placed.some(
+      (p) => p.activity.stage === s.stage && p.laneStart <= l && l <= p.laneEnd
+    );
+    return occupied ? [] : [{ x: GUTTER + s.from * COLW, y: laneY[l]!, w: (s.to - s.from + 1) * COLW, h: laneHpx[l]!, last: si === d.stageSpans.length - 1 }];
+  })
+);
+---
+
+<section class="module fig" aria-label="Figure 01 — Flow">
+  <div class="module__head">
+    <span class="tab">FIG.01</span>
+    <span class="module__title">Flow — Who Hands What to Whom</span>
+    <span class="fig__scrollhint" aria-hidden="true">scroll →</span>
+    <span class="module__meta">x-order derived · topological · ordinal, not time</span>
+  </div>
+  <div class="fig__scroll">
+    <div class="fig__canvas" style={`min-width:${width}px;height:${height}px`}>
+      <svg width="100%" height={height} role="img" aria-label="Activity flow: artifact handoffs between roles">
+        <defs>
+          <pattern id="idle-hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="7" stroke="#e4e4e0" stroke-width="1" />
+          </pattern>
+        </defs>
+        {d.stageSpans.map((s, i) => (
+          <rect
+            x={GUTTER + s.from * COLW}
+            y={0}
+            width={i === d.stageSpans.length - 1 ? '100%' : (s.to - s.from + 1) * COLW}
+            height={height}
+            fill={i % 2 ? '#f7f7f7' : '#ffffff'}
+          />
+        ))}
+        {idleCells.map((c) => (
+          <rect x={c.x} y={c.y} width={c.last ? '100%' : c.w} height={c.h} fill="url(#idle-hatch)" />
+        ))}
+        {team.roles.map((_, i) => (
+          <line x1={0} x2="100%" y1={laneY[i]} y2={laneY[i]} stroke="#dadada" stroke-width="1" />
+        ))}
+        <line x1={0} x2="100%" y1={height - 0.5} y2={height - 0.5} stroke="#dadada" stroke-width="1" />
+        <line x1={GUTTER - 0.5} x2={GUTTER - 0.5} y1={0} y2={height} stroke="#dadada" stroke-width="1" />
+        {paths.map((e) => (
+          <path
+            d={e.d}
+            fill="none"
+            stroke={e.constraint ? '#0f6b3c' : e.handoff ? '#666666' : '#bbbbbb'}
+            stroke-width={e.constraint ? 2 : 1.5}
+            data-roles={e.roles}
+            data-edge={`${e.from}->${e.to}`}
+            class="fig__edge"
+          />
+        ))}
+      </svg>
+
+      {stageMeta.map((s) => (
+        <div class="fig__stagehead" style={`left:${GUTTER + s.from * COLW + 8}px;top:4px;max-width:${(s.to - s.from + 1) * COLW - 16}px`}>
+          <span class="tab">{s.name}</span>
+          <span class="fig__stagemeta">{s.acts} ACT{s.handoffs ? ` · ${s.handoffs} HANDOFF` : ''}</span>
+        </div>
+      ))}
+
+      {team.roles.map((r, i) => (
+        <div class="fig__lane" style={`top:${laneY[i]}px;height:${laneHpx[i]}px`} data-roles={r.id}>
+          <span class="fig__lane-name">{r.name}</span>
+          <span class="fig__lane-note">{r.note}</span>
+        </div>
+      ))}
+
+      {labelEdges.map((e) => (
+        <span
+          class={`fig__artifact${e.constraint ? ' fig__artifact--constraint' : ''}`}
+          style={`left:${e.mx}px;top:${e.my}px`}
+          data-roles={e.roles}
+        >
+          {e.constraint && <span class="fig__one" aria-label="the constraint">①</span>}
+          {artifactName(e.artifact)}
+        </span>
+      ))}
+
+      {d.placed.map((p) => {
+        const at = pos.get(p.activity.id)!;
+        const kids = p.activity.activities?.length ?? 0;
+        return (
+          <>
+            <button
+              class={`fig__act${p.activity.tooling ? '' : ' fig__act--open'}`}
+              style={`left:${at.x}px;top:${at.y}px;width:${NODEW}px;min-height:${NODEH}px`}
+              data-act={p.activity.id}
+              data-roles={p.activity.roles.join(' ')}
+              data-depth="0"
+              aria-label={`${p.activity.name} — details`}
+            >
+              <span class="fig__act-name">{p.activity.name}</span>
+              <span class="fig__act-level">{p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}</span>
+            </button>
+            {kids > 0 && (
+              <button
+                class="fig__expand"
+                style={`left:${at.x}px;top:${at.y + NODEH}px;width:${NODEW}px`}
+                data-expand={p.activity.id}
+                data-roles={p.activity.roles.join(' ')}
+                aria-expanded="false"
+                aria-label={`Expand sub-process of ${p.activity.name}`}
+              >
+                ▸ {kids} INSIDE
+              </button>
+            )}
+            {kids > 0 && (
+              <div
+                class="fig__inset"
+                style={`left:${at.x}px;top:${at.y + NODEH + 20}px`}
+                data-subflow-panel={p.activity.id}
+                data-roles={p.activity.roles.join(' ')}
+                hidden
+              >
+                <div class="fig__inset-head">
+                  <span class="fig__inset-title">SUB-PROCESS — {p.activity.name}</span>
+                  <span class="fig__inset-meta">same lanes, inside {team.stages.find((s) => s.id === p.activity.stage)?.name}</span>
+                </div>
+                <SubFlow team={team} activities={p.activity.activities!} />
+              </div>
+            )}
+          </>
+        );
+      })}
+    </div>
+  </div>
+  {team.constraint && (
+    <p class="fig__note" data-roles={team.roles.map((r) => r.id).join(' ')}>
+      <span class="fig__one" aria-hidden="true">①</span>
+      {team.constraint.note}
+    </p>
+  )}
+</section>
+
+<style>
+  .fig__scroll {
+    overflow-x: auto;
+  }
+  .fig__canvas {
+    position: relative;
+  }
+  .fig__scrollhint {
+    display: none;
+    font-size: var(--micro);
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  @media (max-width: 900px) {
+    .fig__scrollhint {
+      display: inline;
+    }
+  }
+  .fig__stagehead {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  .fig__stagemeta {
+    font-size: var(--micro);
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .fig__lane {
+    position: absolute;
+    left: 0;
+    width: 150px;
+    padding: 8px 10px;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .fig__lane-name {
+    font-size: var(--body);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .fig__lane-note {
+    font-size: var(--micro);
+    line-height: 12px;
+    color: var(--sub);
+  }
+  .fig__act {
+    position: absolute;
+    background: var(--white);
+    border: 1px solid var(--ink);
+    padding: 7px 8px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: background 0.12s ease-out, color 0.12s ease-out, opacity 0.28s var(--ease-out);
+  }
+  .fig__act:hover {
+    background: var(--washi);
+  }
+  .fig__act--open {
+    border-style: dashed;
+    border-color: var(--muted);
+    background-color: var(--washi);
+    background-image: var(--stripe);
+  }
+  .fig__act-name {
+    font-size: 11px;
+    line-height: 13px;
+    font-weight: 700;
+  }
+  .fig__act-level {
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    color: var(--sub);
+  }
+  .fig__act--open:hover {
+    border-color: var(--ink);
+  }
+  .fig__act[aria-current='true'] {
+    background: var(--ink);
+    color: var(--white);
+  }
+  .fig__act[aria-current='true'] .fig__act-level {
+    color: var(--line);
+  }
+  .fig__act--open .fig__act-level {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .fig__expand {
+    position: absolute;
+    z-index: 5;
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-align: left;
+    padding: 3px 0 2px;
+    transition: opacity 0.28s var(--ease-out);
+  }
+  .fig__expand[aria-expanded='true'] {
+    color: var(--ink);
+  }
+  .fig__inset {
+    position: absolute;
+    z-index: 6;
+    background: var(--white);
+    border: 1px solid var(--ink);
+    /* white halo separates the overlay from occluded lane content beneath it */
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.94);
+    padding: 8px 10px 6px;
+    min-width: 420px;
+    max-width: 720px;
+    transition: opacity 0.28s var(--ease-out);
+  }
+  .fig__inset-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 5px;
+    margin-bottom: 4px;
+  }
+  .fig__inset-title {
+    font-size: var(--micro);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+  .fig__inset-meta {
+    margin-left: auto;
+    font-size: var(--micro);
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .fig__edge,
+  .fig__artifact,
+  .fig__lane {
+    transition: opacity 0.28s var(--ease-out);
+  }
+  .fig__artifact {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    background: var(--white);
+    border: 1px solid var(--line);
+    font-size: var(--micro);
+    letter-spacing: 0.04em;
+    padding: 2px 5px;
+    white-space: nowrap;
+    color: var(--sub);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .fig__artifact--constraint {
+    border-color: var(--accent);
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .fig__one {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: var(--body);
+  }
+  .fig__note {
+    background: var(--ink);
+    color: var(--white);
+    padding: 9px 12px;
+    font-size: 11px;
+    line-height: 15px;
+  }
+  .fig__note .fig__one {
+    margin-right: 6px;
+    color: #7fd6a8;
+  }
+</style>

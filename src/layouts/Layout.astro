@@ -1,0 +1,45 @@
+---
+import '@fontsource-variable/archivo';
+import '../styles/global.css';
+import DevLive from '../components/DevLive.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    {description && <meta name="description" content={description} />}
+    <title>{title}</title>
+  </head>
+  <body>
+    <!--
+    THESIS: The whole team document on one screen — a dense, hairline-ruled module
+    mosaic; refuses the airy sidebar-and-cards internal-tool dashboard.
+    OWN-WORLD: Base white #FFFFFF, ink #111111, utility green #0F6B3C for tabs and
+    signals only, line gray #DADADA hairlines, surface gray #F2F2F2, washi #F7F7F7;
+    one compact gothic (Archivo) at a strict scale 56/28/16/12/10/9; every module
+    ruled and tabbed, packed edge to edge, full-bleed; nothing wastes a pixel.
+    STORY: A team member finds their role, filters the whole document to it,
+    switches view (FLOW / GRID / PLAYBOOK), expands an activity into its
+    sub-process, and drills into the right-hand drawer; open slots read as the
+    team's roadmap; skills fire on workflow events, not just process position.
+    FIRST VIEWPORT: Document masthead with green tab and version/status strip; a
+    dense stat strip; the view/filter bar; FIG.01 flow swimlane spanning the
+    full width.
+    FORM: Japanese contemporary high-density web — dealt challenger, bolder round,
+    won both axes; seed f4239808.
+    FINISH: unreviewed and undocumented is unfinished; this build ends with the
+    finish review, the verdict, and DESIGN.md
+    -->
+    <slot />
+    {import.meta.env.DEV && <DevLive />}
+  </body>
+</html>
