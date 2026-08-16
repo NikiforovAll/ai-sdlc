@@ -17,7 +17,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -32,6 +32,7 @@ const USAGE = `ai-sdlc — render a team's delivery process document
   ai-sdlc export <team-dir> [--out <file>]          one self-contained HTML file
   ai-sdlc check  <team-dir>                         validate the YAML, print errors
   ai-sdlc status <team-dir>                         how far along the document is
+  ai-sdlc example [--copy <dir>] [--port <n>]       serve the worked example, or copy it
 
 <team-dir> holds team.yaml and processes/*.yaml.`;
 
@@ -179,6 +180,28 @@ async function cmdExport(positionals, values) {
   }
 }
 
+// The example ships inside the package, so a coach who has never cloned this
+// repo can still read a finished document — and the `map-team` skill can point
+// at one command instead of a path that only exists here. `--copy` is for the
+// team that wants to edit it rather than read it; without it, this is `serve`
+// against a folder the CLI already knows.
+const EXAMPLE_DIR = join(PKG_ROOT, 'examples', 'reference');
+
+async function cmdExample(positionals, values) {
+  if (positionals[0]) die(`example takes no <team-dir> — it ships with ai-sdlc\n\n${USAGE}`);
+
+  if (values.copy) {
+    const dir = resolve(values.copy);
+    const existing = await readdir(dir).catch(() => null);
+    if (existing?.length) die(`"${dir}" already has files in it — copy writes into an empty folder`);
+    await cp(EXAMPLE_DIR, dir, { recursive: true });
+    console.log(`${dir}\n\nnext\n  ai-sdlc serve ${values.copy}      render it, and start editing`);
+    return;
+  }
+
+  await cmdServe([EXAMPLE_DIR], values);
+}
+
 async function cmdCheck(positionals) {
   const teamDir = await teamDirOf(positionals[0]);
   const { checkTeam, reportProblems } = await import('./check.mjs');
@@ -206,6 +229,7 @@ const { values, positionals } = parseArgs({
     host: { type: 'boolean' },
     out: { type: 'string' },
     name: { type: 'string' },
+    copy: { type: 'string' },
   },
 });
 
@@ -215,6 +239,7 @@ try {
   else if (command === 'serve') await cmdServe(positionals, values);
   else if (command === 'export') await cmdExport(positionals, values);
   else if (command === 'check') await cmdCheck(positionals);
+  else if (command === 'example') await cmdExample(positionals, values);
   else die(`unknown command "${command}"\n\n${USAGE}`);
 } catch (err) {
   die(err.message);
