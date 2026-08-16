@@ -54,6 +54,12 @@ activities:
         usage: >-
           Two readings of the spec survived contact with the plan. Resolve them
           by interrogation before decomposing against the wrong one.
+      - tool: effort-escalation
+        level: assisted
+        event: task-too-big
+        usage: >-
+          Spend the extra reasoning on the decomposition, not on the edits. A
+          wrong cut is found days later; a wrong edit is found by the tests.
 
   - id: write-acceptance-criteria
     name: Write Acceptance Criteria
@@ -96,6 +102,53 @@ activities:
         usage: >-
           Work the verdict item by item. Rework is not a loop in the flow — it
           is a moment here, with a play attached.
+      - tool: context-reset
+        level: manual
+        event: context-exhausted
+        usage: >-
+          Start again from what is now known, rather than compacting a session
+          that is already mostly noise. Manual on purpose — deciding what
+          mattered out of the last two hours is the entire job.
+      - tool: session-rewind
+        level: assisted
+        event: context-exhausted
+        usage: >-
+          Return to the point the work turned, keeping the instructions that
+          opened the session. Check the working tree afterwards: shell and
+          subagent edits are not restored with the conversation.
+      - tool: goal-condition
+        level: delegated-review
+        event: nothing-can-check-it
+        usage: >-
+          State the end condition and let a separate evaluator judge each turn
+          against it. It reads the transcript rather than the repository, so the
+          condition must be something the transcript can show.
+      - tool: dynamic-workflow
+        level: delegated-review
+        event: work-is-parallel
+        usage: >-
+          Codify the fan-out as a script when the work needs more agents than one
+          conversation can hold.
+      - tool: fan-out-loop
+        level: delegated-review
+        event: work-is-parallel
+        usage: >-
+          One unattended run per unit, permissions scoped up front. Prove the
+          prompt on two or three units first — a queue applies an ambiguous
+          instruction consistently, which is what makes it hard to spot later.
+      - tool: worktree-session
+        level: assisted
+        event: work-is-parallel
+        usage: >-
+          Separate checkouts so parallel edits cannot collide. Deciding which
+          pieces are genuinely independent stays the engineer's call.
+      - tool: agent-team
+        level: assisted
+        event: work-is-parallel
+        usage: >-
+          Experimental, off by default, and roughly seven times the token spend.
+          Start with work that writes no code, where parallel exploration pays
+          and coordination does not bite.
     activities:
       - id: break-down
         name: Break Down Task
@@ -112,6 +165,14 @@ activities:
         consumes: [task-list]
         produces: [draft-change]
         why: The inner loop — explore, edit, test, repeat.
+        recommends:
+          - tool: explore-subagent
+            level: delegated-review
+            event: investigation-unbounded
+            usage: >-
+              Give the open-ended question to a separate context with a stated
+              thoroughness, so reading the whole repository does not cost the
+              session that has to act on the answer.
         activities:
           - id: explore
             name: Explore Codebase
@@ -128,17 +189,39 @@ activities:
             tooling:
               tool: agent-session
               level: delegated-review
+            recommends:
+              - tool: permission-allowlist
+                level: manual
+                event: prompts-pile-up
+                usage: >-
+                  Pre-approve the commands already being approved without
+                  reading, so the prompts that remain are the ones worth
+                  stopping for.
+              - tool: sandbox-mode
+                level: assisted
+                event: prompts-pile-up
+                usage: >-
+                  Bound the filesystem and network instead of approving one
+                  command at a time — the same problem answered by limiting
+                  consequences rather than enumerating permissions.
       - id: self-review
         name: Self-Review
         roles: [engineer]
         consumes: [draft-change]
         produces: [change-set]
         why: The author reads the diff as a reviewer before the reviewer must.
-        open:
-          need: >-
-            A reviewer's-eye pass over the author's own diff, run before the
-            change set is handed on. The author already knows what they meant,
-            which is exactly why they are the wrong reader of it.
+        tooling:
+          tool: code-review-skill
+          level: delegated-review
+          usage: |
+            A fresh context reads the diff and the criteria, without the
+            reasoning that produced them. The author already knows what they
+            meant and reads that intention into code that does not contain it;
+            a reader that never heard the argument cannot.
+
+            Ask it for findings that affect correctness. A reviewer prompted for
+            gaps reports some regardless, and chasing all of them is how a small
+            change becomes an over-engineered one.
 
   - id: write-tests
     name: Write Tests
@@ -166,6 +249,22 @@ activities:
     tooling:
       tool: evidence-block
       level: delegated-review
+    recommends:
+      - tool: structured-output
+        level: delegated-review
+        event: nothing-can-check-it
+        usage: >-
+          When the evidence is prose a reviewer has to read and believe, return
+          it against a schema instead, so the pipeline can gate on it rather
+          than a person re-running the check by hand.
+      - tool: stop-hook
+        level: gated-autonomous
+        event: nothing-can-check-it
+        usage: >-
+          Make the check a script the session cannot finish without passing. It
+          is the difference between an agent that believes it is done and one
+          that has been shown to be. The runtime stops honouring a hook that
+          blocks repeatedly, so it is a strong default rather than a guarantee.
 
   - id: review-conformance
     name: Review Conformance
@@ -179,6 +278,34 @@ activities:
         Something that lines the evidence pack up against the acceptance criteria
         and says which ones are actually answered. This sits directly on the
         constraint, so it is the slot worth filling first.
+    recommends:
+      - tool: action-pr-review
+        level: assisted
+        usage: >-
+          Standing advice, not a fill: an automated comment on every change is a
+          second pair of eyes and never the verdict. It is good at what is
+          mechanical and locally checkable, and silent on whether the change did
+          what was asked — which is the whole question here.
+      - tool: claude-md
+        level: manual
+        event: review-finds-a-pattern
+        usage: >-
+          When the finding would apply to the next change too, write the rule
+          where every future session reads it. A correction made once is a
+          correction you will make again.
+      - tool: project-rules
+        level: manual
+        event: review-finds-a-pattern
+        usage: >-
+          When the rule holds for one part of the repository and not the rest,
+          file it there rather than taxing every session with it.
+      - tool: pretooluse-hook
+        level: gated-autonomous
+        event: review-finds-a-pattern
+        usage: >-
+          When the rule is mechanical, make it a hook rather than a sentence.
+          Written instructions are advice a long session drifts from; a hook
+          does not negotiate.
 
   - id: prepare-release
     name: Prepare Release

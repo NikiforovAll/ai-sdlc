@@ -46,6 +46,13 @@ activities:
     tooling:
       tool: signal-correlation
       level: assisted
+    recommends:
+      - tool: explore-subagent
+        event: impact-unbounded
+        usage: >-
+          When the signals cannot say who is affected, read the code for who
+          depends on the failing component — the callers bound the blast radius
+          when the dashboards will not.
 
   - id: communicate-status
     name: Communicate Status

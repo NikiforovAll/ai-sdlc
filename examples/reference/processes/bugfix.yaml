@@ -31,6 +31,14 @@ activities:
     tooling:
       tool: rovo-triage
       level: delegated-review
+    recommends:
+      - tool: claude-mention
+        level: delegated-review
+        usage: >-
+          Standing advice. When the report arrived on a thread, answer it there
+          rather than in a tool nobody reading the history will open. The answer
+          then sits beside the question for whoever asks about this a year from
+          now.
 
   - id: reproduce-bug
     name: Reproduce
@@ -83,6 +91,21 @@ activities:
     tooling:
       tool: agent-session
       level: delegated-review
+    recommends:
+      - tool: context-reset
+        level: manual
+        event: agent-loops
+        usage: >-
+          After the second failed correction, stop and start over with an
+          opening that includes what the failures taught. A third correction is
+          read against both earlier ones, which is why the third rarely works.
+      - tool: plan-mode
+        level: assisted
+        event: agent-loops
+        usage: >-
+          Drop out of writing and re-read the ground. A loop is usually a wrong
+          model of the code rather than a wrong edit, and no number of edits
+          fixes that.
 
   - id: assemble-fix-evidence
     name: Assemble Evidence
