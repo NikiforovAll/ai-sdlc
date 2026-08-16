@@ -24,8 +24,10 @@ export interface Edge {
 export interface Placed {
   activity: Activity;
   col: number;
-  laneStart: number;
-  laneEnd: number;
+  /** The lane the card is drawn in: the role the author names first. */
+  lane: number;
+  /** The remaining roles' lanes, where the activity is named again as an echo. */
+  echoes: number[];
 }
 
 export interface Derived {
@@ -133,14 +135,21 @@ export function derive(team: Team): Derived {
   };
   for (const a of team.activities) depth(a, new Set());
 
+  // The lane axis is nominal: lanes are roles in catalog order, and the midpoint
+  // of two of them names a third role rather than a shared one. A two-role
+  // activity used to be centred across `min..max`, which put more than a third of
+  // a real figure's cards in the lane of a role that has nothing to do with them
+  // — and read as wrong precisely because a swimlane's y-position is a claim about
+  // who does the work. So the card takes one lane, the first role named, and each
+  // further role is handed the activity's name in its own lane instead.
   const laneOf = new Map(team.roles.map((r, i) => [r.id, i]));
   const placed: Placed[] = team.activities.map((a) => {
-    const lanes = a.roles.map((r) => laneOf.get(r) ?? 0);
+    const lanes = [...new Set(a.roles.map((r) => laneOf.get(r)).filter((l) => l !== undefined))];
     return {
       activity: a,
       col: col.get(a.id) ?? 0,
-      laneStart: Math.min(...lanes),
-      laneEnd: Math.max(...lanes),
+      lane: lanes[0] ?? 0,
+      echoes: lanes.slice(1).sort((x, y) => x - y),
     };
   });
 

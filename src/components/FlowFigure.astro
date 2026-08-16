@@ -21,52 +21,80 @@ const NODEW = 126;
 // reserves the tallest a card gets (three name lines) rather than the shortest.
 const NODEH = 70;
 const NODEH_MAX = 90;
+// An echo carries the name alone, so two lines of micro type and its padding is
+// the height it is reserved — the same "tallest it gets" rule as the card.
+const ECHOH = 38;
 const STACK_GAP = 10;
 const EXPAND_H = 22;
+const LANE_PAD = 11;
 
 const actById = new Map(d.placed.map((p) => [p.activity.id, p.activity]));
 const expandExtra = (id: string) => ((actById.get(id)?.activities?.length ?? 0) > 0 ? EXPAND_H : 0);
 
-// Two parallel activities can land on the same (column, lane) slot; lanes grow
-// to hold their deepest stack instead of letting nodes overlap.
-const slotKey = (p: (typeof d.placed)[number]) => `${p.col}:${p.laneStart}:${p.laneEnd}`;
-const slots = new Map<string, string[]>();
-for (const p of d.placed) {
-  const k = slotKey(p);
-  slots.set(k, [...(slots.get(k) ?? []), p.activity.id]);
+// One cell per (column, lane), holding everything drawn there: first the cards
+// whose lead role owns the lane, then the echoes of activities led from another
+// lane. Cards before echoes so a lane states its own work above the work it only
+// shares. Parallel activities stack rather than overlap, and a lane grows to its
+// deepest cell — which is why the lane's height is measured here and not assumed.
+interface Item {
+  id: string;
+  echo: boolean;
+  h: number;
 }
-const laneUnits = team.roles.map((_, l) => {
-  let units = 1;
-  for (const p of d.placed) {
-    if (p.laneStart === p.laneEnd && p.laneStart === l) {
-      units = Math.max(units, slots.get(slotKey(p))!.length);
-    }
-  }
-  return units;
+const cells = new Map<string, Item[]>();
+const cellKey = (col: number, lane: number) => `${col}:${lane}`;
+const add = (col: number, lane: number, item: Item) => {
+  const k = cellKey(col, lane);
+  cells.set(k, [...(cells.get(k) ?? []), item]);
+};
+for (const p of d.placed) {
+  add(p.col, p.lane, { id: p.activity.id, echo: false, h: NODEH_MAX + expandExtra(p.activity.id) });
+}
+for (const p of d.placed) {
+  for (const lane of p.echoes) add(p.col, lane, { id: p.activity.id, echo: true, h: ECHOH });
+}
+
+const stackH = (items: Item[]) =>
+  items.reduce((a, i) => a + i.h, 0) + Math.max(0, items.length - 1) * STACK_GAP;
+
+const laneHpx = team.roles.map((_, lane) => {
+  let need = 0;
+  for (let c = 0; c < d.cols; c++) need = Math.max(need, stackH(cells.get(cellKey(c, lane)) ?? []));
+  return Math.max(LANEH, need + LANE_PAD * 2);
 });
 const laneY: number[] = [];
 let acc = BAND;
-for (const u of laneUnits) {
+for (const h of laneHpx) {
   laneY.push(acc);
-  acc += u * LANEH;
+  acc += h;
 }
-const laneHpx = laneUnits.map((u) => u * LANEH);
 
 const width = GUTTER + d.cols * COLW;
 const height = acc;
 
+// An activity appears at most once in a cell — an echo lane is never its lead
+// lane — so its own id locates it in the stack.
+const place = (col: number, lane: number, id: string) => {
+  const items = cells.get(cellKey(col, lane))!;
+  const k = items.findIndex((i) => i.id === id);
+  const above = items.slice(0, k).reduce((a, i) => a + i.h + STACK_GAP, 0);
+  return {
+    x: GUTTER + col * COLW + (COLW - NODEW) / 2,
+    y: laneY[lane]! + (laneHpx[lane]! - stackH(items)) / 2 + above,
+  };
+};
+
 const pos = new Map(
   d.placed.map((p) => {
-    const x = GUTTER + p.col * COLW + (COLW - NODEW) / 2;
-    const stack = slots.get(slotKey(p))!;
-    const k = stack.indexOf(p.activity.id);
-    const n = stack.length;
-    const spanH = laneHpx.slice(p.laneStart, p.laneEnd + 1).reduce((a, b) => a + b, 0);
-    const stackH = stack.reduce((a, id) => a + NODEH_MAX + expandExtra(id), 0) + (n - 1) * STACK_GAP;
-    const above = stack.slice(0, k).reduce((a, id) => a + NODEH_MAX + expandExtra(id) + STACK_GAP, 0);
-    const y = laneY[p.laneStart]! + (spanH - stackH) / 2 + above;
+    const { x, y } = place(p.col, p.lane, p.activity.id);
     return [p.activity.id, { x, y, cy: y + NODEH / 2, p }];
   })
+);
+
+// Edges attach to the card, never to an echo: an artifact is handed over once,
+// and a second curve into the same activity would count the handoff twice.
+const echoes = d.placed.flatMap((p) =>
+  p.echoes.map((lane) => ({ p, lane, ...place(p.col, lane, p.activity.id) }))
 );
 
 const bezier = (t: number, a: number, c1: number, c2: number, b: number) =>
@@ -104,17 +132,21 @@ const labelEdges = paths.filter((e) => e.handoff);
 // across columns, so a stage band would sit above boxes of another stage. Stage
 // lives on each box, in GRID's columns, and in the drawer.
 const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? id;
+const roleName = (id: string) => team.roles.find((r) => r.id === id)?.name ?? id;
 const steps = Array.from({ length: d.cols }, (_, c) => ({
   col: c,
   acts: d.placed.filter((p) => p.col === c).length,
 }));
 
 // Idle cells: step×lane cells no activity touches get a quiet hatch so empty space reads as claimed.
+// An echo counts as touching it — the role really is in that work, and hatching
+// the cell would say the opposite of the label sitting in it.
 const idleCells = steps.flatMap((s) =>
-  team.roles.flatMap((_, l) => {
-    const occupied = d.placed.some((p) => p.col === s.col && p.laneStart <= l && l <= p.laneEnd);
-    return occupied ? [] : [{ x: GUTTER + s.col * COLW, y: laneY[l]!, w: COLW, h: laneHpx[l]!, last: s.col === d.cols - 1 }];
-  })
+  team.roles.flatMap((_, l) =>
+    cells.has(cellKey(s.col, l))
+      ? []
+      : [{ x: GUTTER + s.col * COLW, y: laneY[l]!, w: COLW, h: laneHpx[l]!, last: s.col === d.cols - 1 }]
+  )
 );
 ---
 
@@ -260,6 +292,20 @@ const idleCells = steps.flatMap((s) =>
           </div>
         );
       })}
+
+      {echoes.map((e) => (
+        <button
+          class="fig__echo"
+          style={`left:${e.x}px;top:${e.y}px;width:${NODEW}px;min-height:${ECHOH}px`}
+          data-act={e.p.activity.id}
+          data-fills={e.p.activity.tooling?.tool}
+          data-roles={e.p.activity.roles.join(' ')}
+          data-depth="0"
+          aria-label={`${e.p.activity.name} — shared with ${roleName(team.roles[e.lane]!.id)}, card in the ${roleName(team.roles[e.p.lane]!.id)} lane — details`}
+        >
+          {e.p.activity.name}
+        </button>
+      ))}
     </div>
   </div>
   {team.constraint && (
@@ -434,6 +480,38 @@ const idleCells = steps.flatMap((s) =>
   .fig__act[aria-current='true'] .fig__act-stage,
   .fig__act[aria-current='true'] .fig__act-level {
     color: var(--muted);
+  }
+  /* The same activity, named again in a lane that shares it but does not lead it.
+     It takes the artifact label's skin — hairline box, micro type, sub colour —
+     rather than a skin of its own, because that is already this figure's voice for
+     "a thing drawn in full elsewhere", and a second card would read as a second
+     activity. It carries the same `data-act`, so one click marks the card and every
+     echo of it at once, exactly as an artifact marks every edge that carries it.
+     No green spine here: the spine belongs to the card being read, and an echo is
+     a pointer to that card. */
+  .fig__echo {
+    position: absolute;
+    background: var(--white);
+    border: 1px solid var(--line);
+    padding: 4px 6px;
+    text-align: left;
+    font-size: var(--micro);
+    line-height: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--sub);
+    transition: background 0.12s ease-out, color 0.12s ease-out,
+      border-color 0.12s ease-out, opacity 0.28s var(--ease-out);
+  }
+  .fig__echo:hover {
+    background: var(--washi);
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .fig__echo[aria-current='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--white);
   }
   .fig__expand {
     z-index: 5;

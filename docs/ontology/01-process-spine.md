@@ -137,7 +137,7 @@ activities:
     why: The review judges evidence against criteria — not the diff against taste.
 ```
 
-**How it renders.** A node card in every figure. In FIG.01 it sits in its roles' lane(s) — an activity with two roles spans both lanes — at the column its dependencies dictate. Clicking a node opens the detail drawer.
+**How it renders.** A node card in every figure. In FIG.01 it sits in the lane of the role named first, at the column its dependencies dictate; every further role gets the activity's name echoed in its own lane, in the hairline skin the figure uses for anything drawn in full elsewhere. The card is not centred across the roles' lanes: lanes are roles in catalog order, so a midpoint names a third role rather than a shared one. Clicking either the card or an echo opens the detail drawer, and marks both.
 
 **Invariants & non-meanings.**
 - `produces` is mandatory and non-empty. An activity that produces nothing is invisible to the flow and to reviewers of the process — if it matters, name what it leaves behind.
