@@ -2,10 +2,22 @@ name: Deploy site
 
 # The published site is the landing page at the root and the reference team,
 # rendered by the real renderer, under /demo/. A screenshot can go stale against
-# the code; a build of `examples/reference` on every push cannot.
+# the code; a build of `examples/reference` from the source that shipped cannot.
+#
+# The filter is an ignore-list rather than an allow-list on purpose: a new
+# top-level folder that turns out to feed the site still deploys, where an
+# allow-list would silently drop it. Only paths that provably cannot reach
+# `_site` are listed. `workflow_dispatch` redeploys whatever the filter skipped.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'fixtures/**'
+      - 'skills/**'
+      - 'templates/**'
+      - '*.md'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:
