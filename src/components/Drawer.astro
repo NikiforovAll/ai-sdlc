@@ -257,6 +257,9 @@ const recsOfEvent = (ev: string) =>
         </div>
         <p class="drawer__why">{s.kind}</p>
         {s.note && <p class="drawer__why">{s.note}</p>}
+        {descriptions.has(`tool:${s.id}`) && (
+          <div class="drawer__prose prose-md" set:html={descriptions.get(`tool:${s.id}`)} />
+        )}
 
         <div class="drawer__section">
           <h4 class="drawer__label">Reached for</h4>

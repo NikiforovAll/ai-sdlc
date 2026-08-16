@@ -43,5 +43,6 @@ export function catalogDescriptions(team: TeamDoc): Promise<Map<string, string>>
   add('role', team.roles);
   add('harness', team.harnesses);
   add('event', team.events);
+  add('tool', team.tools);
   return mdMap(entries);
 }

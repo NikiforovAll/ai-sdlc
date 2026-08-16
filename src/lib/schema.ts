@@ -113,6 +113,11 @@ const tool = z.object({
   harness: id,
   kind: z.string(),
   note: z.string().optional(),
+  // Same split as the roles below: `note` is the line a figure prints beside the
+  // tool, `description` is what a reader stops on the shelf to learn. A tool is
+  // the entry most likely to be unfamiliar to the reader, so it needs the long
+  // form more than the artifact it acts on does.
+  description: z.string().optional(),
   refs: z.array(z.string()).optional(),
 });
 

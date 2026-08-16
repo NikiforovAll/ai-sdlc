@@ -162,6 +162,9 @@ const openPanels = [
           <span class="chip">{s.kind}</span>
         </div>
         {s.note && <p class="tdrawer__prose">{s.note}</p>}
+        {descriptions.has(`tool:${s.id}`) && (
+          <div class="tdrawer__md prose-md" set:html={descriptions.get(`tool:${s.id}`)} />
+        )}
         <div class="tdrawer__section">
           <h4 class="tdrawer__label">Reached for</h4>
           <ReachList
