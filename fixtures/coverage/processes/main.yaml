@@ -87,10 +87,11 @@ activities:
               need: >-
                 A gap declared inside a sub-process, so the dashed treatment has
                 to survive two levels of nesting.
-      # unclaimed, and no `why:` either — the emptiest legal sub-activity
+      # unclaimed, and no `why:` either — the emptiest legal sub-activity. Its
+      # second role is the only one an inset echoes rather than draws.
       - id: shape-b
         name: Shape Sibling
-        roles: [builder]
+        roles: [builder, checker]
         consumes: [sketch]
         produces: [record]
 
