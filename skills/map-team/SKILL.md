@@ -1,6 +1,7 @@
 ---
 name: map-team
-description: Map a team's delivery process into ai-sdlc YAML by interviewing them live. Use when authoring a new team document or extending an existing one.
+description: Map a team's delivery process into ai-sdlc YAML by interviewing them live.
+disable-model-invocation: true
 ---
 
 # map-team
