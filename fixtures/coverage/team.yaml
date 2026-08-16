@@ -1,0 +1,156 @@
+# A fixture, not a team. Its only job is to put every field the schema allows in
+# front of the renderer at least once, and to leave every optional field absent
+# at least once — the reference team fills nearly all of them, so the empty
+# branches were going undrawn. Nothing here describes how anyone works; read
+# `reference` for that.
+#
+# MARKDOWN: only `description:` on roles, artifacts and harnesses is rendered as
+# markdown — headings, lists, tables, blockquotes, code, links all work there,
+# and the drawer is where they are read. Every other prose field (`note:`,
+# `why:`, `usage:`, `need:`, and the team and process `description:`) is folded
+# into paragraphs as plain text, so markdown written there prints its own
+# syntax. `events` are the exception to watch: their description doubles as a
+# one-line caption in the overview, so keep it a single plain sentence.
+name: Coverage Fixture
+description: >-
+  Every schema field, exercised once. Read it when a rendering branch needs a
+  document that reaches it, not when you want to know how a team delivers.
+version: "1.0"
+status: draft
+
+roles:
+  # full: note + a description using most of the markdown the drawer supports
+  - id: author
+    name: Author
+    note: Has both optional fields.
+    description: |-
+      Carries a `note` **and** a `description`, so the figure caption and the
+      drawer body are drawn from *different* fields.
+
+      ### What the drawer renders
+
+      1. This heading, as a real `<h3>`.
+      2. This ordered list.
+      3. The table and the quote below.
+
+      | Field | Where it is read | Markdown? |
+      | --- | --- | --- |
+      | `note` | beside the thing, in the figure | no |
+      | `description` | the drawer, when a reader stops here | **yes** |
+
+      > A note truncated to fit a lane and a paragraph nobody has room for are
+      > two different jobs. That is why there are two fields.
+
+      See [Layer 1 — the process spine](docs/ontology/01-process-spine.md).
+  # bare: neither optional field
+  - id: builder
+    name: Builder
+  # note only — no description, so the drawer falls back to whatever it shows
+  # for a role that has none
+  - id: checker
+    name: Checker
+    note: Has a note and no description.
+
+artifacts:
+  - id: brief
+    name: Brief
+    description: |-
+      An artifact description carrying **bold**, *italic*, `inline code`, and a
+      fenced block:
+
+      ```yaml
+      produces: [brief]
+      ```
+
+      - a bullet
+      - and a second one, so the list is a list
+  # bare: no description
+  - id: draft
+    name: Draft
+  - id: sketch
+    name: Sketch
+    description: A single plain sentence — markdown is allowed here, not required.
+  - id: trace
+    name: Trace
+  - id: record
+    name: Record
+  - id: result
+    name: Result
+    description: |-
+      Two paragraphs, to prove the block is rendered rather than printed as one
+      run-on line.
+
+      The constraint does *not* name this artifact — `draft` is the bottleneck.
+  - id: release-note
+    name: Release Note
+
+harnesses:
+  - id: full-harness
+    name: Full Harness
+    note: Has both optional fields.
+    description: |-
+      A harness with a `note` **and** a `description`. It holds two tools, so the
+      harness panel draws a list rather than a single entry.
+
+      #### What a harness is
+
+      A runtime the team already has. It states no activities of its own — the
+      tools inside it are named by the work, never the other way round.
+  # bare: no note, no description
+  - id: bare-harness
+    name: Bare Harness
+
+# An event description is read twice — as markdown in the drawer, and as a plain
+# caption in the overview row. One plain sentence is the only form that reads
+# correctly in both.
+events:
+  - id: full-event
+    name: Full Event
+    description: An event carrying a description, kept to one plain sentence.
+  # bare: no description
+  - id: bare-event
+    name: Bare Event
+
+tools:
+  # full: note + description + refs
+  - id: t-full
+    name: Full Tool
+    harness: full-harness
+    kind: fixture tool
+    note: Carries a note, a description and refs.
+    description: |-
+      A tool description is **markdown**, the same as a role's — the drawer is
+      where a reader learns what an unfamiliar tool actually does.
+
+      ### What it does
+
+      - one bullet, so a list renders inside a tool panel
+      - a second, so the spacing between them is visible
+
+      | Rung | Who holds the gate |
+      | --- | --- |
+      | `assisted` | the person driving |
+      | `delegated-review` | the reviewer |
+
+      > A blockquote, because a tool description is the one place a caveat has
+      > room to be stated rather than compressed into the note.
+    refs:
+      - https://example.invalid/full-tool
+      - https://example.invalid/full-tool/changelog
+      # A repo path, which the document cannot resolve — it draws as text, not a link.
+      - fixtures/coverage/full-tool
+  # bare: no note, no refs
+  - id: t-bare
+    name: Bare Tool
+    harness: bare-harness
+    kind: fixture tool
+  - id: t-rec
+    name: Recommended Tool
+    harness: full-harness
+    kind: fixture tool
+    note: Only ever recommended, never a fill.
+  - id: t-manual
+    name: Manual Tool
+    harness: bare-harness
+    kind: fixture tool
+    note: The only tool filled at the bottom rung of the ladder.

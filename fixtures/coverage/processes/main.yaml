@@ -1,0 +1,120 @@
+# The loaded process: description, constraint, sub-activities two deep, all four
+# rungs of the ladder, and every optional field on a fill and a recommendation.
+name: Main
+description: >-
+  A process carrying every optional field a process has, so the empty ones in
+  `minimal` are the contrast.
+
+stages:
+  - id: alpha
+    name: Alpha
+  - id: beta
+    name: Beta
+
+constraint:
+  artifact: draft
+  note: >-
+    The draft is the fixture's declared bottleneck. It exists so the ① marker has
+    an artifact to be found on.
+
+activities:
+  # A full fill at the bottom rung: manual, with usage, asset and refs.
+  - id: start
+    name: Start
+    stage: alpha
+    roles: [author]
+    produces: [brief]
+    why: The entry activity — no `consumes:`, so the graph has a root.
+    tooling:
+      tool: t-manual
+      level: manual
+      usage: >-
+        The bottom rung: a person does this work, with the tool open beside them.
+        Nothing is delegated, and the fill says so rather than staying silent.
+      asset: fixtures/brief-outline.md
+      refs:
+        - https://example.invalid/fill-ref
+
+  # Multi-role, a minimal fill, a minimal recommendation, and children.
+  - id: shape
+    name: Shape
+    stage: alpha
+    roles: [author, builder]
+    consumes: [brief]
+    produces: [draft]
+    why: Two roles on one activity, so the figure has to place a shared box.
+    tooling:
+      tool: t-bare
+      level: assisted
+    recommends:
+      # the smallest legal recommendation: a tool and nothing else
+      - tool: t-rec
+    activities:
+      - id: shape-a
+        name: Shape Detail
+        roles: [builder]
+        consumes: [brief]
+        produces: [sketch]
+        why: A sub-activity carrying a fill and a recommendation of its own.
+        tooling:
+          tool: t-full
+          level: delegated-review
+        recommends:
+          - tool: t-rec
+            level: assisted
+            event: bare-event
+            usage: A recommendation at depth 1, bound to a moment.
+        activities:
+          - id: shape-a-1
+            name: Shape Detail Inner
+            roles: [builder]
+            consumes: [sketch]
+            produces: [trace]
+            why: Depth 2, and an open slot this far down.
+            open:
+              need: >-
+                A gap declared inside a sub-process, so the dashed treatment has
+                to survive two levels of nesting.
+      # unclaimed, and no `why:` either — the emptiest legal sub-activity
+      - id: shape-b
+        name: Shape Sibling
+        roles: [builder]
+        consumes: [sketch]
+        produces: [record]
+
+  # An open slot with no `why:`.
+  - id: check
+    name: Check
+    stage: beta
+    roles: [checker]
+    consumes: [draft]
+    produces: [result]
+    open:
+      need: >-
+        Something that reads a draft against the brief and says where they
+        disagree. Today that comparison is done from memory.
+
+  # The top rung, plus recommendations carrying every optional field.
+  - id: finish
+    name: Finish
+    stage: beta
+    roles: [builder]
+    consumes: [result]
+    produces: [release-note]
+    why: The exit activity, filled at the top of the ladder.
+    tooling:
+      tool: t-full
+      level: gated-autonomous
+    recommends:
+      - tool: t-rec
+        level: manual
+        event: full-event
+        usage: Every optional field a recommendation has, all at once.
+      - tool: t-bare
+        level: gated-autonomous
+        event: bare-event
+      # The fourth rung, so every level on the ladder is drawn on a recommendation
+      # as well as on a fill.
+      - tool: t-manual
+        level: delegated-review
+        usage: A recommendation with a level and no event — standing advice.
