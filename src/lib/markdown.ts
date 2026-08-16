@@ -8,10 +8,16 @@ import type { TeamDoc } from './derive';
 const processor = await createMarkdownProcessor({ gfm: true, smartypants: false });
 
 /** Render one authored block to HTML. Content is the team's own document, so it
-    is trusted the same way the YAML around it is. */
+    is trusted the same way the YAML around it is.
+
+    The processor slugs every heading into an `id`, which is right for a page and
+    wrong here: a description is rendered into a drawer on every page that draws
+    the catalog, so two roles with an `### Owns` heading collide the moment the
+    export concatenates the routes into one file. Nothing links to a heading
+    inside a drawer, so the id is dropped rather than made unique. */
 export async function md(text: string): Promise<string> {
   const { code } = await processor.render(text.trim());
-  return code;
+  return code.replace(/(<h[1-6])\s+id="[^"]*"/g, '$1');
 }
 
 /** Render many blocks at once, keyed by whatever the caller looks them up by. */

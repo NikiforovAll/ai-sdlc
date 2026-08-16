@@ -206,6 +206,13 @@ export function flatten(team: Team): FlatActivity[] {
    which is what narrows the type. */
 export const statesCapability = (a: AnyActivity) => Boolean(a.tooling || a.open);
 
+/* A ref is authored as either a URL or a path inside the team's own repo, and the
+   document has no way to resolve the second: a bare `skills/grill-me` linked from
+   `/feature` asks the site for `/feature/skills/grill-me`, which no page serves.
+   So only a ref that already addresses somewhere becomes a door; a path is drawn
+   as the text it is, which is the form a reader can act on anyway. */
+export const isLinkableRef = (ref: string) => /^(https?:\/\/|mailto:|\/\/)/.test(ref);
+
 // The levels are an ordinal ramp, not a set: a figure can draw the level as a
 // position on the scale rather than spend a text row on its name.
 export const LEVEL_ORDER = ['manual', 'assisted', 'delegated-review', 'gated-autonomous'];

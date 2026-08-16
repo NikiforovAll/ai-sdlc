@@ -1,7 +1,7 @@
 ---
 import type { OverviewModel } from '../lib/docs';
 import { catalogDescriptions, paragraphs } from '../lib/markdown';
-import { LEVEL_LABELS, toolsOfHarness } from '../lib/derive';
+import { isLinkableRef, LEVEL_LABELS, toolsOfHarness } from '../lib/derive';
 import { useHref } from '../lib/docs';
 import ReachList from './ReachList.astro';
 import UseList from './UseList.astro';
@@ -179,7 +179,7 @@ const openPanels = [
             <h4 class="tdrawer__label">Refs</h4>
             <ul class="tdrawer__refs">
               {s.refs!.map((ref) => (
-                <li>{ref}</li>
+                <li>{isLinkableRef(ref) ? <a href={ref} target="_blank" rel="noreferrer">{ref}</a> : ref}</li>
               ))}
             </ul>
           </div>
@@ -469,6 +469,19 @@ const openPanels = [
   .tdrawer__refs li {
     font-size: var(--label);
     color: var(--sub);
+  }
+  /* A ref leaves the document, so unlike the panel's internal doors it carries a
+     standing hairline — the reader has to be able to tell an exit from a label
+     without pointing at it first. */
+  .tdrawer__refs a {
+    color: inherit;
+    border-bottom: 1px solid var(--line);
+    transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+  }
+  .tdrawer__refs a:hover,
+  .tdrawer__refs a:focus-visible {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
   .tdrawer__list li + li {
     margin-top: 4px;

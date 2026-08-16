@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
+import { flatten, isLinkableRef, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
 import { catalogDescriptions, paragraphs } from '../lib/markdown';
 import { VERB } from '../lib/docs';
 
@@ -181,7 +181,7 @@ const recsOfEvent = (ev: string) =>
               {(a.tooling.refs ?? []).length > 0 && (
                 <ul class="drawer__refs">
                   {a.tooling.refs!.map((ref) => (
-                    <li>{ref}</li>
+                    <li>{isLinkableRef(ref) ? <a href={ref} target="_blank" rel="noreferrer">{ref}</a> : ref}</li>
                   ))}
                 </ul>
               )}
@@ -288,7 +288,7 @@ const recsOfEvent = (ev: string) =>
             <h4 class="drawer__label">Refs</h4>
             <ul class="drawer__refs">
               {s.refs!.map((ref) => (
-                <li>{ref}</li>
+                <li>{isLinkableRef(ref) ? <a href={ref} target="_blank" rel="noreferrer">{ref}</a> : ref}</li>
               ))}
             </ul>
           </div>
@@ -674,6 +674,19 @@ const recsOfEvent = (ev: string) =>
   .drawer__refs li {
     font-size: var(--label);
     color: var(--sub);
+  }
+  /* A ref leaves the document, so unlike the panel's internal doors it carries a
+     standing hairline — the reader has to be able to tell an exit from a label
+     without pointing at it first. */
+  .drawer__refs a {
+    color: inherit;
+    border-bottom: 1px solid var(--line);
+    transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+  }
+  .drawer__refs a:hover,
+  .drawer__refs a:focus-visible {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
   /* What an open slot means is the section's whole content, not a footnote on it,
      so it reads at the body step the panel's other prose does; the panel is the
