@@ -20,68 +20,92 @@ interface Props {
 }
 const { rows, empty, eventNames, inline = false } = Astro.props;
 
-// Where the activity sits and who owns it — one micro-caps run, because both
-// answer "which one of these rows is mine" and neither is worth its own line.
-const where = (r: Reach) => [r.stage, r.roles.join(', ')].filter(Boolean).join(' · ');
-
-// Grouped in first-seen order, which is the order the processes are listed in
-// everywhere else on the document.
-const groups = [
-  ...rows.reduce((m, r) => {
-    const row = { r, where: where(r) };
-    const list = m.get(r.slug);
-    if (list) list.push(row);
-    else m.set(r.slug, [row]);
-    return m;
-  }, new Map<string, { r: Reach; where: string }[]>()),
-];
+// Grouped twice, both in first-seen order — the order the processes are listed in
+// everywhere else on the document. By process, because a reader is looking for a
+// place to go next and a process is how they name places. Then by relation,
+// because the verb is the same sentence on every row it covers: stated once as
+// the list's own label, it stops being four gray words in front of each activity,
+// and the row is free to lead with the only part that varies and the only part
+// that is a door.
+type Kind = { kind: Reach['kind']; rows: Reach[] };
+const groups: { slug: string; process: string; kinds: Kind[] }[] = [];
+for (const r of rows) {
+  let g = groups.find((x) => x.slug === r.slug);
+  if (!g) groups.push((g = { slug: r.slug, process: r.process, kinds: [] }));
+  let k = g.kinds.find((x) => x.kind === r.kind);
+  if (!k) g.kinds.push((k = { kind: r.kind, rows: [] }));
+  k.rows.push(r);
+}
 
 ---
 
 {groups.length === 0 ? (
   <p class="reach__none">{empty}</p>
 ) : (
-  groups.map(([slug, group]) => (
+  groups.map((g) => (
     <div class="reach">
-      <a class="reach__proc" href={useHref({ slug, label: group[0].r.process }, inline)} data-goto={slug}>
-        {group[0].r.process}
+      <a class="reach__proc" href={useHref({ slug: g.slug, label: g.process }, inline)} data-goto={g.slug}>
+        {g.process}
       </a>
-      <ul class="reach__rows">
-        {group.map(({ r, where }) => (
-          <li class="reach__row">
-            <p class="reach__line">
-              {/* Explicit: the newline before a multi-line tag is not kept as a
-                  space, so the verb ran into the name it introduces. */}
-              <span class="reach__verb">{VERB[r.kind]}</span>{' '}
-              <a
-                class="row__go reach__act"
-                href={useHref({ slug: r.slug, label: r.activity, focus: `act-${r.actId}` }, inline)}
-                data-goto={r.slug}
-                data-focus={`act-${r.actId}`}
-              >
-                {r.activity}
-              </a>
-            </p>
-            {(where || r.level) && (
-              <p class="reach__meta">
-                {where && <span>{where}</span>}
-                {/* Delegation is a chip everywhere else it is stated — the playbook
-                    item, the activity drawer — so it stays a chip here rather than
-                    flattening into the same micro-caps run as place and owner. */}
-                {r.level && <span class="chip chip--muted">{LEVEL_LABELS[r.level]}</span>}
-              </p>
-            )}
-            {r.event && (
-              <p class="reach__event">
-                <svg class="reach__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>
-                {eventNames?.get(r.event) ?? r.event}
-              </p>
-            )}
-            {r.usage && paragraphs(r.usage).map((t) => <p class="reach__usage">{t}</p>)}
-            {r.need && paragraphs(r.need).map((t) => <p class="reach__usage reach__need">{t}</p>)}
-          </li>
-        ))}
-      </ul>
+      {g.kinds.map((k) => (
+        <div class="reach__kind">
+          <p class="reach__verb">{VERB[k.kind]}</p>
+          <ul class="reach__rows">
+            {k.rows.map((r) => (
+              <li class="reach__row">
+                <p class="reach__line">
+                  <a
+                    class="row__go reach__act"
+                    href={useHref({ slug: r.slug, label: r.activity, focus: `act-${r.actId}` }, inline)}
+                    data-goto={r.slug}
+                    data-focus={`act-${r.actId}`}
+                  >
+                    {r.activity}
+                  </a>
+                  {/* Delegation is a chip everywhere else it is stated — the playbook
+                      item, the activity drawer — so it stays a chip here, and it takes
+                      the right edge the catalog rows give their usage tag rather than
+                      trailing the owner at a different x on every row. */}
+                  {r.level && <span class="chip chip--muted reach__level">{LEVEL_LABELS[r.level]}</span>}
+                </p>
+                {(r.stage || r.roles.length > 0) && (
+                  <p class="reach__meta">
+                    {/* Place and owner are two axes, and a `·` between them made the
+                        run's first term mean the stage on one row and the role on the
+                        next, because a sub-activity names no stage of its own. They
+                        keep one line and separate by voice instead: the owner in ink,
+                        because the reader scanning for their own name is scanning for
+                        that, and where it sits behind it. */}
+                    {r.stage && <span class="reach__stage">{r.stage}</span>}
+                    {r.roles.length > 0 && <span class="reach__roles">{r.roles.join(', ')}</span>}
+                  </p>
+                )}
+                {/* The moment is a catalog entry with a panel of its own, and it is a
+                    door everywhere else it is named — the activity drawer, the
+                    playbook. It stayed text here only because this list was written
+                    before the events catalog had a panel. An id the catalog does not
+                    define has nowhere to go, so it stays text rather than drawing an
+                    affordance that opens nothing. */}
+                {r.event && (
+                  eventNames?.has(r.event) ? (
+                    <button type="button" class="reach__event reach__event--go" data-detail-key={`event:${r.event}`}>
+                      <svg class="reach__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>
+                      <span>{eventNames.get(r.event)}</span>
+                    </button>
+                  ) : (
+                    <p class="reach__event">
+                      <svg class="reach__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>
+                      {eventNames?.get(r.event) ?? r.event}
+                    </p>
+                  )
+                )}
+                {r.usage && paragraphs(r.usage).map((t) => <p class="reach__usage">{t}</p>)}
+                {r.need && paragraphs(r.need).map((t) => <p class="reach__usage reach__need">{t}</p>)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   ))
 )}
@@ -109,23 +133,48 @@ const groups = [
   .reach__proc:focus-visible {
     border-bottom-color: var(--accent);
   }
+  /* The relation is stated once over the rows it covers, so it is a label and not
+     a heading. Three micro-caps runs now stack — the section, the process, the
+     relation — and the section head is already 700 gray caps, so a fourth voice
+     was needed rather than a fourth copy of the same one: the process takes the
+     green and the underline it has as a door, and the relation drops to 400,
+     which is the only weight left below both. */
+  .reach__kind {
+    margin-top: 6px;
+    border-left: 1px solid var(--line);
+    padding-left: 8px;
+  }
+  .reach__kind + .reach__kind {
+    margin-top: 11px;
+  }
+  .reach__verb {
+    font-size: var(--micro);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
   .reach__rows {
     list-style: none;
     margin-top: 5px;
   }
+  /* A row runs to four lines when it carries usage prose, and 7px of air between
+     rows against 3px inside one left the boundary to be inferred. The seam is the
+     divider everywhere else peers are listed, so it is the divider here. */
   .reach__row + .reach__row {
     margin-top: 7px;
-  }
-  .reach__row {
-    border-left: 1px solid var(--line);
-    padding-left: 8px;
+    border-top: 1px solid var(--line);
+    padding-top: 7px;
   }
   .reach__line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
     font-size: var(--body);
     line-height: 17px;
   }
-  .reach__verb {
-    color: var(--sub);
+  .reach__level {
+    flex: none;
   }
   /* The rule and the hover are `.row__go` — this is the same door every other
      catalog row draws. What is local is the weight and the ink: here the
@@ -138,12 +187,16 @@ const groups = [
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 7px;
     font-size: var(--micro);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--sub);
     margin-top: 3px;
+  }
+  .reach__roles {
+    font-weight: 700;
+    color: var(--ink);
   }
   .reach__event {
     display: flex;
@@ -155,6 +208,16 @@ const groups = [
     font-weight: 700;
     color: var(--accent);
     margin-top: 3px;
+  }
+  /* A door, so it carries the hairline the other doors in the panel carry — under
+     the words only, because an underlined bolt reads as a struck-through glyph. */
+  .reach__event--go span {
+    border-bottom: 1px solid rgba(15, 107, 60, 0.35);
+    transition: border-color 0.14s var(--ease-out);
+  }
+  .reach__event--go:hover span,
+  .reach__event--go:focus-visible span {
+    border-bottom-color: var(--accent);
   }
   /* The same bolt the playbook draws, at the same size: one glyph for one meaning
      across the two surfaces that state when a tool is reached for. */
