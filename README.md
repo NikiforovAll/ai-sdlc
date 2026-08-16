@@ -1,14 +1,24 @@
 # ai-sdlc
 
-**A composer of project delivery processes.** One YAML document describes how a team delivers changes and where AI is utilized — activities, roles, artifacts, stages, tool fills, and the gaps the team has declared. `ai-sdlc` renders that document into an interactive site with several projections of the same model: a flow swimlane, a stage×role grid, drill-down panels per activity and per role.
+**A composer of project delivery processes.** Write in YAML how a team delivers changes and where AI is utilized — activities, roles, artifacts, stages, tool fills, and the gaps the team has declared. `ai-sdlc` renders it into an interactive site: a flow swimlane, a stage×role grid, drill-down panels per activity and per role.
 
-Nothing on the page is drawn twice, and nothing on the page is hand-written. **The site is a projection.** Arrows, handoffs, and ordering are derived from artifact names matching across activities — you never author an edge.
+![The team document — masthead, stat strip, the process index, and the shared catalogs](assets/main.png)
 
 > Status: prototype. The schema is still being firmed up; expect churn.
 
 ## Why
 
 Teams describe their process in slides that go stale the day after the workshop. Here the process is a document under version control, the diagram is generated from it, and the parts nobody has solved yet — **open slots** — render as visible dashed gaps rather than quietly disappearing. The declared gaps are the roadmap.
+
+## What it renders
+
+The team document above is the index: every process, every catalog, and the counts that say how much of the model is filled in. Opening a process draws it as a swimlane — one lane per role, columns as topological steps, artifacts riding the arrows between activities. Dashed boxes are the open slots.
+
+![A process as a flow swimlane — roles as lanes, steps as columns, artifacts on the edges](assets/process.png)
+
+Every box opens a drill-down: what the activity consumes and produces, which tool fills it and at what rung of the delegation ladder, and what tooling is recommended where nothing is attached yet.
+
+![The drill-down drawer for one activity, showing its artifacts, its fill, and the recommendations](assets/drawer.png)
 
 ## Install
 
@@ -53,7 +63,7 @@ npm run dev        # serves examples/reference at http://localhost:4321
 | `ai-sdlc export <team-dir> [--out <file>]` | One self-contained HTML file that opens from disk — no server, no assets |
 | `ai-sdlc check <team-dir>` | Validate the YAML against the schema. Exits non-zero on problems |
 | `ai-sdlc status <team-dir>` | Inventory how complete the document is. Always exits 0 |
-| `ai-sdlc example [--copy <dir>]` | Serve the worked example that ships with the package, or copy it to edit |
+| `ai-sdlc example [--copy <dir>] [--path]` | Serve the worked example that ships with the package, copy it to edit, or print the folder it lives in |
 
 `<team-dir>` is required everywhere — there is no default and no cwd sniffing. The folder name is the team id; each file name under `processes/` is that process id.
 
@@ -92,6 +102,17 @@ Three states an activity can be in, and they render differently on purpose:
 ## Authoring a team
 
 A document is meant to be written *live*, in a mapping session: editor and browser side by side, the team talking, the page redrawing as their sentences become YAML. The `skills/map-team/` skill conducts that interview — it knows the vocabulary and translates the team's own words into the model, so nobody has to learn the schema before speaking.
+
+Install it into your agent with the [skills](https://github.com/vercel-labs/skills) CLI — no clone needed:
+
+```sh
+npx skills add NikiforovAll/ai-sdlc            # this project only
+npx skills add NikiforovAll/ai-sdlc --global   # every project
+```
+
+It reads the skills out of the repository and writes them where your agent looks for them; `-a`/`--agent` picks the agent when you have more than one, `npx skills list` shows what is installed, and `npx skills update` pulls later revisions. The skill drives the `ai-sdlc` CLI, so install that too — see [Install](#install).
+
+Then, with a team folder and the renderer up:
 
 ```sh
 ai-sdlc new ~/teams/acme
