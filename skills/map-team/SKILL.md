@@ -1,13 +1,13 @@
 ---
 name: map-team
-description: Map a team's delivery process into ai-sdlc YAML by interviewing them live, while the rendered page redraws beside the conversation. Use when authoring a new team document, or adding a process, activity, or tooling fill to an existing one.
+description: Map a team's delivery process into ai-sdlc YAML by interviewing them live. Use when authoring a new team document or extending an existing one.
 ---
 
 # map-team
 
 You are the editor's hand in a mapping session. A coach and a team are talking; a browser is projected beside them. Turn what the team says into YAML fast enough that the page **redraws** while they are still describing it.
 
-You are not filling in a form. You are listening to people describe their work and writing down the parts the model has words for.
+You are listening to people describe their work and writing down the parts the model has words for.
 
 ## Before the first question
 
@@ -43,21 +43,25 @@ One activity per edit. Assembling a whole file in one pass buys a sixty-second s
 | "we write a design doc" | an artifact, and `produces:` on the activity that writes it |
 | "engineering picks it up from there" | nothing new — the arrow is derived from `consumes:` matching `produces:` |
 | "that's where it always gets stuck" | `constraint:` on the process, naming the artifact |
-| "Copilot writes most of those tests" | a tool in the catalog, and `tooling:` on that activity with a level |
+| "the three of us do that together" | one activity, with every one of them in `roles:` |
+| "that box is really a whole process of its own" | `activities:` nested inside that activity — they inherit its stage |
+| "Copilot writes most of those tests" | a tool in the catalog — plus the harness it runs in, if that runtime is new — and `tooling:` on that activity with a level |
 | "sometimes it turns out bigger than we thought" | an event, plus a `recommends:` bound to it |
 | "we do that by hand, and that's fine" | the activity, with neither `tooling:` nor `open:`. Move on |
 | "we do that by hand, and we'd love something for it" | `open:` on that activity, with their sentence about what would take the work off them as `need:` |
 
-When the team gives you the reason — *"otherwise it bounces back at us"* — that is `why:`. It reads in the drawer, and it is the field that makes the document worth returning to.
+When the team gives you the reason — *"otherwise it bounces back at us"* — that is `why:`. It reads in the drawer, and it is the field that makes the document worth returning to. A `why:` you are about to write yourself instead of quoting is the signal to read `references/worked-example.md`, which shows the difference between an argument and a restated name.
 
 ### Ask once about tooling — then once about the gap
 
 Ask neutrally, once — *"anything doing that work for you today?"* — take the first answer and move on. A yes is `tooling:`.
 
-A no leaves two different facts, and only the team can say which one it is. Ask the follow-up in their words — *"would you want something here?"* — because the answer decides how the activity draws:
+A no leaves two different facts, and only the team can say which one it is. Ask the follow-up in their words — *"would you want something here?"* — because the answer decides which state the activity is in:
 
 - **Yes, we want something here.** That is `open:`, and the sentence they just said about what would help is `need:`. Write their sentence, not a product name: an open slot names the work that would be taken off them. This is the roadmap, so it is worth one extra beat to get the sentence right.
-- **No, this stays ours.** Write neither field. The activity draws plain, and the document says nothing about it — which is exactly right, because the team said nothing about it.
+- **No, this stays ours.** Write neither field. The activity is **unclaimed**, and the document says nothing about it — which is exactly right, because the team said nothing about it.
+
+When a level, or a fill-versus-recommendation call, will not settle, read `references/worked-example.md` — it argues four of these calls in full.
 
 Never infer the first from the second. An unanswered question is the second state, not the first: if the team has not asked for anything, the page must not ask on their behalf.
 
@@ -81,9 +85,11 @@ Process facts live in the YAML. A fact recorded only in the conversation is not 
 Stop when the team stops, not when the document looks finished. Then:
 
 1. Run `ai-sdlc status <dir>` and read the counts aloud.
-2. Name what is unmapped: processes not covered, activities with no `why:`, stages nobody described.
-3. Give the open slots as a count, and say plainly that the unclaimed activities are not part of it — the team declared those, and nothing is owed on them.
+2. Resolve every id it lists as referenced but not in a catalog. None may be left when you close.
+3. Name what is unmapped: processes not covered, activities with no `why:`, stages nobody described.
+4. Give the open slots as a count, and say plainly that the unclaimed activities are not part of it — the team declared those, and nothing is owed on them.
+
 ## References
 
 - `references/ontology-cheatsheet.md` — the model on one page. Read before you start.
-- `references/worked-example.md` — a real excerpt with the reasoning behind each field. Reach for it when a `why:`, a delegation level, or a recommendation-versus-fill call is unclear.
+- `references/worked-example.md` — the reasoning behind every field of a finished document, read against `ai-sdlc example`.

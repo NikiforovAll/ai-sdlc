@@ -5,9 +5,9 @@ import { pathToFileURL } from 'node:url';
 import { teamSchema, processSchema } from './lib/schema';
 
 // One team folder per run: `team.yaml` plus `processes/*.yaml`. The CLI points
-// this at any folder on disk; the repo's own reference team is the fallback so
-// `npm run dev` keeps working with no environment set.
-const TEAM_DIR = resolve(process.env.AISDLC_TEAM_DIR ?? './content/teams/reference');
+// this at any folder on disk; the packaged example is the fallback so `npm run
+// dev` keeps working with no environment set.
+const TEAM_DIR = resolve(process.env.AISDLC_TEAM_DIR ?? './examples/reference');
 
 // The folder name is the team id; the process file name is the process id.
 const TEAM_ID = basename(TEAM_DIR);

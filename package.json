@@ -14,8 +14,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "cli": "node bin/ai-sdlc.mjs",
-    "check": "node bin/ai-sdlc.mjs check content/teams/reference",
-    "export": "node bin/ai-sdlc.mjs export content/teams/reference --out _exports/reference.html"
+    "check": "node bin/ai-sdlc.mjs check examples/reference",
+    "check:coverage": "node bin/ai-sdlc.mjs check fixtures/coverage",
+    "dev:coverage": "node bin/ai-sdlc.mjs serve fixtures/coverage",
+    "export": "node bin/ai-sdlc.mjs export examples/reference --out _exports/reference.html",
+    "export:coverage": "node bin/ai-sdlc.mjs export fixtures/coverage --out _exports/coverage.html"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^6.3.11",

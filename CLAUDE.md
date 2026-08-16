@@ -20,13 +20,15 @@ Read the relevant one before changing the model or the look, rather than re-deri
 
 ## One team renders per run
 
-Routes are flat — `/feature`, not `/acme/feature` — so one team folder is the whole content root. `src/content.config.ts` reads `AISDLC_TEAM_DIR`, falling back to `content/teams/reference` so `npm run dev` needs no environment. The CLI (`bin/ai-sdlc.mjs`) sets that variable, which is how `serve`/`export`/`check` render a folder anywhere on disk.
+Routes are flat — `/feature`, not `/acme/feature` — so one team folder is the whole content root. `src/content.config.ts` reads `AISDLC_TEAM_DIR`, falling back to `examples/reference` so `npm run dev` needs no environment. The CLI (`bin/ai-sdlc.mjs`) sets that variable, which is how `serve`/`export`/`check` render a folder anywhere on disk.
 
 The folder name is the team id and each process file name is its process id — renaming a folder renames the team.
 
 ## Verifying a change
 
 `npx astro build` is the gate. There is no test suite and no linter, so a clean build reporting the expected page count (5 for the reference team, 3 for a folder from `ai-sdlc new`) is the evidence that a change holds. `node bin/ai-sdlc.mjs check <team-dir>` validates YAML alone, without booting Astro.
+
+Two teams ship with the repo, and a rendering change is not verified until both hold. `examples/reference` is the realistic document — five roles, three processes, prose at the lengths a real team writes. It ships inside the package and is what `ai-sdlc example` serves, so it is a public surface: a coach reads it to learn what a finished document looks like. `fixtures/coverage` is the opposite — every schema field present once and every optional field absent once, so the branches `reference` happens to fill are still drawn somewhere. `npm run dev:coverage` serves it (2 processes, 4 pages), `npm run check:coverage` validates it. A new schema field belongs in `fixtures/coverage` the same commit it enters `schema.ts`.
 
 `check` and `status` answer different questions and only one is a gate: `check` is schema-only and exits non-zero, `status` inventories how complete a document is and always exits 0. An id an activity references but no catalog defines belongs to `status` — it is schema-legal, so `check` passes it, and unless it is a **tool** id (which fails the build) the only symptom is an arrow that never draws.
 
