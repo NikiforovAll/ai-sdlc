@@ -1,7 +1,7 @@
 // Fold a built `/export` page into one self-contained file: stylesheets become
 // `<style>`, the latin Archivo subset becomes a data: URI, and the other two
-// subsets are dropped (D-CLI-6). There are no image assets and no JS bundles, so
-// after this pass the document has no external reference left.
+// subsets are dropped (D-CLI-6). There are no image assets, so after this pass
+// the document has no external reference left.
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -15,6 +15,30 @@ function foldFonts(css, woff2) {
   });
 }
 
+// Code two client scripts share is split into a chunk of its own, which the
+// entry scripts then import by a URL relative to `/_astro/`. Inlining the
+// entries moves them to the document's own base, where that URL names a file the
+// single artifact does not carry — so both scripts fail to load and the page
+// keeps its markup and loses every interaction. A data: URI is the same
+// specifier for every importer, which preserves the one-instance-per-module
+// identity the chunk had.
+const RELATIVE = /(["'])(\.\/[^"']+\.js)\1/g;
+
+async function foldImports(asset, js, cache, chain = []) {
+  for (const spec of new Set([...js.matchAll(RELATIVE)].map((m) => m[2]))) {
+    const name = spec.slice(2);
+    // The cache is filled after the recursion, so a cycle would never reach it.
+    if (chain.includes(name)) throw new Error(`circular script chunk: ${[...chain, name].join(' -> ')}`);
+    if (!cache.has(name)) {
+      const chunk = await readFile(asset(`/_astro/${name}`), 'utf8');
+      const folded = await foldImports(asset, chunk, cache, [...chain, name]);
+      cache.set(name, `data:text/javascript;base64,${Buffer.from(folded, 'utf8').toString('base64')}`);
+    }
+    js = js.replaceAll(spec, cache.get(name));
+  }
+  return js;
+}
+
 export async function inlineExport(distDir) {
   const asset = (href) => join(distDir, href.replace(/^\//, ''));
   const file = join(distDir, 'export', 'index.html');
@@ -26,22 +50,40 @@ export async function inlineExport(distDir) {
 
   const match = /\/_astro\/(archivo-latin-wght-normal[^"')]*\.woff2)/.exec(sheets.join('\n'));
   if (!match) throw new Error('the latin Archivo subset is missing from the build');
-  const woff2 = (await readFile(join(distDir, '_astro', match[1]))).toString('base64');
+  const woff2 = (await readFile(asset(`/_astro/${match[1]}`))).toString('base64');
 
   for (const [i, [tag]] of links.entries()) {
     html = html.replace(tag, `<style>${foldFonts(sheets[i], woff2)}</style>`);
   }
 
   // Astro inlines the client script at this size, but a future bundle would land
-  // here as a src= instead, and the artifact has to keep working either way.
+  // here as a src= instead, and the artifact has to keep working either way — so
+  // the src= form comes inline first and one pass then folds every script body,
+  // whichever way it arrived.
   const scripts = [...html.matchAll(/<script type="module" src="([^"]+)"><\/script>/g)];
   for (const [tag, src] of scripts) {
     const js = await readFile(asset(src), 'utf8');
-    html = html.replace(tag, `<script type="module">${js}</script>`);
+    html = html.replace(tag, () => `<script type="module">${js}</script>`);
+  }
+  const chunks = new Map();
+  const bodies = [];
+  for (const [tag, js] of [...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)]) {
+    const folded = await foldImports(asset, js, chunks);
+    bodies.push(folded);
+    html = html.replace(tag, () => `<script type="module">${folded}</script>`);
   }
 
-  const left = [...html.matchAll(/(?:src|href)="(\/_astro\/[^"]*)"/g)].map((m) => m[1]);
-  if (left.length) throw new Error(`export still references ${left.join(', ')}`);
+  // A dangling module specifier is only a fault inside a script. The same string
+  // in a team's own prose — a guide naming `./setup.js` — is just a file name,
+  // and failing the export over it would be a build error pointing at nothing.
+  const left = [
+    ...[...html.matchAll(/(?:src|href)="(\/_astro\/[^"]*)"/g)].map((m) => m[1]),
+    ...bodies.flatMap((js) => [
+      ...[...js.matchAll(RELATIVE)].map((m) => m[2]),
+      ...[...js.matchAll(/["'](\/_astro\/[^"']+)["']/g)].map((m) => m[1]),
+    ]),
+  ];
+  if (left.length) throw new Error(`export still references ${[...new Set(left)].join(', ')}`);
 
   // Every document is unique on a route and repeated in the export, so a hard-coded
   // id survives the served site and collides only here. Fail the export instead.
