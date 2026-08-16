@@ -1,5 +1,5 @@
 # The other half of the fixture: a process with every optional field left out.
-# No description, no constraint, one stage, and one activity carrying nothing
+# No note, no description, no constraint, one stage, and one activity carrying nothing
 # beyond what the schema demands — the contrast that proves `main`'s optional
 # fields are optional.
 name: Minimal

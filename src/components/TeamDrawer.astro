@@ -1,6 +1,6 @@
 ---
 import type { OverviewModel } from '../lib/docs';
-import { catalogDescriptions, paragraphs } from '../lib/markdown';
+import { catalogDescriptions, md, paragraphs } from '../lib/markdown';
 import { isLinkableRef, LEVEL_LABELS, toolsOfHarness } from '../lib/derive';
 import { useHref } from '../lib/docs';
 import ReachList from './ReachList.astro';
@@ -21,6 +21,8 @@ const eventNames = new Map(team.events.map((e) => [e.id, e.name]));
 // process drawer explains an entity in the context of one flow, this one explains
 // what it is at all and lists every process that touches it.
 const descriptions = await catalogDescriptions(team);
+// The team's own long form is not a catalog entry, so it renders on its own.
+const teamProse = team.description ? await md(team.description) : null;
 
 // The only panels not keyed to a catalog entry: an open slot has no id of its own,
 // so the set is read together — once for the team, once per process that has any.
@@ -52,10 +54,11 @@ const openPanels = [
         </span>
       </div>
 
-      {team.description && (
+      {(team.note || teamProse) && (
         <div class="tdrawer__section">
           <h4 class="tdrawer__label">About</h4>
-          {paragraphs(team.description).map((p) => <p class="tdrawer__prose">{p}</p>)}
+          {team.note && <p class="tdrawer__prose">{team.note}</p>}
+          {teamProse && <div class="tdrawer__md prose-md" set:html={teamProse} />}
         </div>
       )}
 

@@ -1,7 +1,30 @@
 name: Bugfix
-description: >-
+note: >-
   The short path: a report becomes a reproduction, a cause, a guarded fix, and a
   release. No spec, no planning — the bug is the spec.
+description: |-
+  The bug is the spec, which is why this path has no Define stage and no
+  acceptance criteria. Somebody has already told you what the software should
+  have done; the whole question is whether you can make it do that without
+  breaking something else.
+
+  ### What it assumes
+
+  - **Reproduce before diagnosing.** ① sits on `reproduction` because everything
+    downstream is cheap once the bug reproduces on demand and guesswork until it
+    does. A team that skips this ships fixes to hypotheses.
+  - **The regression test is written from the reproduction, before the fix.**
+    Written after, it only proves the fix compiles.
+  - **Urgency is not an exemption.** `ship-fix` runs the same release gate as
+    Feature does.
+
+  ### Why the ends are thin
+
+  `reproduce-bug` is open and `review-fix` carries nothing at all, and the
+  difference between those two is the whole point of the notation. The first is
+  work this team wants to hand over and has not found the tool for. The second is
+  work they intend to keep doing themselves — one reviewer, one question, no
+  tooling wanted.
 
 stages:
   - id: triage

@@ -1,9 +1,21 @@
 # The loaded process: description, constraint, sub-activities two deep, all four
 # rungs of the ladder, and every optional field on a fill and a recommendation.
 name: Main
-description: >-
+note: >-
   A process carrying every optional field a process has, so the empty ones in
   `minimal` are the contrast.
+description: |-
+  A process `description:` is markdown, rendered in the drawer that opens from the
+  masthead. `minimal` has neither field, which is the branch this one contrasts.
+
+  - a list, so the spacing inside a process panel is visible
+  - a second item, for the same reason
+
+  ```yaml
+  note: the caption
+  description: |-
+    the long form
+  ```
 
 stages:
   - id: alpha

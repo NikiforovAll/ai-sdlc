@@ -4,17 +4,36 @@
 # branches were going undrawn. Nothing here describes how anyone works; read
 # `reference` for that.
 #
-# MARKDOWN: only `description:` on roles, artifacts and harnesses is rendered as
-# markdown — headings, lists, tables, blockquotes, code, links all work there,
-# and the drawer is where they are read. Every other prose field (`note:`,
-# `why:`, `usage:`, `need:`, and the team and process `description:`) is folded
-# into paragraphs as plain text, so markdown written there prints its own
-# syntax. `events` are the exception to watch: their description doubles as a
-# one-line caption in the overview, so keep it a single plain sentence.
+# MARKDOWN: `description:` is markdown everywhere it appears — on the team, on a
+# process, and on every catalog entry. Headings, lists, tables, blockquotes, code
+# and links all work there, and the drawer is where they are read. `note:` is its
+# short counterpart: one plain line, printed by a figure or an index, and the one
+# the page hands to `<meta>`. The remaining prose fields (`why:`, `usage:`,
+# `need:`, the constraint's `note:`) are folded into paragraphs as plain text, so
+# markdown written there prints its own syntax. `events` are the exception to
+# watch: their description doubles as a one-line caption in the overview, so keep
+# it a single plain sentence.
+#
+# A markdown `description:` must use the literal block scalar `|-`. The folded
+# `>-` joins consecutive lines, which silently collapses a table or a list into
+# one paragraph.
 name: Coverage Fixture
-description: >-
+note: >-
   Every schema field, exercised once. Read it when a rendering branch needs a
   document that reaches it, not when you want to know how a team delivers.
+description: |-
+  The team's own `description:` is markdown, the same as a catalog entry's, and
+  the drawer renders it under the `note` above.
+
+  ### Why both fields exist
+
+  | Field | Where it is printed |
+  | --- | --- |
+  | `note` | the process index, the page `<meta>`, one plain line |
+  | `description` | the drawer, as markdown, at whatever length it needs |
+
+  > A document that only had the caption had nowhere to say how it wants to be
+  > read, which is the thing a reader most needs on arrival.
 version: "1.0"
 status: draft
 

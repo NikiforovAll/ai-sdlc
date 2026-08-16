@@ -16,16 +16,19 @@ The load-bearing idea: **you never author the flow**. You author activities and 
 
 ```yaml
 name: Reference Delivery Team
-description: >-
+note: >-
   A vendor-neutral reference for how a small product team delivers changes.
+description: |-
+  Markdown. What this document assumes, how to read it, what it is honest about.
 version: "0.2"
 status: living   # living | draft
 ```
 
-**How it renders.** The masthead: team name, version, status, and a stat strip counting everything the document contains.
+**How it renders.** The masthead: team name, version, status, and a stat strip counting everything the document contains. The `note` is the page's `<meta name="description">`; the `description` is markdown the team drawer renders under an **About** heading.
 
 **Invariants & non-meanings.**
 - `status: living` is the normal state — the document is expected to change as the team does. `draft` marks a document not yet in use.
+- `note` and `description` mean the same two things here as on a role: caption versus what a reader gets after stopping. The split reaches every entity in the model, the two documents included.
 - A team document describes *one* team. Shared practice across teams is expressed by copying, not by referencing another document.
 
 ---
@@ -51,7 +54,7 @@ processes:
     activities: [...]
 ```
 
-**How it renders.** A process switcher beside the view tabs; FLOW, GRID, and PLAYBOOK all scope to the selected process.
+**How it renders.** A process switcher beside the view tabs; FLOW, GRID, and PLAYBOOK all scope to the selected process. A process carries the same `note` / `description` pair the team does: the `note` is the caption under its name in the overview's process index and the page's `<meta>`, and the `description` is markdown, rendered in the drawer that opens from the masthead — the one place a process has room to say what it assumes and why its stages are in that order.
 
 **Invariants & non-meanings.**
 - Processes are independent: there is no cross-process flow, and nothing in one process orders or gates another.

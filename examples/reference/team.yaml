@@ -1,7 +1,36 @@
 name: Example Team
-description: >-
+note: >-
   A vendor-neutral reference for how a small product team delivers changes and
   where AI is utilized. Copy this folder, rename the team, and fill the open slots.
+description: |-
+  This document is an example of the format, not a prescription. Nothing in it is
+  a recommendation for your team: the roles, the artifacts and the three processes
+  are the ones a small product team usually ends up with, written out so you have
+  something to disagree with rather than a blank file to stare at.
+
+  ### How to read it
+
+  - **Start with a process, not the catalog.** The catalog is a shelf; it means
+    nothing until you see which activity reaches for what.
+  - **The ① marks the constraint** — the one handoff the team believes everything
+    else waits behind. Improving anywhere else moves nothing.
+  - **A dashed activity is an open slot**: work the team has decided to hand over
+    and has not yet. It is a roadmap item, and it says what it wants.
+  - **An activity with nothing on it is not a gap.** It is work the team does
+    itself and has no intention of changing.
+
+  ### What it is honest about
+
+  Four activities are open and five are unclaimed, because a document where every
+  box is filled is a document nobody believed while writing it. The delegation
+  level on each fill is the argument, not the tool name — `gated-autonomous` is
+  reserved here for the things with no model in the loop at all.
+
+  ### Making it yours
+
+  `ai-sdlc example --copy <dir>` hands you this folder to edit. Rename it — the
+  folder name is the team id — then cut what your team does not do. Deleting is
+  the faster half of the work.
 version: "0.3"
 status: living
 

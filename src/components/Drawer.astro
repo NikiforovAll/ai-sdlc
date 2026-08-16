@@ -1,13 +1,13 @@
 ---
 import type { Team } from '../lib/derive';
 import { flatten, isLinkableRef, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
-import { catalogDescriptions, paragraphs } from '../lib/markdown';
+import { catalogDescriptions, md, paragraphs } from '../lib/markdown';
 import { VERB } from '../lib/docs';
 
 interface Props {
   team: Team;
   /** The process itself is a drawer panel: its name opens from the masthead line. */
-  process?: { name: string; description?: string; stages: number; activities: number; file?: string };
+  process?: { name: string; note?: string; description?: string; stages: number; activities: number; file?: string };
 }
 const { team, process } = Astro.props;
 const flat = flatten(team);
@@ -25,6 +25,9 @@ const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? 
 // processor is async and the panels are a static map, so the render belongs in
 // frontmatter where the cost is paid at build time.
 const descriptions = await catalogDescriptions(team);
+// The process's own long form is not a catalog entry, so it renders on its own —
+// same treatment, one document up.
+const processProse = process?.description ? await md(process.description) : null;
 
 const actsOfRole = (r: string) => flat.filter((f) => f.activity.roles.includes(r));
 // An event is named by recommendations, never by a fill: it says when a tool is
@@ -56,10 +59,11 @@ const recsOfEvent = (ev: string) =>
           <span class="chip">{process.stages} STAGES</span>
         </div>
 
-        {process.description && (
+        {(process.note || processProse) && (
           <div class="drawer__section">
             <h4 class="drawer__label">About</h4>
-            {paragraphs(process.description).map((p) => <p class="drawer__why">{p}</p>)}
+            {process.note && <p class="drawer__why">{process.note}</p>}
+            {processProse && <div class="drawer__prose prose-md" set:html={processProse} />}
           </div>
         )}
 

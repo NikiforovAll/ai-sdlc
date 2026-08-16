@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 const { model } = Astro.props as { model: ProcessModel };
 ---
 
-<Layout title={`${model.process.name} — ${model.team.name}`} description={model.process.description}>
+<Layout title={`${model.process.name} — ${model.team.name}`} description={model.process.note}>
   <RoleDimStyle roles={model.doc.roles} />
   <ProcessDoc model={model} />
 </Layout>

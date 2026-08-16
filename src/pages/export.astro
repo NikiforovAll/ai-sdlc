@@ -11,7 +11,7 @@ import { overviewModel, processModels } from '../lib/docs';
 const [overview, processes] = await Promise.all([overviewModel(), processModels()]);
 ---
 
-<Layout title={`${overview.team.name} — ai-sdlc`} description={overview.team.description}>
+<Layout title={`${overview.team.name} — ai-sdlc`} description={overview.team.note}>
   <RoleDimStyle roles={overview.team.roles} />
 
   <nav class="switch module" aria-label="Document">

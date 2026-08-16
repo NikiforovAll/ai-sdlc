@@ -6,6 +6,6 @@ import { overviewModel } from '../lib/docs';
 const model = await overviewModel();
 ---
 
-<Layout title={`${model.team.name} — ai-sdlc`} description={model.team.description}>
+<Layout title={`${model.team.name} — ai-sdlc`} description={model.team.note}>
   <OverviewDoc model={model} />
 </Layout>

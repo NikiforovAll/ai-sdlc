@@ -1,6 +1,31 @@
 name: Feature
-description: >-
+note: >-
   The long path: an intent becomes a spec, a plan, a change, proof, and a release.
+description: |-
+  The path a change takes when nobody has asked for it yet — someone decided it
+  was worth building. That is what separates this from Bugfix: the intent has to
+  be written down and agreed before there is anything to build against, and most
+  of the cost of getting it wrong is paid at review time, weeks later.
+
+  ### What it assumes
+
+  - **Criteria before code.** `write-acceptance-criteria` sits in Plan, not
+    Verify, so the review has something written before the change to judge
+    against — not taste applied after it.
+  - **Evidence is assembled, not scattered.** The reviewer reads one pack. This
+    is the constraint: everything upstream moves faster than a reviewer can
+    absorb proof, which is why ① sits on `evidence-pack`.
+  - **The inner loop is nested, not flattened.** `implement` contains the real
+    work — break down, write, self-review — because a single box would hide the
+    three places a session actually goes wrong.
+
+  ### Where it is still open
+
+  `write-acceptance-criteria` and `review-conformance` are both open, and both
+  for the same reason: the tooling that exists can draft and can comment, but the
+  judgement of whether a change did what was asked has to stay with a person who
+  can be held to it. `review-conformance` carries four recommendations and is
+  still open — recommendations never fill a slot.
 
 stages:
   - id: define

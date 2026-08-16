@@ -31,18 +31,20 @@ If a team asks you to draw an arrow, the answer is to name an artifact.
 name: Acme
 version: "0.1"
 status: draft            # draft | living — prints in the masthead
-description: ...         # optional
-roles:      [{ id, name, note? }]        # at least one
-artifacts:  [{ id, name }]               # at least one
-harnesses:  [{ id, name, note? }]        # optional
-events:     [{ id, name, description? }] # optional
-tools:      [{ id, name, harness, kind, note?, refs? }]   # optional
+note: ...                # optional — one plain line; the caption and the page <meta>
+description: ...         # optional — markdown, rendered in the drawer
+roles:      [{ id, name, note?, description? }]        # at least one
+artifacts:  [{ id, name, description? }]               # at least one
+harnesses:  [{ id, name, note?, description? }]        # optional
+events:     [{ id, name, description? }] # optional — keep to one plain sentence
+tools:      [{ id, name, harness, kind, note?, description?, refs? }]   # optional
 ```
 
 ```yaml
 # processes/<process-id>.yaml    ← the file name IS the process id
 name: Delivery
-description: ...                 # optional
+note: ...                        # optional — one plain line; the caption and the page <meta>
+description: ...                 # optional — markdown, rendered in the drawer
 stages: [{ id, name }]           # at least one
 constraint: { artifact: <id>, note: ... }   # optional, at most one
 activities:                      # at least one

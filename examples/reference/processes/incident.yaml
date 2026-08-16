@@ -1,7 +1,27 @@
 name: Incident
-description: >-
+note: >-
   The interrupt path: a page becomes a bounded impact, a mitigation, a cause, and
   a lesson. Service first, understanding second — the order is the point.
+description: |-
+  The only path here that interrupts rather than queues, and the only one where
+  the right first move is to stop the bleeding without understanding why. That
+  inversion is what makes it a separate process instead of an urgent Bugfix.
+
+  ### What it assumes
+
+  - **Mitigate before diagnosing.** ① sits on `mitigation` because every minute
+    spent understanding the cause is a minute the service is still down.
+  - **The durable fix is not this process.** It rejoins the ordinary change path,
+    with a review and a release gate, once the service is back.
+  - **The lesson is an artifact.** An incident that produces no written change to
+    how the team works has been paid for and not banked.
+
+  ### Reading the tooling here
+
+  Two of the six fills sit at `assisted`, which is the lowest concentration of
+  delegation in this document, and on purpose: an incident is the worst moment to
+  be reading a diff you did not write. The single `gated-autonomous` fill is alert
+  routing — the one step here with no model in the loop at all.
 
 stages:
   - id: detect

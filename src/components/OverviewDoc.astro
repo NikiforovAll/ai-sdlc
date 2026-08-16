@@ -71,7 +71,7 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
               <span class="proc__name">{p.data.name}</span>
               <span class="proc__go" aria-hidden="true">→</span>
             </a>
-            {p.data.description && <p class="proc__desc">{p.data.description}</p>}
+            {p.data.note && <p class="proc__desc">{p.data.note}</p>}
             <ol class="proc__stages">
               {p.data.stages.map((st) => <li class="proc__stage">{st.name}</li>)}
             </ol>

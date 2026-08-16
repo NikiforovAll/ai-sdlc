@@ -121,8 +121,14 @@ const tool = z.object({
   refs: z.array(z.string()).optional(),
 });
 
+// The same `note` / `description` split the catalogs use, applied to the two
+// documents themselves. `note` is the caption — the line the process index
+// prints and the one the page hands to `<meta>`. `description` is markdown the
+// drawer renders, which is where a document finally has room to say what it
+// assumes and how it wants to be read.
 export const teamSchema = z.object({
   name: z.string(),
+  note: z.string().optional(),
   description: z.string().optional(),
   version: z.string(),
   status: z.enum(['living', 'draft']).default('living'),
@@ -143,6 +149,7 @@ export const teamSchema = z.object({
 
 export const processSchema = z.object({
   name: z.string(),
+  note: z.string().optional(),
   description: z.string().optional(),
   stages: z.array(z.object({ id, name: z.string() })).min(1),
   activities: z.array(activity).min(1),
