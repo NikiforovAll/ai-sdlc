@@ -189,6 +189,14 @@ ol {
   color: var(--white);
 }
 
+/* The signal colour a count of open slots is drawn in everywhere else — the
+   masthead figure, the card figure — so the panel they open agrees with them. */
+.chip--accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+
 /* A chip that names another catalog entry is a door to it. The `font` shorthand
    is deliberately not used: it would reset the size, weight, and line-height
    `.chip` sets just above, and the button would outgrow the chips beside it. */
@@ -220,6 +228,29 @@ ol {
 .row__go:focus-visible {
   color: var(--accent);
   border-color: var(--accent);
+}
+
+/* A figure that is also a door: the masthead's open-slot count and the same count
+   on a process card. The number keeps whatever size and colour its strip gives it
+   — this is the hit area and the mark, nothing else — so the gesture has one owner
+   rather than one per place a countable thing turns out to be reachable. */
+.num-go {
+  --num-go-mark: var(--label);
+  --num-go-mark-line: 14px;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 3px;
+  color: inherit;
+  font: inherit;
+  transition: opacity 0.14s var(--ease-out);
+}
+.num-go:hover,
+.num-go:focus-visible {
+  opacity: 0.6;
+}
+.num-go__mark {
+  font-size: var(--num-go-mark);
+  line-height: var(--num-go-mark-line);
 }
 
 /* Drawer chrome: BACK and CLOSE read as one control voice in both drawers. */

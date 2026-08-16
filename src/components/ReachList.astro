@@ -78,6 +78,7 @@ const groups = [
               </p>
             )}
             {r.usage && paragraphs(r.usage).map((t) => <p class="reach__usage">{t}</p>)}
+            {r.need && paragraphs(r.need).map((t) => <p class="reach__usage reach__need">{t}</p>)}
           </li>
         ))}
       </ul>
@@ -168,6 +169,11 @@ const groups = [
     line-height: 17px;
     color: var(--sub);
     margin-top: 4px;
+  }
+  /* A need is not an aside about the row — it is what the row is for, the only
+     sentence saying what would close the gap, so it keeps the ink the activity has. */
+  .reach__need {
+    color: var(--ink);
   }
   /* An aside about a list must not outweigh the rows it stands in for, so the
      empty line takes the same body step the rows do, not the drawer's prose. */

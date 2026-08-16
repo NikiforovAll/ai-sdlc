@@ -42,7 +42,16 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
       <dl class="mast__stats">
         {stats.map((s) => (
           <div class="mast__stat">
-            <dd class:list={['mast__stat-n', { 'mast__stat-n--open': s.open && s.n > 0 }]}>{s.n}</dd>
+            <dd class:list={['mast__stat-n', { 'mast__stat-n--open': s.key && s.n > 0 }]}>
+              {/* A number the team is meant to act on has somewhere to go. The others
+                  are inventory, and a door on them would promise a panel that is
+                  already the page underneath. */}
+              {s.key && s.n > 0 ? (
+                <button type="button" class="num-go" data-detail-key={s.key} aria-controls="team-drawer">
+                  {s.n}<span class="num-go__mark" aria-hidden="true">▸</span>
+                </button>
+              ) : s.n}
+            </dd>
             <dt class="mast__stat-label">{s.label}</dt>
           </div>
         ))}
@@ -69,7 +78,16 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
             <dl class="proc__nums">
               <div><dd>{p.activities}</dd><dt>Activities</dt></div>
               <div><dd>{p.data.stages.length}</dd><dt>Stages</dt></div>
-              <div><dd class:list={{ 'proc__open': p.open > 0 }}>{p.open}</dd><dt>Open slots</dt></div>
+              <div>
+                <dd class:list={{ 'proc__open': p.open > 0 }}>
+                  {p.open > 0 ? (
+                    <button type="button" class="num-go proc__open-go" data-detail-key={`open:${p.slug}`} aria-controls="team-drawer">
+                      {p.open}<span class="num-go__mark" aria-hidden="true">▸</span>
+                    </button>
+                  ) : p.open}
+                </dd>
+                <dt>Open slots</dt>
+              </div>
             </dl>
             {p.data.constraint && (
               <p class="proc__constraint">
@@ -295,6 +313,11 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
   }
   .proc__open {
     color: var(--accent);
+  }
+  /* The same door the masthead figure draws, sized to the card's smaller number. */
+  .proc__open-go {
+    --num-go-mark: var(--micro);
+    --num-go-mark-line: 11px;
   }
   .proc__nums dt {
     font-size: var(--micro);

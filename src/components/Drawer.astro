@@ -591,11 +591,12 @@ const recsOfEvent = (ev: string) =>
     border-bottom-color: var(--accent);
   }
   /* Authored markdown, so the drawer owns the vertical rhythm rather than the
-     renderer: the same prose step the rest of the panel reads at, with lists
-     kept tight enough that a three-item list is not the loudest thing in view. */
+     renderer: the body step the rows around it read at — one prose voice across
+     both drawers — with lists kept tight enough that a three-item list is not the
+     loudest thing in view, and a description never outweighs the entry it describes. */
   .drawer__prose {
-    font-size: var(--prose);
-    line-height: 19px;
+    font-size: var(--body);
+    line-height: 17px;
     color: var(--ink);
     max-width: 46ch;
   }

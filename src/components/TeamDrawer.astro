@@ -12,7 +12,7 @@ interface Props {
   inline?: boolean;
 }
 const { model, inline = false } = Astro.props;
-const { team, teamId, roleUse, harnessUse, eventUse, toolReach, artifactReach, roleReach } = model;
+const { team, teamId, roleUse, harnessUse, eventUse, toolReach, artifactReach, roleReach, openReach, openByProc, procs } = model;
 const harnessNames = new Map(team.harnesses.map((h) => [h.id, h.name]));
 const harnessName = (id: string) => harnessNames.get(id) ?? id;
 const eventNames = new Map(team.events.map((e) => [e.id, e.name]));
@@ -21,6 +21,17 @@ const eventNames = new Map(team.events.map((e) => [e.id, e.name]));
 // process drawer explains an entity in the context of one flow, this one explains
 // what it is at all and lists every process that touches it.
 const descriptions = await catalogDescriptions(team);
+
+// The only panels not keyed to a catalog entry: an open slot has no id of its own,
+// so the set is read together — once for the team, once per process that has any.
+// One list rather than two blocks, so the two readings cannot drift into saying
+// different things about the same rows.
+const openPanels = [
+  { key: '__open', name: 'Open Slots', rows: openReach, all: true },
+  ...procs
+    .filter((p) => p.open > 0)
+    .map((p) => ({ key: `open:${p.slug}`, name: p.data.name, rows: openByProc.get(p.slug) ?? [], all: false })),
+];
 ---
 
 <aside class="tdrawer" id="team-drawer" hidden aria-label="Team document detail">
@@ -209,6 +220,30 @@ const descriptions = await catalogDescriptions(team);
           <p class="tdrawer__uses">
             <UseList uses={eventUse.get(e.id) ?? []} empty="Defined, but nothing is bound to it yet." emptyClass="tdrawer__none" />
           </p>
+        </div>
+      </div>
+    ))}
+
+    {openPanels.map((o) => (
+      <div class="tdrawer__panel" data-detail={o.key} data-title="Open Slots" hidden>
+        <h3 class="tdrawer__name">{o.name}</h3>
+        <div class="tdrawer__chips">
+          <span class="chip chip--accent">{o.rows.length} {o.all ? 'DECLARED' : 'OPEN'}</span>
+          {!o.all && <button type="button" class="chip chip--link" data-detail-key="__open">ALL PROCESSES</button>}
+        </div>
+        {o.all && (
+          <p class="tdrawer__prose">
+            Work this team has decided to hand to a tool and has not yet. Each one names what
+            it needs, in the team's own words.
+          </p>
+        )}
+        <div class="tdrawer__section">
+          <h4 class="tdrawer__label">Waiting on</h4>
+          <ReachList
+            rows={o.rows}
+            empty="Nothing is declared open. Every activity is either filled or done by hand on purpose."
+            inline={inline}
+          />
         </div>
       </div>
     ))}
@@ -442,10 +477,12 @@ const descriptions = await catalogDescriptions(team);
     text-transform: uppercase;
   }
   /* Authored markdown, so the panel styles the tags it can actually receive
-     rather than a class per element. */
+     rather than a class per element. The body step, not the prose one: this is the
+     longest block in a panel, and at 14px it outweighed both the entry name above
+     it and every row derived below it — one description read as a document pasted in. */
   .tdrawer__md {
     margin-top: 8px;
-    font-size: var(--prose);
-    line-height: 20px;
+    font-size: var(--body);
+    line-height: 17px;
   }
 </style>

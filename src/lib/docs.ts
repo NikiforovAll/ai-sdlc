@@ -36,10 +36,14 @@ export interface Reach {
   /** Sub-activities live inside their parent's stage, so they name none of their own. */
   stage?: string;
   roles: string[];
-  kind: 'fill' | 'recommended' | 'produces' | 'consumes' | 'owns';
+  kind: 'fill' | 'recommended' | 'produces' | 'consumes' | 'owns' | 'open';
   level?: Fill['level'];
   /** Only an `owns` row states it: the activity is a declared gap, so it has no level to name. */
   open?: boolean;
+  /** The sentence the team wrote about what would fill the gap. Kept apart from
+      `usage`, which says how a tool is used — one field with both meanings would
+      read the same and mean opposite things. */
+  need?: string;
   event?: string;
   usage?: string;
 }
@@ -55,6 +59,7 @@ export const VERB: Record<Reach['kind'], string> = {
   produces: 'produced by',
   consumes: 'consumed by',
   owns: 'owned in',
+  open: 'declared in',
 };
 
 export interface ProcStat {
@@ -68,7 +73,10 @@ export interface OverviewModel {
   teamId: string;
   team: TeamDoc;
   procs: ProcStat[];
-  stats: { n: number; label: string; open?: boolean }[];
+  /** `key` is the drawer panel the figure opens. A stat that has one is a number
+      the team is meant to act on, which is also why it is the one drawn in the
+      signal colour — two fields for that would let the door and the colour disagree. */
+  stats: { n: number; label: string; key?: string }[];
   artifactUse: Map<string, Use[]>;
   harnessUse: Map<string, Use[]>;
   roleUse: Map<string, Use[]>;
@@ -78,6 +86,11 @@ export interface OverviewModel {
   toolReach: Map<string, Reach[]>;
   artifactReach: Map<string, Reach[]>;
   roleReach: Map<string, Reach[]>;
+  /** Flat, not keyed: the open slots are one list the whole team reads, and the
+      count in the masthead is the door to it. The per-process reading is the same
+      rows keyed the way every other panel receives them. */
+  openReach: Reach[];
+  openByProc: Map<string, Reach[]>;
 }
 
 export interface ProcessModel {
@@ -155,6 +168,8 @@ export async function overviewModel(): Promise<OverviewModel> {
   // The team drawer answers a role the way the process drawer does — the work it
   // owns, one line each — because "which processes" is the summary, not the answer.
   const roleReach = new Map<string, Reach[]>();
+  const openReach: Reach[] = [];
+  const openByProc = new Map<string, Reach[]>();
   // Unlike `pushUse`, every row is kept: two activities reaching for the same
   // tool is the answer, not a duplicate.
   const pushReach = (m: Map<string, Reach[]>, key: string, r: Reach) => {
@@ -212,6 +227,11 @@ export async function overviewModel(): Promise<OverviewModel> {
       for (const r of a.roles) {
         pushReach(roleReach, r, { ...at, kind: 'owns', level: a.tooling?.level, open: Boolean(a.open) });
       }
+      if (a.open) {
+        const row: Reach = { ...at, kind: 'open', need: a.open.need };
+        openReach.push(row);
+        pushReach(openByProc, p.slug, row);
+      }
       if (a.tooling) {
         pushReach(toolReach, a.tooling.tool, { ...at, kind: 'fill', level: a.tooling.level, usage: a.tooling.usage });
       }
@@ -242,6 +262,8 @@ export async function overviewModel(): Promise<OverviewModel> {
     toolReach,
     artifactReach,
     roleReach,
+    openReach,
+    openByProc,
     stats: [
       { n: procs.length, label: 'Processes' },
       { n: team.roles.length, label: 'Roles' },
@@ -250,7 +272,7 @@ export async function overviewModel(): Promise<OverviewModel> {
       { n: team.harnesses.length, label: 'Harnesses' },
       { n: team.tools.length, label: 'Tools' },
       { n: team.events.length, label: 'Events' },
-      { n: totalOpen, label: 'Open slots', open: true },
+      { n: totalOpen, label: 'Open slots', key: '__open' },
     ],
   };
 }
