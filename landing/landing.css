@@ -1,0 +1,663 @@
+/* The landing page stands alone — it is copied into the deploy beside the built
+   demo, not rendered by Astro — so it carries its own copy of the document's
+   tokens rather than importing a stylesheet that only exists inside the app. */
+
+@font-face {
+  font-family: 'Archivo Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('fonts/archivo-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --white: #ffffff;
+  --ink: #111111;
+  --accent: #0f6b3c;
+  --accent-on-ink: #7fd6a8;
+  --line: #dadada;
+  --surface: #f2f2f2;
+  --washi: #f7f7f7;
+  --sub: #666666;
+  --muted: #999999;
+
+  /* The inverted band needs a hairline and a header ground, and `--line` and
+     `--washi` are both invisible on ink. Mixed from the same two colours rather
+     than picked, so the palette stays closed. */
+  --line-on-ink: color-mix(in srgb, var(--white) 18%, var(--ink));
+  --washi-on-ink: color-mix(in srgb, var(--white) 6%, var(--ink));
+
+  --stripe: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 5px,
+    rgba(15, 107, 60, 0.12) 5px,
+    rgba(15, 107, 60, 0.12) 6px
+  );
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --font: 'Archivo Variable', 'Archivo', 'Yu Gothic', sans-serif;
+  --mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', 'Consolas', monospace;
+
+  /* The page is scaled a quarter up (see `.page`), so the display step is set a
+     quarter below the document's 56px rather than repeating it. */
+  --display-lg: 32px;
+  --display-md: 24px;
+  --title: 20px;
+  --subhead: 16px;
+  --prose: 14px;
+  --body: 12px;
+  --label: 10px;
+  --micro: 9px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--surface);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--body);
+  line-height: 16px;
+  color: var(--ink);
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--white);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The width/height attributes are on the tags so the page reserves the right box
+   before the image lands; `height: auto` is what keeps that box in proportion
+   once the width is constrained. */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+}
+
+/* ---- the same module chrome the document uses: ruled box, green tab ---- */
+
+/* Every size below is the document's own — a scale set for a dense reference page
+   the reader leans into. This page is read once, at arm's length, so the whole
+   thing is scaled up a quarter rather than a second scale being maintained
+   alongside the first. `max-width` is divided by the same factor so the measure
+   is unchanged. */
+.page {
+  zoom: 1.25;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.module {
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+
+.module__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 8px 6px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.module__title {
+  font-size: var(--subhead);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.module__meta {
+  margin-left: auto;
+  font-size: var(--micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.tab {
+  display: inline-block;
+  padding: 3px 7px 2px;
+  background: var(--accent);
+  color: var(--white);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ---- top bar ---- */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 8px 6px 6px;
+}
+
+.bar__name {
+  font-size: var(--subhead);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.bar__note {
+  font-size: var(--micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.bar__links {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- buttons: the document's own pressed/unpressed pair ---- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--ink);
+  padding: 7px 12px 6px;
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: var(--white);
+  transition: background 0.12s ease-out, color 0.12s ease-out;
+}
+
+.btn:hover {
+  background: var(--washi);
+}
+
+.btn--go {
+  background: var(--ink);
+  color: var(--white);
+}
+
+.btn--go:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn__mark {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+/* ---- hero ---- */
+
+.hero {
+  padding: 0;
+}
+
+.hero__body {
+  padding: 22px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Wide, the display line and the prose sit side by side. Stacked, a 22ch title
+   left half the page empty — the pitch was reading down a narrow gutter of a
+   very wide sheet, which is the airy layout this design refuses. */
+@media (min-width: 1040px) {
+  .hero__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    column-gap: 28px;
+    align-items: start;
+  }
+  .hero__title {
+    grid-row: 1 / span 3;
+  }
+  .hero__ctas {
+    margin-top: 4px;
+  }
+}
+
+/* The one display-step line on the page. It wraps at a measure rather than the
+   full 1440, so the second line never starts a screen-width away from the first. */
+.hero__title {
+  font-size: var(--display-md);
+  line-height: 28px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  max-width: 30ch;
+  text-transform: uppercase;
+}
+
+@media (min-width: 900px) {
+  .hero__title {
+    font-size: var(--display-lg);
+    line-height: 36px;
+  }
+}
+
+.hero__lede {
+  font-size: var(--prose);
+  line-height: 21px;
+  color: var(--sub);
+  max-width: 68ch;
+}
+
+.hero__lede strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.hero__ctas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hero__status {
+  font-size: var(--micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+/* The claim strip reads as the document's stat strip: equal cells, hairline
+   between, a number-weight lead and a small caption under it. */
+.claims {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  border-top: 1px solid var(--line);
+}
+
+.claim {
+  padding: 10px 14px 12px;
+  border-left: 1px solid var(--line);
+}
+
+.claim:first-child {
+  border-left: none;
+}
+
+.claim__lead {
+  font-size: var(--subhead);
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.claim__lead em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.claim__note {
+  font-size: var(--label);
+  line-height: 15px;
+  color: var(--sub);
+}
+
+/* ---- screenshots ---- */
+
+.shot {
+  border-top: 1px solid var(--line);
+}
+
+.shot:first-of-type {
+  border-top: none;
+}
+
+.shot__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 7px 8px 6px;
+  background: var(--washi);
+}
+
+.shot__n {
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.shot__title {
+  font-size: var(--body);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.shot__note {
+  flex: 1 1 40ch;
+  font-size: var(--label);
+  line-height: 15px;
+  color: var(--sub);
+}
+
+.shot__frame {
+  padding: 12px;
+}
+
+.shot__frame img {
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+
+/* FIG.01 is shown whole — the reader is being told the shape of the thing, not
+   asked to read it. FIG.02 and FIG.03 are the opposite: the document sets its
+   type at 9-12px, so a whole page scaled into this column renders that at half
+   the size and the diagram becomes a texture. They are 1:1 crops instead, at
+   their natural size, and the frame scrolls sideways rather than shrinking them. */
+.shot__frame--scroll {
+  overflow-x: auto;
+}
+
+.shot__frame--scroll img {
+  max-width: none;
+  /* Cancels the page scale: a 1:1 crop of the document is only 1:1 at 1. */
+  zoom: 0.8;
+}
+
+/* The drawer is a 400px panel and the band is far wider, so left-aligning it
+   leaves the figure looking cropped rather than placed. `safe` keeps it flush
+   left instead of clipping once the viewport is narrower than the panel. */
+.shot__frame--centre {
+  display: flex;
+  justify-content: safe center;
+}
+
+/* The screenshots are pictures of a page built from this page's own tokens, so on
+   a white ground the frame line is the only thing separating specimen from
+   specimen case, and it disappears. The band is inverted: the shots read as
+   objects laid on a dark table. */
+.module--ink {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--white);
+}
+
+.module--ink .module__head {
+  border-bottom-color: var(--line-on-ink);
+}
+
+.module--ink .module__meta {
+  color: var(--muted);
+}
+
+.module--ink .tab {
+  background: var(--accent-on-ink);
+  color: var(--ink);
+}
+
+.module--ink .shot {
+  border-top-color: var(--line-on-ink);
+}
+
+.module--ink .shot__head {
+  background: var(--washi-on-ink);
+}
+
+.module--ink .shot__n {
+  color: var(--accent-on-ink);
+}
+
+.module--ink .shot__note {
+  color: var(--muted);
+}
+
+.module--ink .shot__frame img {
+  border-color: var(--line-on-ink);
+}
+
+/* ---- two-column prose + code ---- */
+
+.split {
+  display: grid;
+  /* `min(340px, 100%)` rather than a bare 340px: below that the track would keep
+     its floor and push the page sideways instead of collapsing to one column. */
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+}
+
+.split > * {
+  min-width: 0;
+  padding: 12px 14px 14px;
+  border-left: 1px solid var(--line);
+}
+
+.split > *:first-child {
+  border-left: none;
+}
+
+.split h3 {
+  font-size: var(--body);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.split p {
+  font-size: var(--prose);
+  line-height: 20px;
+  color: var(--sub);
+  max-width: 56ch;
+}
+
+.split p + p {
+  margin-top: 8px;
+}
+
+pre {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--ink);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: var(--body);
+  line-height: 18px;
+  overflow-x: auto;
+}
+
+pre .c {
+  color: var(--muted);
+}
+
+pre .k {
+  color: var(--accent-on-ink);
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.94em;
+}
+
+/* ---- the three states an activity can be in ---- */
+
+.states {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin: -1px 0 0 -1px;
+}
+
+.state {
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+/* Each state is introduced by a box drawn the way the figure draws it — filled
+   solid, open slot dashed and striped — so the word and the mark are learned
+   together rather than the reader matching them up in the demo. */
+.state__box {
+  border: 1px solid var(--ink);
+  padding: 6px 8px 7px;
+  margin-bottom: 8px;
+}
+
+.state__box--open {
+  border: 1px dashed var(--muted);
+  background: var(--stripe);
+}
+
+.state__box--plain {
+  border-color: var(--line);
+}
+
+.state__stage {
+  display: block;
+  font-size: var(--micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.state__act {
+  display: block;
+  font-size: var(--body);
+  font-weight: 700;
+}
+
+.state__level {
+  display: block;
+  font-size: var(--micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.state__level--open {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.state__rung {
+  display: block;
+  height: 2px;
+  margin-top: 4px;
+  background: linear-gradient(to right, var(--accent) 0 var(--fill, 50%), var(--line) var(--fill, 50%) 100%);
+}
+
+.state h3 {
+  font-size: var(--body);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.state p {
+  font-size: var(--label);
+  line-height: 16px;
+  color: var(--sub);
+}
+
+/* ---- command table ---- */
+
+.cmds {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cmds th {
+  text-align: left;
+  padding: 6px 10px 5px;
+  background: var(--washi);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.cmds td {
+  padding: 7px 10px 6px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  font-size: var(--body);
+  line-height: 17px;
+}
+
+.cmds tr:last-child td {
+  border-bottom: none;
+}
+
+.cmds code {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cmds td:last-child {
+  color: var(--sub);
+}
+
+/* ---- footer ---- */
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 8px;
+  font-size: var(--micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.foot a {
+  color: var(--sub);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  transition: color 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.foot a:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.foot__right {
+  margin-left: auto;
+}

@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ai-sdlc — a composer of project delivery processes</title>
+    <meta
+      name="description"
+      content="Write in YAML how a team delivers changes and where AI is utilized. ai-sdlc renders it into an interactive document: a flow swimlane, a stage-by-role grid, and drill-down panels."
+    />
+    <meta property="og:title" content="ai-sdlc" />
+    <meta
+      property="og:description"
+      content="A composer of project delivery processes. The process is a document under version control; the diagram is generated from it."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="assets/main.png" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="landing.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="bar module">
+        <span class="tab">AI-SDLC</span>
+        <span class="bar__name">A Composer of Delivery Processes</span>
+        <span class="bar__note">prototype · schema still firming up</span>
+        <nav class="bar__links" aria-label="Primary">
+          <a class="btn" href="#what">What it draws</a>
+          <a class="btn" href="#start">Quick start</a>
+          <a class="btn btn--go" href="demo/">Open the live demo →</a>
+        </nav>
+      </header>
+
+      <section class="hero module" aria-labelledby="hero-title">
+        <div class="hero__body">
+          <h1 class="hero__title" id="hero-title">The process a team really runs, drawn from what they wrote down</h1>
+          <p class="hero__lede">
+            Write in YAML how your team delivers changes and where AI is utilized — activities, roles, artifacts,
+            stages, tool fills, and the gaps the team has declared. <strong>ai-sdlc renders it</strong> into an
+            interactive document: a flow swimlane, a stage×role grid, and a drill-down panel behind every box.
+          </p>
+          <div class="hero__ctas">
+            <a class="btn btn--go" href="demo/">Open the live demo →</a>
+            <a class="btn" href="https://github.com/NikiforovAll/ai-sdlc">
+              <svg class="btn__mark" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+                />
+              </svg>
+              Source on GitHub
+            </a>
+            <span class="hero__status">Node ≥ 22.18 · runs on your machine · no account</span>
+          </div>
+        </div>
+
+        <dl class="claims">
+          <div class="claim">
+            <dt class="claim__lead">Written down <em>at all</em></dt>
+            <dd class="claim__note">
+              Most delivery processes live in habit, in tickets, and in whoever has been here longest. This one is a
+              file in the repo — readable by the team, and by their agents.
+            </dd>
+          </div>
+          <div class="claim">
+            <dt class="claim__lead">Gaps stay <em>visible</em></dt>
+            <dd class="claim__note">
+              What nobody has solved yet renders as a dashed open slot rather than quietly disappearing. The declared
+              gaps are the roadmap.
+            </dd>
+          </div>
+          <div class="claim">
+            <dt class="claim__lead">One file, <em>shareable</em></dt>
+            <dd class="claim__note">
+              <code>ai-sdlc export</code> folds the whole document into a single HTML file that opens from disk with
+              every interaction intact.
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="module module--ink" id="what" aria-labelledby="what-title">
+        <div class="module__head">
+          <span class="tab">PROJECTIONS</span>
+          <span class="module__title" id="what-title">Three Readings of One Model</span>
+          <span class="module__meta">screenshots of the example team · open the demo to use it</span>
+        </div>
+
+        <figure class="shot">
+          <figcaption class="shot__head">
+            <span class="shot__n">FIG. 01</span>
+            <span class="shot__title">The team document</span>
+            <span class="shot__note">
+              The index: every process with its stages and its open-slot count, then the shared catalogs — roles,
+              harnesses, tooling, events, artifacts — each entry saying where it is actually reached for.
+            </span>
+          </figcaption>
+          <div class="shot__frame">
+            <img
+              src="assets/main.png"
+              width="3389"
+              height="1961"
+              alt="The team document: masthead, stat strip, three process cards, and the shared catalogs below them"
+              loading="lazy"
+            />
+          </div>
+        </figure>
+
+        <figure class="shot">
+          <figcaption class="shot__head">
+            <span class="shot__n">FIG. 02</span>
+            <span class="shot__title">The flow</span>
+            <span class="shot__note">
+              One lane per role, columns as topological steps, artifacts riding the arrows between activities. Dashed
+              boxes are open slots. Shown here at full size — the lens that filters the whole document to a single
+              role is in the demo.
+            </span>
+          </figcaption>
+          <div class="shot__frame shot__frame--scroll">
+            <img
+              src="assets/crop-flow.png"
+              width="1260"
+              height="630"
+              alt="A process drawn as a swimlane: roles as lanes, steps as columns, artifacts labelling the edges"
+              loading="lazy"
+            />
+          </div>
+        </figure>
+
+        <figure class="shot">
+          <figcaption class="shot__head">
+            <span class="shot__n">FIG. 03</span>
+            <span class="shot__title">The drill-down</span>
+            <span class="shot__note">
+              Every box opens: what the activity consumes and produces, which tool fills it and at what rung of the
+              delegation ladder, and what tooling is recommended where nothing is attached yet. This is the panel
+              itself, lifted out of the page.
+            </span>
+          </figcaption>
+          <div class="shot__frame shot__frame--scroll shot__frame--centre">
+            <img
+              src="assets/crop-drawer.png"
+              width="500"
+              height="783"
+              alt="The drill-down drawer for one activity, listing its artifacts, its tool fill, and recommendations"
+              loading="lazy"
+            />
+          </div>
+        </figure>
+      </section>
+
+      <section class="module" aria-labelledby="write-title">
+        <div class="module__head">
+          <span class="tab">THE UNIT</span>
+          <span class="module__title" id="write-title">What You Actually Write</span>
+          <span class="module__meta">an activity is the atomic unit</span>
+        </div>
+        <div class="split">
+          <div>
+            <h3>A team folder</h3>
+            <p>
+              A <code>team.yaml</code> holds the catalogs every process shares — roles, artifacts, harnesses, tools,
+              events. Each file under <code>processes/</code> is one way work flows through the team, and its file name
+              is the process id.
+            </p>
+            <p>
+              Nothing else is authored. Ordering is a topological sort of the artifact edges; a handoff exists because
+              one activity produces what another consumes.
+            </p>
+            <pre><code>acme/
+  team.yaml       <span class="c">roles, artifacts, harnesses, tools, events</span>
+  processes/
+    feature.yaml  <span class="c">stages, activities, tooling fills</span>
+    bugfix.yaml   <span class="c">same team, same catalogs</span></code></pre>
+          </div>
+          <div>
+            <h3>An activity</h3>
+            <p>
+              Who does what, at which stage, consuming and producing which artifacts — and the capability attached to
+              it, at a stated rung of the delegation ladder.
+            </p>
+            <pre><code><span class="k">- id:</span> write-spec
+  <span class="k">name:</span> Write Spec
+  <span class="k">stage:</span> define
+  <span class="k">roles:</span> [lead]
+  <span class="k">produces:</span> [spec]
+  <span class="k">why:</span> Work without a written intent
+       gets re-litigated at review time.
+  <span class="k">tooling:</span>
+    <span class="k">tool:</span> spec-interview
+    <span class="k">level:</span> assisted</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="module" aria-labelledby="states-title">
+        <div class="module__head">
+          <span class="tab">STATES</span>
+          <span class="module__title" id="states-title">Three States, Drawn Differently On Purpose</span>
+          <span class="module__meta">manual → assisted → delegated-review → gated-autonomous</span>
+        </div>
+        <div class="states">
+          <div class="state">
+            <div class="state__box">
+              <span class="state__stage">VERIFY</span>
+              <span class="state__act">Assemble Evidence</span>
+              <span class="state__level">DELEGATED + REVIEW</span>
+              <span class="state__rung" style="--fill: 75%"></span>
+            </div>
+            <h3>Filled</h3>
+            <p>
+              Capability attached to work, at a stated rung of the ladder. The bar under the name says how far the
+              team has actually delegated — not how modern the tool is.
+            </p>
+          </div>
+          <div class="state">
+            <div class="state__box state__box--open">
+              <span class="state__stage">VERIFY</span>
+              <span class="state__act">Review Conformance</span>
+              <span class="state__level state__level--open">OPEN SLOT</span>
+            </div>
+            <h3>Open slot</h3>
+            <p>
+              A gap the team has declared, plus what would fill it. It draws dashed and it is counted on the masthead,
+              so a document is honest about its own holes.
+            </p>
+          </div>
+          <div class="state">
+            <div class="state__box state__box--plain">
+              <span class="state__stage">SHIP</span>
+              <span class="state__act">Prepare Release</span>
+              <span class="state__level">&nbsp;</span>
+            </div>
+            <h3>Unclaimed</h3>
+            <p>
+              Work the team does itself and has asked for nothing on. It draws plain — and is not a gap. Not every
+              activity wants a tool.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="module" id="start" aria-labelledby="start-title">
+        <div class="module__head">
+          <span class="tab">RUN IT</span>
+          <span class="module__title" id="start-title">Quick Start</span>
+          <span class="module__meta">a team folder anywhere on disk · no default, no cwd sniffing</span>
+        </div>
+        <div class="split">
+          <div>
+            <h3>Render a team</h3>
+            <p>
+              <code>serve</code> is the mapping-session surface: editor and browser side by side, the page redrawing as
+              the team's sentences become YAML.
+            </p>
+            <pre><code>git clone https://github.com/NikiforovAll/ai-sdlc
+cd ai-sdlc &amp;&amp; npm install &amp;&amp; npm link
+
+<span class="c"># 1. a skeleton team folder</span>
+ai-sdlc new ~/teams/acme --name "Acme"
+
+<span class="c"># 2. render it, and leave it running</span>
+ai-sdlc serve ~/teams/acme
+
+<span class="c"># 3. edit the YAML — the page hot-reloads</span></code></pre>
+          </div>
+          <div>
+            <h3>Let an agent conduct the interview</h3>
+            <p>
+              The <code>map-team</code> skill knows the vocabulary and translates a team's own words into the model, so
+              nobody has to learn the schema before speaking.
+            </p>
+            <pre><code>npx skills add NikiforovAll/ai-sdlc
+
+<span class="c"># then, in Claude Code:</span>
+/map-team ~/teams/acme</code></pre>
+          </div>
+        </div>
+        <table class="cmds">
+          <thead>
+            <tr>
+              <th scope="col">Command</th>
+              <th scope="col">What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ai-sdlc new &lt;dir&gt;</code></td>
+              <td>Write a skeleton team folder — the smallest document the schema accepts and the renderer draws</td>
+            </tr>
+            <tr>
+              <td><code>ai-sdlc serve &lt;dir&gt;</code></td>
+              <td>Dev server with hot reload on YAML edits — the mapping-session surface</td>
+            </tr>
+            <tr>
+              <td><code>ai-sdlc export &lt;dir&gt;</code></td>
+              <td>One self-contained HTML file that opens from disk — no server, no assets</td>
+            </tr>
+            <tr>
+              <td><code>ai-sdlc check &lt;dir&gt;</code></td>
+              <td>Validate the YAML against the schema. Exits non-zero on problems</td>
+            </tr>
+            <tr>
+              <td><code>ai-sdlc status &lt;dir&gt;</code></td>
+              <td>Inventory how complete the document is. Always exits 0</td>
+            </tr>
+            <tr>
+              <td><code>ai-sdlc example</code></td>
+              <td>Serve the worked example that ships with the package, or copy it to edit</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer class="foot module">
+        <span>ai-sdlc — a composer of project delivery processes</span>
+        <span class="foot__right">
+          <a href="demo/">Live demo</a> ·
+          <a href="https://github.com/NikiforovAll/ai-sdlc">GitHub</a> ·
+          <a href="https://github.com/NikiforovAll/ai-sdlc#readme">Docs</a>
+        </span>
+      </footer>
+    </div>
+  </body>
+</html>

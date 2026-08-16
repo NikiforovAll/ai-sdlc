@@ -21,7 +21,16 @@ export interface Use {
 // script answers the click instead. One rule, so the document and the drawer that
 // sits over it cannot answer the same link differently.
 export const useHref = (u: Use, inline = false) =>
-  inline ? '#' : `/${u.slug}${u.focus ? `#${u.focus}` : ''}`;
+  inline ? '#' : `${docPath(u.slug)}${u.focus ? `#${u.focus}` : ''}`;
+
+// Routes are flat, but the site is not always served from the root of a host —
+// GitHub Pages puts a project site under `/<repo>/`. Every internal link goes
+// through here so the deployed demo and `npm run dev` differ only in the prefix
+// Astro was configured with; `BASE_URL` is `/` unless `AISDLC_BASE` says otherwise.
+export const docPath = (slug = '') => {
+  const base = import.meta.env.BASE_URL || '/';
+  return (base.endsWith('/') ? base : `${base}/`) + slug;
+};
 
 // A use answers "which processes", which is all a table cell has room for. The
 // team document's drawer has a panel, and the question a reader opens it with is

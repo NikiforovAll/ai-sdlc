@@ -6,6 +6,8 @@ import FlowFigure from './FlowFigure.astro';
 import GridFigure from './GridFigure.astro';
 import PlaybookFigure from './PlaybookFigure.astro';
 import Drawer from './Drawer.astro';
+import RepoMark from './RepoMark.astro';
+import { docPath } from '../lib/docs';
 import type { ProcessModel } from '../lib/docs';
 
 interface Props {
@@ -17,7 +19,7 @@ interface Props {
 }
 const { model, hidden = false, inline = false } = Astro.props;
 const { slug, team, process, doc, file, siblings } = model;
-const docHref = (s: string) => (inline ? '#' : `/${s}`);
+const docHref = (s: string) => (inline ? '#' : docPath(s));
 
 const views = [
   { id: 'flow', label: 'FLOW' },
@@ -31,7 +33,7 @@ const views = [
     <header class="mast mast--line module">
       <div class="mast__top">
         <span class="tab">PROCESS</span>
-        <a class="mast__up" href={inline ? '#' : '/'} data-goto="">↑ {team.name}</a>
+        <a class="mast__up" href={inline ? '#' : docPath()} data-goto="">↑ {team.name}</a>
         <h1 class="mast__title">
           <button type="button" class="mast__open" data-open-process aria-expanded="false">
             {process.name}<span class="mast__open-mark" aria-hidden="true">▸</span>
@@ -40,6 +42,7 @@ const views = [
         <span class="mast__status">
           {doc.activities.length} ACTIVITIES · {process.stages.length} STAGES
         </span>
+        <RepoMark />
       </div>
       <nav class="mast__switch" aria-label="Process">
         <span class="tab tab--quiet">PROCESSES</span>

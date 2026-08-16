@@ -1,0 +1,69 @@
+name: Deploy site
+
+# The published site is the landing page at the root and the reference team,
+# rendered by the real renderer, under /demo/. A screenshot can go stale against
+# the code; a build of `examples/reference` on every push cannot.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A queued run finishes rather than being cancelled: the deployment is the
+# artifact, and half of one is worse than a slightly late one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The gate the repo uses locally, run before anything is published.
+      - name: Validate the reference team
+        run: node bin/ai-sdlc.mjs check examples/reference
+
+      # A project site lives under /<repo>/, so the demo's links have to carry
+      # that prefix. `base` is read from the environment by astro.config.mjs —
+      # unset locally, which is why `npm run dev` and the CLI stay at the root.
+      - name: Build the demo
+        env:
+          AISDLC_TEAM_DIR: examples/reference
+          AISDLC_BASE: /${{ github.event.repository.name }}/demo
+        run: npx astro build
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/demo _site/fonts
+          cp -r landing/. _site/
+          cp -r assets _site/assets
+          cp -r dist/. _site/demo/
+          cp node_modules/@fontsource-variable/archivo/files/archivo-latin-wght-normal.woff2 _site/fonts/
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

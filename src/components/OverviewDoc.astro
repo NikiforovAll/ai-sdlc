@@ -4,6 +4,8 @@
 // with every process document into one file — `_plans/spec-cli-layer.md`, D-CLI-5.
 import TeamDrawer from './TeamDrawer.astro';
 import UseList from './UseList.astro';
+import RepoMark from './RepoMark.astro';
+import { docPath } from '../lib/docs';
 import type { OverviewModel } from '../lib/docs';
 
 interface Props {
@@ -15,7 +17,7 @@ interface Props {
 const { model, hidden = false, inline = false } = Astro.props;
 const { teamId, team, procs, stats, artifactUse, harnessUse, roleUse, roleActs, toolUse, eventUse } = model;
 
-const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
+const docHref = (slug: string) => (inline ? '#' : docPath(slug));
 ---
 
 <section class="doc" data-doc="__team" data-doc-kind="overview" hidden={hidden}>
@@ -37,6 +39,7 @@ const docHref = (slug: string) => (inline ? '#' : `/${slug}`);
         <span class="mast__status">
           VERSION {team.version} · STATUS <strong class:list={{ 'mast__living': team.status === 'living' }}>{team.status.toUpperCase()}</strong>
         </span>
+        <RepoMark />
       </div>
 
       <dl class="mast__stats">
