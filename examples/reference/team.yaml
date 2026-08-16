@@ -162,37 +162,17 @@ harnesses:
       | Encoded practice | skills, `CLAUDE.md`, scoped rule files |
       | Bounded delegation | plan mode, read-only subagents |
       | Deterministic gates | lifecycle hooks, permission rules |
+      | Unattended runs | batch scripts, machine-readable results |
 
-      The last row is the one that changes the ladder. Instructions to the agent
+      The last row runs with nobody there to answer a question, so the judgment
+      moves out of the session and into what is written before it starts — the
+      prompt, the permitted actions, the exit condition. Same agent, same shelf;
+      what changes is when the thinking happens, not where it runs.
+
+      The row above it is the one that changes the ladder. Instructions to the agent
       are advisory and a long session forgets them; a hook is a script at a fixed
       point that does not negotiate. Where this team runs `gated-autonomous`
       inside a session, it is a hook doing the holding.
-  - id: claude-code-headless
-    name: Claude Code (unattended)
-    note: The same agent with nobody there to answer a question.
-    description: |-
-      The same agent loop, run non-interactively: one prompt in, one result out,
-      with permissions declared up front because there is no one to ask.
-
-      It is a **separate harness rather than a mode** because it changes who is
-      present when the work runs, and that is precisely what the delegation
-      ladder measures. An unattended run that meets something unexpected does not
-      pause for a decision — it stops, or it proceeds on an assumption nobody
-      checked.
-
-      ### Reach for it when
-
-      - the same mechanical change has to be made in fifty places
-      - the work is a check that should run on every change, not on request
-      - a script needs a result it can branch on, not prose a person reads
-
-      ### Where the human stands
-
-      Earlier than usual, and in a different place. The judgment moves out of the
-      session and into what is written before it starts: the prompt, the
-      permitted tools, and the exit criteria. Prove the prompt on two or three
-      units before running the queue — the queue will not tell you it is wrong.
-    refs: ["https://docs.claude.com/en/docs/claude-code/headless"]
   - id: github-actions
     name: GitHub Actions
     note: Agent work triggered by what happens on the repository.
@@ -977,7 +957,7 @@ tools:
 
   - id: fan-out-loop
     name: Fan-Out Loop
-    harness: claude-code-headless
+    harness: claude-code
     kind: batch script
     note: One unattended run per unit, with permissions scoped up front.
     description: |-
@@ -1004,7 +984,7 @@ tools:
 
   - id: structured-output
     name: Structured Result
-    harness: claude-code-headless
+    harness: claude-code
     kind: machine-readable result
     note: Returns a result against a schema, so a pipeline can gate on it.
     description: |-
