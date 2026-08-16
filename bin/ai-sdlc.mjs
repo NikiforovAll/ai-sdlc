@@ -32,7 +32,7 @@ const USAGE = `ai-sdlc — render a team's delivery process document
   ai-sdlc export <team-dir> [--out <file>]          one self-contained HTML file
   ai-sdlc check  <team-dir>                         validate the YAML, print errors
   ai-sdlc status <team-dir>                         how far along the document is
-  ai-sdlc example [--copy <dir>] [--port <n>]       serve the worked example, or copy it
+  ai-sdlc example [--copy <dir>] [--path]           serve the worked example, copy it, or print its path
 
 <team-dir> holds team.yaml and processes/*.yaml.`;
 
@@ -189,6 +189,14 @@ const EXAMPLE_DIR = join(PKG_ROOT, 'examples', 'reference');
 
 async function cmdExample(positionals, values) {
   if (positionals[0]) die(`example takes no <team-dir> — it ships with ai-sdlc\n\n${USAGE}`);
+  if (values.path && values.copy) die('example takes --path or --copy, not both');
+
+  // `worked-example.md` cites the YAML by file name, and a reader who installed
+  // the package rather than cloning the repo has no path to it.
+  if (values.path) {
+    console.log(await teamDirOf(EXAMPLE_DIR));
+    return;
+  }
 
   if (values.copy) {
     const dir = resolve(values.copy);
@@ -199,6 +207,9 @@ async function cmdExample(positionals, values) {
     return;
   }
 
+  console.log(
+    `${await teamDirOf(EXAMPLE_DIR)}\n  team.yaml, processes/*.yaml — the source of the page below\n`
+  );
   await cmdServe([EXAMPLE_DIR], values);
 }
 
@@ -230,6 +241,7 @@ const { values, positionals } = parseArgs({
     out: { type: 'string' },
     name: { type: 'string' },
     copy: { type: 'string' },
+    path: { type: 'boolean' },
   },
 });
 

@@ -8,7 +8,9 @@ ai-sdlc example
 
 That serves the packaged example team — three processes, five roles, every field the schema has an opinion about. It ships inside `ai-sdlc`, so this works on any machine that has the CLI, with no repository checked out. To edit a copy rather than read it: `ai-sdlc example --copy <dir>`.
 
-Everything below cites `processes/bugfix.yaml` by activity id. Read the YAML beside the page it draws — the point of each note is the relationship between the two, and no excerpt reproduced here could stay true to the file as it changes.
+To open the YAML behind the page rather than the page: `ai-sdlc example --path` prints the folder it lives in and exits without serving anything.
+
+Everything below cites `processes/bugfix.yaml` by activity id, relative to that folder. Read the YAML beside the page it draws — the point of each note is the relationship between the two, and no excerpt reproduced here could stay true to the file as it changes.
 
 ## What to notice, in `bugfix.yaml`
 
