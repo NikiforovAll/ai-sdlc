@@ -1,0 +1,129 @@
+---
+import type { Team, Activity, SubActivity } from '../lib/derive';
+import { LEVEL_LABELS, nameOf, statesCapability, toolOf } from '../lib/derive';
+
+interface Props {
+  team: Team;
+  act: Activity | SubActivity;
+  /** `0` is a cell's own slot, `sub` one drawn inside another — see GridNest. */
+  depth: '0' | 'sub';
+  /** Printed under the name when the slot is not worked by the row's own role. */
+  otherRoles?: string[];
+}
+const { team, act, depth, otherRoles } = Astro.props;
+
+const tool = act.tooling ? toolOf(team, act.tooling.tool) : null;
+---
+
+<button
+  class={`gcard${act.open ? ' gcard--open' : ''}`}
+  data-act={act.id}
+  data-fills={act.tooling?.tool}
+  data-roles={act.roles.join(' ')}
+  data-depth={depth}
+  aria-label={`${act.name} — details`}
+>
+  <span class="gcard__name">{act.name}</span>
+  {otherRoles && otherRoles.length > 0 && <span class="gcard__role">{otherRoles.join(' · ')}</span>}
+  {statesCapability(act) && (
+    <span class="gcard__fill">
+      {act.tooling && tool ? (
+        <>
+          <span class="gcard__tool">{nameOf(team.harnesses, tool.harness)} · {tool.name}</span>
+          <span class="chip chip--muted">{LEVEL_LABELS[act.tooling.level]}</span>
+        </>
+      ) : (
+        <span class="gcard__open">OPEN SLOT</span>
+      )}
+    </span>
+  )}
+</button>
+
+<style>
+  /* One card, two sizes. A slot inside another is the same object as the slot it
+     sits in — same open-slot skin, same selection mark — so depth changes the
+     weight it is drawn at and nothing else. Two copies of this skin drifted the
+     first time one of them was edited. */
+  .gcard {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    text-align: left;
+    background: var(--white);
+    border: 1px solid var(--ink);
+    padding: 7px 8px;
+    transition: background 0.12s ease-out, color 0.12s ease-out,
+      border-color 0.12s ease-out, opacity 0.16s ease-out;
+  }
+  /* A nested card sits on a hairline: the ink border is the cell's own outline,
+     and repeating it inside the rail would read as a second cell. */
+  .gcard[data-depth='sub'] {
+    gap: 3px;
+    border-color: var(--line);
+    padding: 5px 6px;
+  }
+  .gcard:hover {
+    background: var(--washi);
+    border-color: var(--ink);
+  }
+  .gcard--open {
+    border-style: dashed;
+    border-color: var(--muted);
+    background-color: var(--washi);
+    background-image: var(--stripe);
+  }
+  .gcard--open:hover {
+    border-color: var(--ink);
+  }
+  /* Same selection mark as the flow view: an ink invert keeping the green spine.
+     The background shorthand clears the open slot's stripe, and the captions drop
+     to muted because ink cannot carry the green they wear on paper. */
+  .gcard[aria-current='true'] {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-left: 2px solid var(--accent);
+    color: var(--white);
+  }
+  .gcard[aria-current='true'] .gcard__tool,
+  .gcard[aria-current='true'] .gcard__role,
+  .gcard[aria-current='true'] .gcard__open {
+    color: var(--muted);
+  }
+  .gcard[aria-current='true'] :global(.chip--muted) {
+    border-color: var(--muted);
+    color: var(--muted);
+  }
+  .gcard__name {
+    font-size: 11px;
+    line-height: 13px;
+    font-weight: 700;
+  }
+  .gcard[data-depth='sub'] .gcard__name {
+    font-size: var(--label);
+    line-height: 12px;
+  }
+  .gcard__role {
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+  .gcard__fill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .gcard__tool {
+    font-size: var(--micro);
+    letter-spacing: 0.04em;
+    color: var(--sub);
+  }
+  .gcard__open {
+    font-size: var(--micro);
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--accent);
+  }
+</style>

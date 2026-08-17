@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { derive, LEVEL_LABELS, LEVEL_ORDER, statesCapability } from '../lib/derive';
+import { derive, LEVEL_LABELS, LEVEL_ORDER, nameOf, statesCapability } from '../lib/derive';
 import SubFlow from './SubFlow.astro';
 
 interface Props {
@@ -118,21 +118,14 @@ const paths = d.edges.map((e) => {
   };
 });
 
-const artifactName = (id: string) => team.artifacts.find((a) => a.id === id)?.name ?? id;
-
-// One label per hand-off edge. Fan-out used to share a single label, chosen by
-// whichever midpoint sat lowest — which assumed the consumers of one artifact sit
-// near each other. They do not: bug-report leaves triage on two curves 600px
-// apart, and "lowest" put the only name on the far one, leaving the curve beside
-// the producer bare. An edge that carries a document says which document.
-const labelEdges = paths.filter((e) => e.handoff);
+const artifactName = (id: string) => nameOf(team.artifacts, id);
 
 // A column is a step in the topological order — the only horizontal unit this
 // figure can honestly name. Stages are not drawn here: their activities interleave
 // across columns, so a stage band would sit above boxes of another stage. Stage
 // lives on each box, in GRID's columns, and in the drawer.
-const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? id;
-const roleName = (id: string) => team.roles.find((r) => r.id === id)?.name ?? id;
+const stageName = (id: string) => nameOf(team.stages, id);
+const roleName = (id: string) => nameOf(team.roles, id);
 const steps = Array.from({ length: d.cols }, (_, c) => ({
   col: c,
   acts: d.placed.filter((p) => p.col === c).length,
@@ -155,10 +148,10 @@ const idleCells = steps.flatMap((s) =>
     <span class="tab">FLOW</span>
     <span class="module__title">Who Hands What to Whom</span>
     <span class="fig__scrollhint" aria-hidden="true">scroll →</span>
-    <span class="module__meta">columns are steps · topological · ordinal, not time · stage sits on the box</span>
+    <span class="module__meta">columns are steps · topological · ordinal, not time · stage sits on the box · select a card to light what it hands over</span>
   </div>
   <div class="fig__scroll">
-    <div class="fig__canvas" style={`min-width:${width}px;height:${height}px`}>
+    <div class="fig__canvas" data-flow style={`min-width:${width}px;height:${height}px`}>
       <svg width="100%" height={height} role="img" aria-label="Activity flow: artifact handoffs between roles">
         <defs>
           <pattern id={hatchId} width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
@@ -187,10 +180,12 @@ const idleCells = steps.flatMap((s) =>
             d={e.d}
             fill="none"
             stroke={e.constraint ? '#0f6b3c' : e.handoff ? '#666666' : '#bbbbbb'}
-            stroke-width={e.constraint ? 2 : 1.5}
+            stroke-width={e.constraint ? 1.5 : 1}
             data-roles={e.roles}
-            data-edge={`${e.from}->${e.to}`}
-            class="fig__edge"
+            data-from={e.from}
+            data-to={e.to}
+            data-artifact={e.artifact}
+            class={`fig__edge${e.constraint ? ' fig__edge--constraint' : ''}`}
           />
         ))}
       </svg>
@@ -209,12 +204,26 @@ const idleCells = steps.flatMap((s) =>
         </div>
       ))}
 
-      {labelEdges.map((e) => (
+      {/* One label per edge, not one per artifact. Fan-out used to share a single
+          label, chosen by whichever midpoint sat lowest — which assumed the
+          consumers of one artifact sit near each other. They do not: bug-report
+          leaves triage on two curves 600px apart, and "lowest" put the only name
+          on the far one, leaving the curve beside the producer bare. An edge that
+          carries a document says which document.
+          Only a hand-off wears its label at rest. A same-role edge is one
+          person's own next step, and naming what they passed to themselves is a
+          box the reader has to skip past. It becomes worth reading the moment
+          they ask about that one activity, so the label is drawn either way and
+          the selection is what lets the quiet ones speak. */}
+      {paths.map((e) => (
         <button
           type="button"
-          class={`fig__artifact${e.constraint ? ' fig__artifact--constraint' : ''}`}
+          class={`fig__artifact${e.constraint ? ' fig__artifact--constraint' : ''}${e.handoff ? '' : ' fig__artifact--quiet'}`}
           style={`left:${e.mx}px;top:${e.my}px`}
           data-roles={e.roles}
+          data-from={e.from}
+          data-to={e.to}
+          data-artifact={e.artifact}
           data-detail-key={`artifact:${e.artifact}`}
           aria-label={`${artifactName(e.artifact)} — details`}
         >
@@ -230,7 +239,12 @@ const idleCells = steps.flatMap((s) =>
         const at = pos.get(p.activity.id)!;
         const kids = p.activity.activities?.length ?? 0;
         return (
-          <div class="fig__node" style={`left:${at.x}px;top:${at.y}px;width:${NODEW}px`}>
+          <div
+            class="fig__node"
+            data-nodebox
+            data-act={p.activity.id}
+            style={`left:${at.x}px;top:${at.y}px;width:${NODEW}px`}
+          >
             <button
               class={`fig__act${p.activity.open ? ' fig__act--open' : ''}`}
               style={`min-height:${NODEH}px`}
@@ -297,6 +311,7 @@ const idleCells = steps.flatMap((s) =>
         <button
           class="fig__echo"
           style={`left:${e.x}px;top:${e.y}px;width:${NODEW}px;min-height:${ECHOH}px`}
+          data-nodebox
           data-act={e.p.activity.id}
           data-fills={e.p.activity.tooling?.tool}
           data-roles={e.p.activity.roles.join(' ')}
@@ -561,10 +576,51 @@ const idleCells = steps.flatMap((s) =>
     color: var(--sub);
     letter-spacing: 0.04em;
   }
-  .fig__edge,
   .fig__artifact,
-  .fig__lane {
+  .fig__lane,
+  [data-nodebox] {
     transition: opacity 0.28s var(--ease-out);
+  }
+  /* A real process draws more curves than a reader can follow at once, and at full
+     weight they cross the cards rather than pass behind them. So the edge layer
+     rests as a hint of where the work travels, and answers "where does this one
+     go?" only when asked: selecting a node — or an artifact — brings its own edges
+     back to full weight and pushes the rest further down. The constraint rests
+     louder than the others because it is the one edge the document argues about.
+     Whatever an edge does its label does, so a name never floats free of the
+     curve it belongs to. */
+  .fig__edge {
+    opacity: 0.34;
+    transition: opacity 0.28s var(--ease-out), stroke-width 0.16s var(--ease-out);
+  }
+  .fig__edge--constraint {
+    opacity: 0.75;
+  }
+  [data-flow][data-lens] .fig__edge {
+    opacity: 0.1;
+  }
+  [data-flow][data-lens] .fig__edge.is-lit {
+    opacity: 1;
+    stroke-width: 2;
+  }
+  [data-flow][data-lens] .fig__artifact {
+    opacity: 0.22;
+  }
+  /* The cards follow the edges: a selection fades the work it does not touch, so
+     what is left at full strength is the neighbourhood — the activity, what it
+     was handed, and who it hands to. Faded is not gone; the shape of the figure
+     stays readable behind the answer. */
+  [data-flow][data-lens] [data-nodebox] {
+    opacity: 0.3;
+  }
+  [data-flow][data-lens] [data-nodebox].is-near {
+    opacity: 1;
+  }
+  /* A lit label brightens where it already sits and no further: raising it over
+     the cards buys one legible name at the cost of covering an activity, and the
+     cards are the layer the figure is read from. */
+  [data-flow][data-lens] .fig__artifact.is-lit {
+    opacity: 1;
   }
   .fig__lane-name:hover,
   .fig__lane-name:focus-visible {
@@ -583,6 +639,15 @@ const idleCells = steps.flatMap((s) =>
     display: inline-flex;
     align-items: center;
     gap: 4px;
+  }
+  /* A same-role edge's label: absent from the page until its edge is lit, not
+     merely transparent — an invisible box that still takes clicks and tab stops
+     is worse than the noise it was hidden to avoid. */
+  .fig__artifact--quiet {
+    display: none;
+  }
+  [data-flow][data-lens] .fig__artifact--quiet.is-lit {
+    display: inline-flex;
   }
   .fig__artifact:hover,
   .fig__artifact:focus-visible {

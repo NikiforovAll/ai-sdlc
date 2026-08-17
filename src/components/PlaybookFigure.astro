@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { LEVEL_LABELS, toolOf } from '../lib/derive';
+import { LEVEL_LABELS, nameOf, toolOf } from '../lib/derive';
 import { VERB } from '../lib/docs';
 
 interface Props {
@@ -8,8 +8,8 @@ interface Props {
 }
 const { team } = Astro.props;
 
-const eventName = (id: string) => team.events.find((e) => e.id === id)?.name ?? id;
-const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? id;
+const eventName = (id: string) => nameOf(team.events, id);
+const stageName = (id: string) => nameOf(team.stages, id);
 
 // A role's playbook is read off the activities it owns — the catalog no longer
 // states roles, so recommendations inherit them from the work they annotate. One

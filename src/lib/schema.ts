@@ -126,10 +126,15 @@ const tool = z.object({
 // prints and the one the page hands to `<meta>`. `description` is markdown the
 // drawer renders, which is where a document finally has room to say what it
 // assumes and how it wants to be read.
+// A document's `refs` are the sources it was read out of, not a tool's install
+// page: the same field as the catalog carries, one level up, so a reader who
+// wants the original can leave from the document panel instead of guessing which
+// tool happens to link the root.
 export const teamSchema = z.object({
   name: z.string(),
   note: z.string().optional(),
   description: z.string().optional(),
+  refs: z.array(z.string()).optional(),
   version: z.string(),
   status: z.enum(['living', 'draft']).default('living'),
   // `note` is the one line a figure can afford to print beside the thing;
@@ -151,6 +156,7 @@ export const processSchema = z.object({
   name: z.string(),
   note: z.string().optional(),
   description: z.string().optional(),
+  refs: z.array(z.string()).optional(),
   stages: z.array(z.object({ id, name: z.string() })).min(1),
   activities: z.array(activity).min(1),
   constraint: z.object({ artifact: id, note: z.string() }).optional(),

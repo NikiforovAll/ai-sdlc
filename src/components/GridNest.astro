@@ -1,0 +1,46 @@
+---
+import type { Team, SubActivity } from '../lib/derive';
+import { nameOf } from '../lib/derive';
+import GridCard from './GridCard.astro';
+
+interface Props {
+  team: Team;
+  activities: SubActivity[];
+  /** The role whose row this list is drawn in — a child of another role says so. */
+  rowRole: string;
+}
+const { team, activities, rowRole } = Astro.props;
+---
+
+<ul class="gnest">
+  {activities.map((a) => (
+    <li>
+      <GridCard
+        team={team}
+        act={a}
+        depth="sub"
+        otherRoles={a.roles.includes(rowRole) ? undefined : a.roles.map((id) => nameOf(team.roles, id))}
+      />
+      {(a.activities?.length ?? 0) > 0 && (
+        <Astro.self team={team} activities={a.activities!} rowRole={rowRole} />
+      )}
+    </li>
+  ))}
+</ul>
+
+<style>
+  /* The grid is an inventory of slots, so a slot inside a slot is drawn, not
+     hidden behind a toggle: a cell is too narrow to carry the sub-process lanes
+     the flow view draws, and too small for a disclosure control to be worth its
+     own row. The rail is the same accent the flow's inset uses, so the reader
+     reads "inside" from the same mark in both views. */
+  .gnest {
+    margin: 4px 0 0 6px;
+    padding-left: 7px;
+    border-left: 2px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    list-style: none;
+  }
+</style>

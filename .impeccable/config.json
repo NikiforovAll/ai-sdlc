@@ -13,6 +13,12 @@
         "rule": "design-system-font-size",
         "value": "8px",
         "createdAt": "2026-08-15T19:35:00.741Z"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "stroke-width",
+        "createdAt": "2026-08-17T06:11:51.844Z",
+        "reason": "SVG paint property, not a layout box property: stroke-width repaints the path and triggers no reflow. Matched by the substring 'width'."
       }
     ]
   }

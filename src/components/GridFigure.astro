@@ -1,6 +1,7 @@
 ---
 import type { Team } from '../lib/derive';
-import { LEVEL_LABELS, statesCapability, toolOf } from '../lib/derive';
+import GridCard from './GridCard.astro';
+import GridNest from './GridNest.astro';
 
 interface Props {
   team: Team;
@@ -9,7 +10,6 @@ const { team } = Astro.props;
 
 const cell = (roleId: string, stageId: string) =>
   team.activities.filter((a) => a.stage === stageId && a.roles.includes(roleId));
-const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.name ?? id;
 ---
 
 <section class="module grid" aria-label="Stage by Role Grid">
@@ -17,7 +17,7 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
     <span class="tab">GRID</span>
     <span class="module__title">Capability Slots by Stage × Role</span>
     <span class="grid__scrollhint" aria-hidden="true">scroll →</span>
-    <span class="module__meta">dashed = a slot the team has declared open · no line = work they do themselves</span>
+    <span class="module__meta">dashed = a slot the team has declared open · indented = a slot inside the one above · no line = work they do themselves</span>
   </div>
   <div class="grid__scroll">
     <table class="grid__table">
@@ -40,33 +40,15 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
               const acts = cell(r.id, s.id);
               return (
                 <td class="grid__cell">
+                  {/* No "N inside" marker: the grid draws the children, so the
+                      count restates what the cell already shows. */}
                   {acts.map((a) => (
-                    <button
-                      class={`grid__act${a.open ? ' grid__act--open' : ''}`}
-                      data-act={a.id}
-                      data-roles={a.roles.join(' ')}
-                      data-depth="0"
-                      aria-label={`${a.name} — details`}
-                    >
-                      <span class="grid__act-name">
-                        {a.name}
-                        {(a.activities?.length ?? 0) > 0 && (
-                          <span class="grid__nested">▸ {a.activities!.length} inside</span>
-                        )}
-                      </span>
-                      {statesCapability(a) && (
-                        <span class="grid__act-fill">
-                          {a.tooling ? (
-                            <>
-                              <span class="grid__tool">{harnessName(toolOf(team, a.tooling.tool).harness)} · {toolOf(team, a.tooling.tool).name}</span>
-                              <span class="chip chip--muted">{LEVEL_LABELS[a.tooling.level]}</span>
-                            </>
-                          ) : (
-                            <span class="grid__open">OPEN SLOT</span>
-                          )}
-                        </span>
+                    <div class="grid__slot">
+                      <GridCard team={team} act={a} depth="0" />
+                      {(a.activities?.length ?? 0) > 0 && (
+                        <GridNest team={team} activities={a.activities!} rowRole={r.id} />
                       )}
-                    </button>
+                    </div>
                   ))}
                 </td>
               );
@@ -145,51 +127,10 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
   }
   .grid__cell {
     padding: 6px;
-    min-width: 132px;
+    min-width: 148px;
   }
-  .grid__act {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    width: 100%;
-    text-align: left;
-    background: var(--white);
-    border: 1px solid var(--ink);
-    padding: 7px 8px;
-    transition: background 0.12s ease-out, color 0.12s ease-out, opacity 0.16s ease-out;
-  }
-  .grid__act + .grid__act {
-    margin-top: 6px;
-  }
-  .grid__act:hover {
-    background: var(--washi);
-  }
-  .grid__act--open {
-    border-style: dashed;
-    border-color: var(--muted);
-    background-color: var(--washi);
-    background-image: var(--stripe);
-  }
-  .grid__act--open:hover {
-    border-color: var(--ink);
-  }
-  /* Same selection mark as the flow view: an ink invert keeping the green spine.
-     The background shorthand clears the open slot's stripe, and the captions drop
-     to muted because ink cannot carry the green they wear on paper. */
-  .grid__act[aria-current='true'] {
-    background: var(--ink);
-    border: 1px solid var(--ink);
-    border-left: 2px solid var(--accent);
-    color: var(--white);
-  }
-  .grid__act[aria-current='true'] .grid__tool,
-  .grid__act[aria-current='true'] .grid__open,
-  .grid__act[aria-current='true'] .grid__nested {
-    color: var(--muted);
-  }
-  .grid__act[aria-current='true'] :global(.chip--muted) {
-    border-color: var(--muted);
-    color: var(--muted);
+  .grid__slot + .grid__slot {
+    margin-top: 8px;
   }
   .grid__scrollhint {
     display: none;
@@ -203,36 +144,6 @@ const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.nam
     .grid__scrollhint {
       display: inline;
     }
-  }
-  .grid__nested {
-    margin-left: 6px;
-    font-size: var(--micro);
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    color: var(--accent);
-    text-transform: uppercase;
-  }
-  .grid__act-name {
-    font-size: 11px;
-    line-height: 13px;
-    font-weight: 700;
-  }
-  .grid__act-fill {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-wrap: wrap;
-  }
-  .grid__tool {
-    font-size: var(--micro);
-    letter-spacing: 0.04em;
-    color: var(--sub);
-  }
-  .grid__open {
-    font-size: var(--micro);
-    letter-spacing: 0.08em;
-    font-weight: 700;
-    color: var(--accent);
   }
   tr[data-roles] {
     transition: opacity 0.28s var(--ease-out);

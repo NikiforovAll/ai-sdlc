@@ -1,22 +1,30 @@
 ---
 import type { Team } from '../lib/derive';
-import { flatten, isLinkableRef, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
+import { flatten, isLinkableRef, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, nameOf, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
 import { catalogDescriptions, md, paragraphs } from '../lib/markdown';
 import { VERB } from '../lib/docs';
 
 interface Props {
   team: Team;
   /** The process itself is a drawer panel: its name opens from the masthead line. */
-  process?: { name: string; note?: string; description?: string; stages: number; activities: number; file?: string };
+  process?: {
+    name: string;
+    note?: string;
+    description?: string;
+    refs?: string[];
+    stages: number;
+    activities: number;
+    file?: string;
+  };
 }
 const { team, process } = Astro.props;
 const flat = flatten(team);
 
-const artifactName = (id: string) => team.artifacts.find((a) => a.id === id)?.name ?? id;
-const roleName = (id: string) => team.roles.find((r) => r.id === id)?.name ?? id;
-const stageName = (id: string) => team.stages.find((s) => s.id === id)?.name ?? id;
-const harnessName = (id: string) => team.harnesses.find((h) => h.id === id)?.name ?? id;
-const eventName = (id: string) => team.events.find((e) => e.id === id)?.name ?? id;
+const artifactName = (id: string) => nameOf(team.artifacts, id);
+const roleName = (id: string) => nameOf(team.roles, id);
+const stageName = (id: string) => nameOf(team.stages, id);
+const harnessName = (id: string) => nameOf(team.harnesses, id);
+const eventName = (id: string) => nameOf(team.events, id);
 const activityLabel = (id: string) => flat.find((f) => f.activity.id === id)?.activity.name ?? id;
 const producerOf = (art: string) => flat.find((f) => f.activity.produces.includes(art));
 const consumersOf = (art: string) => flat.filter((f) => (f.activity.consumes ?? []).includes(art));
@@ -64,6 +72,17 @@ const recsOfEvent = (ev: string) =>
             <h4 class="drawer__label">About</h4>
             {process.note && <p class="drawer__why">{process.note}</p>}
             {processProse && <div class="drawer__prose prose-md" set:html={processProse} />}
+          </div>
+        )}
+
+        {(process.refs ?? []).length > 0 && (
+          <div class="drawer__section">
+            <h4 class="drawer__label">Read from</h4>
+            <ul class="drawer__refs">
+              {process.refs!.map((ref) => (
+                <li>{isLinkableRef(ref) ? <a href={ref} target="_blank" rel="noreferrer">{ref}</a> : ref}</li>
+              ))}
+            </ul>
           </div>
         )}
 

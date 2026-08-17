@@ -103,6 +103,7 @@ const views = [
       name: process.name,
       note: process.note,
       description: process.description,
+      refs: process.refs,
       stages: process.stages.length,
       activities: doc.activities.length,
       file,
@@ -112,6 +113,7 @@ const views = [
 
 <script>
   import { panelNav } from '../lib/panel-nav';
+  import type { PanelState } from '../lib/panel-nav';
 
   // Root-scoped, initialized once per process document. The export puts four of
   // these in one file, so nothing here may reach for a document-global singleton.
@@ -162,28 +164,85 @@ const views = [
     const doors = [...root.querySelectorAll<HTMLElement>('[data-detail-key]')].filter(
       (el) => !el.closest('[data-drawer]')
     );
-    const clearMarks = () => {
-      for (const b of [...acts, ...tools, ...doors]) b.setAttribute('aria-current', 'false');
+    // The edge lens reads the marks rather than being told about them: an entry is
+    // marked from four places — a node click, a drawer link, a hash arrival, a
+    // close — and a lens driven from each of them would go stale the first time a
+    // fifth appears. One pass over what is currently marked, run by the one
+    // function that moves the mark, cannot disagree with the page.
+    // The ends of a curve are read from the markup as two facts, not recovered by
+    // splitting one composite id: the figure had them apart at build time, and an
+    // activity id holding the separator would break the parse silently.
+    // Curve and label are the same edge drawn twice, so they light from one list:
+    // the figure emits a label per path, and splitting them into two collections
+    // only leaves two places to keep an attribute in step.
+    const edges = [...root.querySelectorAll<HTMLElement | SVGElement>('[data-from]')].map((el) => ({
+      el,
+      from: el.dataset.from!,
+      to: el.dataset.to!,
+      artifact: el.dataset.artifact!,
+    }));
+    const nodeBoxes = [...root.querySelectorAll<HTMLElement>('[data-nodebox]')].map((el) => ({
+      el,
+      act: el.dataset.act!,
+    }));
+    const canvases = [...root.querySelectorAll<HTMLElement>('[data-flow]')];
+    const isMarked = (el: Element) => el.getAttribute('aria-current') === 'true';
+    const syncEdges = () => {
+      // Top-level only: a sub-activity's node lives inside an inset and hands
+      // nothing over on this canvas, so lighting the figure for it would fade
+      // everything and light nothing.
+      const actIds = new Set(topActs.filter(isMarked).map((a) => a.dataset.act));
+      // An artifact is drawn once per hand-off that carries it, so marking one
+      // lights every curve moving that document — the same rule its label follows.
+      const artIds = new Set(
+        doors
+          .filter((d) => isMarked(d) && d.dataset.detailKey?.startsWith('artifact:'))
+          .map((d) => d.dataset.detailKey!.slice('artifact:'.length))
+      );
+      // The neighbourhood is the selection plus whatever a lit edge touches: the
+      // question "what does this activity hand over" is only half answered by the
+      // curve — the other half is who is at the far end of it.
+      const near = new Set(actIds);
+      for (const e of edges) {
+        const on = actIds.has(e.from) || actIds.has(e.to) || artIds.has(e.artifact);
+        e.el.classList.toggle('is-lit', on);
+        if (on) {
+          near.add(e.from);
+          near.add(e.to);
+        }
+      }
+      for (const box of nodeBoxes) box.el.classList.toggle('is-near', near.has(box.act));
+      for (const canvas of canvases) canvas.toggleAttribute('data-lens', near.size > 0);
     };
-    // Same rule for an activity, which is drawn once per view — the flow, the
-    // grid and the playbook each hold a node for it.
-    const markAct = (id: string) => {
-      for (const a of acts) if (a.dataset.act === id) a.setAttribute('aria-current', 'true');
+    // One reading position, so one function moves it: clearing and marking in the
+    // same pass is what keeps the lens from flickering through an empty state
+    // between the two, and leaves no second way to mark that could forget to sync.
+    const markable = [...acts, ...tools, ...doors];
+    const select = (on: HTMLElement[]) => {
+      const wanted = new Set(on);
+      for (const b of markable) b.setAttribute('aria-current', String(wanted.has(b)));
+      syncEdges();
     };
+    const clearMarks = () => select([]);
 
     // Drawer
     const drawer = root.querySelector<HTMLElement>('[data-drawer]')!;
     const procOpen = root.querySelector<HTMLButtonElement>('[data-open-process]');
     const back = drawer.querySelector<HTMLButtonElement>('[data-drawer-back]');
     const closeBtn = drawer.querySelector<HTMLButtonElement>('[data-drawer-close]');
+    // BACK is an undo of the whole step, not of the panel alone: panel-nav returns
+    // the reader to the name they clicked, and `restore` returns the figure to the
+    // selection that panel was read against. Without the second half the drawer
+    // says one thing while the flow still lights another.
     const nav = panelNav(drawer, {
       back,
-      onBack: () => (back?.hidden ? closeBtn : back)?.focus(),
+      close: closeBtn,
+      onBack: (state) => state?.restore?.(),
     });
     // `deeper` is a step taken from inside the open drawer, which is the only
     // move BACK is meant to undo — an entry opened from the page is a fresh read.
-    const openDrawer = (key: string, deeper = false) => {
-      nav.show(key, deeper);
+    const openDrawer = (key: string, deeper = false, leaving: PanelState | null = null) => {
+      nav.show(key, deeper, leaving);
       drawer.hidden = false;
       main.setAttribute('data-drawer-open', '');
       procOpen?.setAttribute('aria-expanded', String(key === '__process'));
@@ -244,8 +303,9 @@ const views = [
     for (const btn of acts) {
       btn.addEventListener('click', () => {
         const id = btn.dataset.act!;
-        clearMarks();
-        markAct(id);
+        // Every node naming this activity, not the one clicked: the flow, the grid
+        // and the playbook each hold one.
+        select(acts.filter((a) => a.dataset.act === id));
         openDrawer(id);
         bringIntoView(btn, 'nudge');
       });
@@ -253,8 +313,7 @@ const views = [
     for (const btn of tools) {
       btn.addEventListener('click', () => {
         const id = btn.dataset.tool!;
-        clearMarks();
-        for (const s of tools) if (s.dataset.tool === id) s.setAttribute('aria-current', 'true');
+        select(tools.filter((s) => s.dataset.tool === id));
         openDrawer(`tool:${id}`);
         bringIntoView(btn, 'nudge');
       });
@@ -269,6 +328,14 @@ const views = [
       const key = el?.dataset.detailKey;
       if (!key || !nav.has(key)) return;
       const deeper = Boolean(el!.closest('[data-drawer]')) && !drawer.hidden;
+      // Read before the mark moves: this is the state BACK puts back — the name
+      // under the reader's hand, and the selection the panel they leave was read
+      // against. Only a step deeper has a way back, so only a step deeper records
+      // one; `show` discards what a fresh read hands it.
+      const was = markable.filter(isMarked);
+      const leaving: PanelState | null = deeper
+        ? { invoker: el, restore: () => select(was) }
+        : null;
       // A key that names an activity has a node on the page, so the link moves the
       // selection there as well as the panel — otherwise the drawer changes under
       // the reader while the marked node still points at where they came from.
@@ -288,10 +355,7 @@ const views = [
         ...(key.startsWith('tool:') ? tools.filter((t) => t.dataset.tool === key.slice(5)) : []),
         ...doors.filter((d) => d.dataset.detailKey === key),
       ];
-      if (btn || !deeper || marks.some((m) => m.offsetParent !== null)) {
-        clearMarks();
-        for (const m of marks) m.setAttribute('aria-current', 'true');
-      }
+      if (btn || !deeper || marks.some((m) => m.offsetParent !== null)) select(marks);
       if (btn) {
         const panel = btn.closest<HTMLElement>('[data-viewpanel]');
         if (panel?.dataset.viewpanel) setView(panel.dataset.viewpanel);
@@ -303,7 +367,7 @@ const views = [
           }
         }
       }
-      openDrawer(key, deeper);
+      openDrawer(key, deeper, leaving);
       if (btn) bringIntoView(btn, 'center');
       if (deeper) (nav.depth() ? back : closeBtn)?.focus();
     });
@@ -348,8 +412,7 @@ const views = [
               ?.click();
           }
         }
-        clearMarks();
-        btn.setAttribute('aria-current', 'true');
+        select([btn]);
       }
       // The drawer opens first: it takes the right edge of the window, and the
       // reveal below has to know how much room is left before it centres.

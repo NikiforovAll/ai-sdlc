@@ -33,6 +33,7 @@ version: "0.1"
 status: draft            # draft | living — prints in the masthead
 note: ...                # optional — one plain line; the caption and the page <meta>
 description: ...         # optional — markdown, rendered in the drawer
+refs:       [ ... ]      # optional — the sources the document was read out of
 roles:      [{ id, name, note?, description? }]        # at least one
 artifacts:  [{ id, name, description? }]               # at least one
 harnesses:  [{ id, name, note?, description? }]        # optional
@@ -45,6 +46,7 @@ tools:      [{ id, name, harness, kind, note?, description?, refs? }]   # option
 name: Delivery
 note: ...                        # optional — one plain line; the caption and the page <meta>
 description: ...                 # optional — markdown, rendered in the drawer
+refs:   [ ... ]                  # optional — the sources this process was read out of
 stages: [{ id, name }]           # at least one
 constraint: { artifact: <id>, note: ... }   # optional, at most one
 activities:                      # at least one

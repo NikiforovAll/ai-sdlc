@@ -1,6 +1,6 @@
 ---
 import type { Team, SubActivity } from '../lib/derive';
-import { deriveSub, LEVEL_LABELS, statesCapability } from '../lib/derive';
+import { deriveSub, LEVEL_LABELS, nameOf, statesCapability } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -20,7 +20,7 @@ const echoes = (roleId: string, col: number) =>
   d.placed.filter(
     (p) => p.col === col && p.activity.roles[0] !== roleId && p.activity.roles.includes(roleId)
   );
-const roleName = (id: string) => team.roles.find((r) => r.id === id)?.name ?? id;
+const roleName = (id: string) => nameOf(team.roles, id);
 const cols = [...Array(d.cols).keys()];
 ---
 

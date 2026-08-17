@@ -34,6 +34,12 @@ description: |-
 
   > A document that only had the caption had nowhere to say how it wants to be
   > read, which is the thing a reader most needs on arrival.
+# A document-level `refs:`, drawn as "Read from" in the team drawer. One link, one
+# bare string, so both branches of `isLinkableRef` render here. `processes/minimal.yaml`
+# leaves the field absent.
+refs:
+  - https://example.invalid/coverage-fixture
+  - a source with no URL, printed as plain text
 version: "1.0"
 status: draft
 

@@ -16,6 +16,8 @@ description: |-
   description: |-
     the long form
   ```
+refs:
+  - https://example.invalid/main-process
 
 stages:
   - id: alpha

@@ -45,6 +45,13 @@ export function toolOf(team: Pick<TeamDoc, 'tools'>, id: string): Tool {
   return t;
 }
 
+// The other three catalogs are read the same way, and unlike a tool a dangling id
+// here is schema-legal: `status` reports it, the page prints the raw id, and the
+// only symptom is a name that reads like a slug. That fallback is one decision, so
+// it is written once rather than in each figure that happens to need a name.
+export const nameOf = <T extends { id: string; name: string }>(catalog: T[], id: string) =>
+  catalog.find((x) => x.id === id)?.name ?? id;
+
 // The shelf, grouped the way both drawers and the tooling catalog read it: a
 // harness is the runtime, and what it holds is everything pointing back at it.
 export function toolsOfHarness(team: Pick<TeamDoc, 'tools'>, harness: string): Tool[] {
