@@ -178,9 +178,11 @@ const recsOfEvent = (ev: string) =>
           <h4 class="drawer__label">Tooling</h4>
           {a.tooling ? (
             <div class="drawer__tooling">
+              {/* The tool alone. Which harness runs it is a fact about the tool,
+                  not about this activity, and the tool's own panel is one click
+                  away — repeating it here put the same runtime name at the top of
+                  every activity that reaches for anything on that shelf. */}
               <p class="drawer__tool-line">
-                <button class="drawer__artifact drawer__link" data-detail-key={`harness:${toolOf(team, a.tooling.tool).harness}`}>{harnessName(toolOf(team, a.tooling.tool).harness)}</button>
-                <span class="drawer__artifact"> · </span>
                 <button class="drawer__artifact drawer__link" data-detail-key={`tool:${a.tooling.tool}`}>{toolOf(team, a.tooling.tool).name}</button>
                 {a.tooling.asset && <span class="drawer__via"> · {a.tooling.asset}</span>}
               </p>
