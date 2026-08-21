@@ -126,6 +126,17 @@ ai-sdlc serve ~/teams/acme      # put this on the shared screen
 # then, in Claude Code: /map-team ~/teams/acme
 ```
 
+### When the process is already written down
+
+Some repositories describe their own delivery process — an agentic bundle names its skills, its agents, its gates and the artifacts they pass. There is nothing to interview: the `skills/mine-repo/` skill reads that package and writes the YAML from it, then hands the folder to `map-team` so a team can cut what does not apply to them.
+
+```sh
+# in Claude Code, pointed at the package you want read
+/mine-repo ~/src/some-bundle --into ~/teams/some-bundle
+```
+
+A mined document says so in its own masthead — `status: draft` — because it describes a package until a team has confirmed it. Its roles are inferred, its open slots are quoted from the package's own roadmap, and nothing is filled that the source did not state.
+
 ## The model
 
 `docs/ontology/` walks the vocabulary in dependency order — each layer only uses terms defined before it. It is a reference for maintaining a document, not a prerequisite for writing one.
