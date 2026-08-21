@@ -76,6 +76,8 @@ Both, when the source does both. The role names who is accountable in that mode;
 
 A **harness** is a runtime, and it should stay small: the agent host, the project's own runners and CI, the adapter layer, the deterministic hook points. Resist making a harness per plugin — provenance is `kind`. A useful test: if a tool could be re-implemented tomorrow inside the same runtime, the runtime is the harness.
 
+**A harness with no tools is not a harness.** A repository can have an agent host installed, configured and written for, with nothing captured into it — no skill, no command, no subagent. That is worth saying, and `status` will tell you it is unreferenced. Say it in the document's `description`, where it reads as the finding it is, and leave the catalog to the runtimes that actually hold something. An empty shelf on the page reads as an oversight; the same fact in a sentence reads as an argument.
+
 ## Events
 
 Mine these from the source's own troubleshooting, escalation rules, and halt conditions — those sections are a list of recurring moments the package already recognises. Name the moment, never the remedy: *"the run stopped mid-phase"*, not *"resume the run"*. The remedy is the `recommends:` that points at it.

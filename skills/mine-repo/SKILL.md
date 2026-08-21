@@ -47,26 +47,32 @@ Read in this order, because later sources correct earlier ones:
 | `SKILL.md` / agent front matter | one-line purpose, hard constraints, whether it is standalone |
 | CHANGELOG | why something is the way it is, and what it replaced |
 
-## Surface the two decisions before authoring
+## Surface the decisions before authoring
 
-Two calls change the finished picture more than any other, and **neither is derivable from the source**. Put both to the user in one message, with your recommendation, before you write a process file:
+Three calls change the finished picture more than anything else, and **none of them is derivable from the source**. Put all three to the user in one message, with your recommendation, before you write a process file:
 
-**1. How the processes are cut.**
+**1. How many documents.** One package is one document; a program of several repositories is a judgement. The evidence for *one* is a shared lifecycle — the same task conventions, the same commit rules, one tracker — and cross-references between the repos. The evidence for *several* is separate audiences: a document each team can be handed without reading the other two.
+
+Ask before authoring, not after. The routes are: **one document, repositories appear as harnesses and tools** — or **one folder per repository, and the shared lifecycle is authored as many times as there are folders**. Getting this wrong is the only decision here that cannot be fixed by editing; it is re-mining.
+
+**2. How the processes are cut.**
 
 | Cut | You get | You pay |
 | --- | --- | --- |
 | **By mode** — one process per entry point | the contrast is on the page: the same activity, a different resolver and a different level | the spine is authored twice, and every later edit lands in two files |
 | **By domain** — one delivery process, modes as sibling sub-activities | nothing is authored twice | the contrast moves inside a drawer, where a reader has to go looking for it |
 
-**2. How fine the artifacts are.** One artifact per file the package names (a review diff, the lens findings, the fix-up diff, the check verdict — sixty or more), or one per thing that visibly changes hands (one review verdict — thirty or so). Fine granularity makes the flow figure honest about the machinery; coarse granularity makes it readable.
+**3. How fine the artifacts are.** One artifact per file the package names (a review diff, the lens findings, the fix-up diff, the check verdict — sixty or more), or one per thing that visibly changes hands (one review verdict — thirty or so). Fine granularity makes the flow figure honest about the machinery; coarse granularity makes it readable.
 
-State the choice in the document's `description` once it is made. A reader who can see the cut can argue with it.
+State each choice in the document's `description` once it is made. A reader who can see the cut can argue with it.
 
 ## The loop
 
 Catalogs first, then one process at a time. Within a process: read the source for that flow end to end, then write it, then run `ai-sdlc status <dir>` and fix what it names before starting the next.
 
 Write the spine before the tooling. A stage, a role, an artifact and an activity are cheap to get right and expensive to retrofit; a fill is a two-line edit.
+
+Two YAML traps cost a round-trip every time, and both come from quoting a package that writes in Markdown. A plain scalar may not **start with a backtick**, and may not **contain a colon followed by a space** — `note: \`make test\` is the gate` and `description: reviewed against master: architecture, tests` both fail to parse. Wrap the value in double quotes, or make it a `>-` block. Mining hits this far more often than an interview does, because so much of what you are quoting is prose about file names and commands.
 
 ## Never infer these four
 
@@ -108,6 +114,8 @@ AISDLC_TEAM_DIR=<dir> npx astro build      # pages == processes + 2
 
 `status` is the one that catches mining mistakes specifically. An id an activity names but no catalog defines is schema-legal — the page renders and the arrow silently never appears. An unreferenced catalog entry is the other direction: a tool you inventoried and never placed, which means either an activity is missing or the entry is not part of this document.
 
+**Write the document's own honest-about paragraph last**, from what `status` actually printed. Written before the processes are authored, it becomes a prediction, and a mined document that opens by miscounting its own open slots has undermined the only thing it was claiming: that every number in it came from somewhere. The same applies to each process's "where it is open" note.
+
 Then report, in this order:
 
 1. The counts `status` prints — activities, filled, open, unclaimed.
@@ -122,6 +130,7 @@ Then report, in this order:
 - You are writing an `open:` block and cannot point at the sentence you are quoting.
 - You are writing a `why:` in your own voice.
 - A role in your document holds a hat no source document mentions.
-- You chose the process cut silently.
+- You chose the process cut, or the number of documents, silently.
 - The document renders and you have not run `status`.
+- The honest-about paragraph was written before the processes it counts.
 - Your report says the document describes the team.
