@@ -256,19 +256,21 @@ const views = [
     };
 
     // Every figure scrolls sideways inside its own track, so "bring this node
-    // into view" is a scroll of that track, not of the page. The trailing-room
-    // rule in this component's stylesheet names the same two classes: a track
-    // the CSS does not know about has no room to scroll into, so the node would
-    // stay behind the drawer and the fault would look like a script fault.
+    // into view" is a scroll of that track, not of the page. A node parked past
+    // the track's right edge still has to be fetched even now that the panel
+    // pushes the column rather than covering it: the column narrowing is what
+    // put the node out there.
     const TRACK = '.fig__scroll, .grid__scroll';
-    // The drawer is a fixed panel over the right edge: the width a reader can
-    // actually see is the track minus that panel. Selecting a node underneath it
-    // reads as nothing having happened at all.
+    // Above the overlay breakpoint the panel pushes, so the column already ends
+    // where the panel starts and this reads the same edge twice. Below it the
+    // panel covers, and the width a reader can actually see is the track minus
+    // that panel — selecting a node underneath it reads as nothing having
+    // happened at all.
     const visibleRight = () =>
       drawer.hidden ? window.innerWidth : Math.min(window.innerWidth, drawer.getBoundingClientRect().left);
-    // Both moves wait two frames: the room the drawer leaves at the end of the
-    // track is a style change, and a track measured in the same frame as the
-    // opening still reports its old width — the node then stops short.
+    // Both moves wait two frames: the column giving up the panel's width is a
+    // style change, and a track measured in the same frame as the opening still
+    // reports its old width — the node then stops short.
     const afterLayout = (fn: () => void) =>
       requestAnimationFrame(() => requestAnimationFrame(fn));
     // `nudge` moves the node just clear of the drawer and no further, which is
@@ -458,13 +460,14 @@ const views = [
 </script>
 
 <style>
-  /* The drawer is fixed over the right edge, so the last node in a figure has
-     nowhere left to travel: without this much extra room at the end of the
-     track, a selection at the end of a flow can never come out from behind the
-     panel. The room only exists while the panel does. */
-  main[data-drawer-open] :global(.fig__scroll),
-  main[data-drawer-open] :global(.grid__scroll) {
-    padding-right: calc(var(--drawer-w) + 16px);
+  /* The drawer pushes the document rather than covering it: the panel is still
+     fixed over the right edge, but the main column gives up that width while it
+     is open, so a sub-process inset — or any node — is read beside the panel,
+     never underneath it. How much to give up, and the narrow screen where the
+     answer is nothing, both come from `--drawer-push` in `global.css` beside the
+     panel width they are derived from. */
+  main[data-drawer-open] {
+    margin-right: var(--drawer-push);
   }
 
   main[data-view='flow'] [data-viewpanel]:not([data-viewpanel='flow']),

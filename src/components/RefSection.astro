@@ -1,0 +1,23 @@
+---
+/* A labelled block of refs, drawn only when there are any. The two drawers ask
+   the same question of an entry — where do I go to see this thing — so the
+   wording is a default rather than a decision made at each of thirteen call
+   sites. Which panel it lands in is the panel's business: `global.css` gives the
+   team drawer's sections their wider rules, so nothing here has to be told
+   where it is. */
+import RefList from './RefList.astro';
+
+interface Props {
+  refs?: string[];
+  label?: string;
+}
+
+const { refs = [], label = 'Where it lives' } = Astro.props;
+---
+
+{refs.length > 0 && (
+  <div class="panel-section">
+    <h4 class="panel-label">{label}</h4>
+    <RefList refs={refs} />
+  </div>
+)}

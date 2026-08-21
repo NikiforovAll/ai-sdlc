@@ -1,10 +1,11 @@
 ---
 import type { OverviewModel } from '../lib/docs';
 import { catalogDescriptions, md, paragraphs } from '../lib/markdown';
-import { isLinkableRef, LEVEL_LABELS, toolsOfHarness } from '../lib/derive';
+import { LEVEL_LABELS, toolsOfHarness } from '../lib/derive';
 import { useHref } from '../lib/docs';
 import ReachList from './ReachList.astro';
 import UseList from './UseList.astro';
+import RefSection from './RefSection.astro';
 
 interface Props {
   model: OverviewModel;
@@ -55,26 +56,17 @@ const openPanels = [
       </div>
 
       {(team.note || teamProse) && (
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">About</h4>
+        <div class="panel-section">
+          <h4 class="panel-label">About</h4>
           {team.note && <p class="tdrawer__prose">{team.note}</p>}
           {teamProse && <div class="tdrawer__md prose-md" set:html={teamProse} />}
         </div>
       )}
 
-      {(team.refs ?? []).length > 0 && (
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Read from</h4>
-          <ul class="tdrawer__refs">
-            {team.refs!.map((ref) => (
-              <li>{isLinkableRef(ref) ? <a href={ref} target="_blank" rel="noreferrer">{ref}</a> : ref}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <RefSection refs={team.refs} label="Read from" />
 
-      <div class="tdrawer__section">
-        <h4 class="tdrawer__label">Source</h4>
+      <div class="panel-section">
+        <h4 class="panel-label">Source</h4>
         <p class="tdrawer__path">{teamId}/</p>
         <p class="tdrawer__none">
           One folder is one team: the document plus one file per process. The page has no
@@ -94,14 +86,14 @@ const openPanels = [
         {descriptions.has(`role:${r.id}`) && (
           <div class="tdrawer__md prose-md" set:html={descriptions.get(`role:${r.id}`)} />
         )}
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Works in</h4>
+        <div class="panel-section">
+          <h4 class="panel-label">Works in</h4>
           <p class="tdrawer__uses">
             <UseList uses={roleUse.get(r.id) ?? []} empty="No activity names this role yet." emptyClass="tdrawer__none" />
           </p>
         </div>
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Owns</h4>
+        <div class="panel-section">
+          <h4 class="panel-label">Owns</h4>
           {(roleReach.get(r.id) ?? []).length ? (
             <ul class="tdrawer__list tdrawer__list--owns">
               {(roleReach.get(r.id) ?? []).map((w) => (
@@ -125,6 +117,7 @@ const openPanels = [
             <p class="tdrawer__none">No activity names this role yet.</p>
           )}
         </div>
+        <RefSection refs={r.refs} />
       </div>
     ))}
 
@@ -141,8 +134,8 @@ const openPanels = [
           {descriptions.has(`harness:${h.id}`) && (
             <div class="tdrawer__md prose-md" set:html={descriptions.get(`harness:${h.id}`)} />
           )}
-          <div class="tdrawer__section">
-            <h4 class="tdrawer__label">Tools</h4>
+          <div class="panel-section">
+            <h4 class="panel-label">Tools</h4>
             {owned.length ? (
               <ul class="tdrawer__list">
                 {owned.map((s) => (
@@ -156,12 +149,13 @@ const openPanels = [
               <p class="tdrawer__none">Nothing on the shelf runs in it yet.</p>
             )}
           </div>
-          <div class="tdrawer__section">
-            <h4 class="tdrawer__label">Reached for in</h4>
+          <div class="panel-section">
+            <h4 class="panel-label">Reached for in</h4>
             <p class="tdrawer__uses">
               <UseList uses={harnessUse.get(h.id) ?? []} empty="Shelf inventory — no process reaches for it." emptyClass="tdrawer__none" />
             </p>
           </div>
+          <RefSection refs={h.refs} />
         </div>
       );
     })}
@@ -179,8 +173,8 @@ const openPanels = [
         {descriptions.has(`tool:${s.id}`) && (
           <div class="tdrawer__md prose-md" set:html={descriptions.get(`tool:${s.id}`)} />
         )}
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Reached for</h4>
+        <div class="panel-section">
+          <h4 class="panel-label">Reached for</h4>
           <ReachList
             rows={toolReach.get(s.id) ?? []}
             empty="Shelf inventory — nothing references it yet."
@@ -188,16 +182,7 @@ const openPanels = [
             inline={inline}
           />
         </div>
-        {(s.refs ?? []).length > 0 && (
-          <div class="tdrawer__section">
-            <h4 class="tdrawer__label">Refs</h4>
-            <ul class="tdrawer__refs">
-              {s.refs!.map((ref) => (
-                <li>{isLinkableRef(ref) ? <a href={ref} target="_blank" rel="noreferrer">{ref}</a> : ref}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <RefSection refs={s.refs} label="Refs" />
       </div>
     ))}
 
@@ -211,14 +196,15 @@ const openPanels = [
         {descriptions.has(`artifact:${a.id}`) && (
           <div class="tdrawer__md prose-md" set:html={descriptions.get(`artifact:${a.id}`)} />
         )}
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Changes hands</h4>
+        <div class="panel-section">
+          <h4 class="panel-label">Changes hands</h4>
           <ReachList
             rows={artifactReach.get(a.id) ?? []}
             empty="Declared, but no activity produces or consumes it."
             inline={inline}
           />
         </div>
+        <RefSection refs={a.refs} />
       </div>
     ))}
 
@@ -232,12 +218,13 @@ const openPanels = [
         {descriptions.has(`event:${e.id}`) && (
           <div class="tdrawer__md prose-md" set:html={descriptions.get(`event:${e.id}`)} />
         )}
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Answered by</h4>
+        <div class="panel-section">
+          <h4 class="panel-label">Answered by</h4>
           <p class="tdrawer__uses">
             <UseList uses={eventUse.get(e.id) ?? []} empty="Defined, but nothing is bound to it yet." emptyClass="tdrawer__none" />
           </p>
         </div>
+        <RefSection refs={e.refs} />
       </div>
     ))}
 
@@ -254,8 +241,8 @@ const openPanels = [
             it needs, in the team's own words.
           </p>
         )}
-        <div class="tdrawer__section">
-          <h4 class="tdrawer__label">Waiting on</h4>
+        <div class="panel-section">
+          <h4 class="panel-label">Waiting on</h4>
           <ReachList
             rows={o.rows}
             empty="Nothing is declared open. Every activity is either filled or done by hand on purpose."
@@ -375,21 +362,6 @@ const openPanels = [
     color: var(--accent);
     border-color: var(--accent);
   }
-  /* The rule belongs to the section under it, so it needs more air above than
-     below — at 12px/8px it read as a line through the previous section's last row. */
-  .tdrawer__section {
-    border-top: 1px solid var(--line);
-    padding-top: 10px;
-    margin-top: 20px;
-  }
-  .tdrawer__label {
-    font-size: var(--micro);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--sub);
-    font-weight: 700;
-    margin-bottom: 6px;
-  }
   .tdrawer__prose {
     font-size: var(--prose);
     line-height: 20px;
@@ -476,26 +448,6 @@ const openPanels = [
   }
   .tdrawer__list--owns li + li {
     margin-top: 7px;
-  }
-  .tdrawer__refs {
-    list-style: none;
-  }
-  .tdrawer__refs li {
-    font-size: var(--label);
-    color: var(--sub);
-  }
-  /* A ref leaves the document, so unlike the panel's internal doors it carries a
-     standing hairline — the reader has to be able to tell an exit from a label
-     without pointing at it first. */
-  .tdrawer__refs a {
-    color: inherit;
-    border-bottom: 1px solid var(--line);
-    transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
-  }
-  .tdrawer__refs a:hover,
-  .tdrawer__refs a:focus-visible {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
   }
   .tdrawer__list li + li {
     margin-top: 4px;

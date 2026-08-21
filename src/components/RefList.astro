@@ -1,0 +1,56 @@
+---
+/* The one place a `refs:` list is drawn. Every shelf in the document takes the
+   same field, so the reading of it is decided once here rather than at each of
+   the thirteen places a panel files one.
+   The split is done at build time because it is a fact about the string, not a
+   decision: a URL already names its host and its path, and printing them apart
+   is only agreeing to read what is written. Styles live in `global.css` — the
+   markup is drawn here and consumed by two drawers, and an Astro `<style>`
+   reaches only the component that renders the tags. */
+import { isLinkableRef } from '../lib/derive';
+
+interface Props {
+  refs?: string[];
+}
+
+const { refs = [] } = Astro.props;
+
+/** host + path, or null when the string is not a URL this can read. */
+const split = (ref: string): { host: string; path: string } | null => {
+  try {
+    const u = new URL(ref.startsWith('//') ? `https:${ref}` : ref);
+    // A mailto has no host — the address is the whole of it, and it is the part
+    // worth reading.
+    if (u.protocol === 'mailto:') return { host: u.pathname, path: '' };
+    const rest = `${u.pathname}${u.search}${u.hash}`;
+    return {
+      host: u.host,
+      // A lone slash is not a path, it is the absence of one; and an escaped
+      // space is a space, which is what the page it names actually says.
+      path: rest === '/' ? '' : decodeURI(rest),
+    };
+  } catch {
+    return null;
+  }
+};
+---
+
+{refs.length > 0 && (
+  <ul class="refs">
+    {refs.map((ref) => {
+      const parts = isLinkableRef(ref) ? split(ref) : null;
+      return (
+        <li>
+          {parts ? (
+            <a class="refs__link" href={ref} target="_blank" rel="noreferrer">
+              <span class="refs__host">{parts.host}</span><span class="refs__out" aria-hidden="true">↗</span>
+              {parts.path && <span class="refs__path">{parts.path}</span>}
+            </a>
+          ) : (
+            <span class="refs__plain">{ref}</span>
+          )}
+        </li>
+      );
+    })}
+  </ul>
+)}

@@ -25,6 +25,15 @@ const NODEH_MAX = 90;
 // the height it is reserved — the same "tallest it gets" rule as the card.
 const ECHOH = 38;
 const STACK_GAP = 10;
+// The ladder. Consecutive columns sit on alternating rungs inside their lane, so
+// the edge between them runs diagonally and its label lands in open air instead
+// of in the 24px gutter between two cards, where it covered both of them. The
+// rung has to clear a card, not merely differ from it: the label sits at the
+// midpoint, which is half a rung from each card's attach point, so anything
+// under ~110 puts the name back on top of the box it was moved off.
+const RUNGS = 2;
+const RUNG = 136;
+const rungOf = (col: number) => (col % RUNGS) * RUNG;
 const EXPAND_H = 22;
 const LANE_PAD = 11;
 
@@ -57,16 +66,34 @@ for (const p of d.placed) {
 const stackH = (items: Item[]) =>
   items.reduce((a, i) => a + i.h, 0) + Math.max(0, items.length - 1) * STACK_GAP;
 
-const laneHpx = team.roles.map((_, lane) => {
-  let need = 0;
-  for (let c = 0; c < d.cols; c++) need = Math.max(need, stackH(cells.get(cellKey(c, lane)) ?? []));
-  return Math.max(LANEH, need + LANE_PAD * 2);
+// A lane is tall enough for its deepest stack on every rung it actually uses. A
+// lane pays for the ladder only where it climbs one: a role holding a single
+// activity, or holding them all on even columns, has one rung and stays the
+// height it was. Without this the ladder charged every lane for a step it never
+// took, and a five-role figure grew to two and a half screens to open a gutter
+// in two of them.
+const lanes = team.roles.map((_, lane) => {
+  let stack = 0;
+  let base = 0;
+  let top = 0;
+  let occupied = false;
+  for (let c = 0; c < d.cols; c++) {
+    const items = cells.get(cellKey(c, lane));
+    if (!items) continue;
+    const rung = rungOf(c);
+    base = occupied ? Math.min(base, rung) : rung;
+    top = occupied ? Math.max(top, rung) : rung;
+    occupied = true;
+    stack = Math.max(stack, stackH(items));
+  }
+  const content = stack + (top - base);
+  return { stack, base, content, h: Math.max(LANEH, content + LANE_PAD * 2) };
 });
 const laneY: number[] = [];
 let acc = BAND;
-for (const h of laneHpx) {
+for (const l of lanes) {
   laneY.push(acc);
-  acc += h;
+  acc += l.h;
 }
 
 const width = GUTTER + d.cols * COLW;
@@ -78,9 +105,15 @@ const place = (col: number, lane: number, id: string) => {
   const items = cells.get(cellKey(col, lane))!;
   const k = items.findIndex((i) => i.id === id);
   const above = items.slice(0, k).reduce((a, i) => a + i.h + STACK_GAP, 0);
+  const l = lanes[lane]!;
   return {
     x: GUTTER + col * COLW + (COLW - NODEW) / 2,
-    y: laneY[lane]! + (laneHpx[lane]! - stackH(items)) / 2 + above,
+    y:
+      laneY[lane]! +
+      (l.h - l.content) / 2 +
+      (rungOf(col) - l.base) +
+      (l.stack - stackH(items)) / 2 +
+      above,
   };
 };
 
@@ -100,7 +133,7 @@ const echoes = d.placed.flatMap((p) =>
 const bezier = (t: number, a: number, c1: number, c2: number, b: number) =>
   (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * c1 + 3 * (1 - t) * t ** 2 * c2 + t ** 3 * b;
 
-const paths = d.edges.map((e) => {
+const paths0 = d.edges.map((e) => {
   const a = pos.get(e.from)!;
   const b = pos.get(e.to)!;
   const x1 = a.x + NODEW;
@@ -116,6 +149,26 @@ const paths = d.edges.map((e) => {
     my: bezier(t, y1, y1, y2, y2),
     roles: [...new Set([...team.activities.find((t2) => t2.id === e.from)!.roles, ...team.activities.find((t2) => t2.id === e.to)!.roles])].join(' '),
   };
+});
+
+// Two edges can land their labels on the same pixel — a pair of activities joined
+// by two artifacts draws the same curve twice, and edges of different spans meet
+// at a shared midpoint often enough to matter. Grouping by the point rather than
+// by the pair catches both, and the group is dealt into rows around it so every
+// name is readable. Twenty pixels is the label's own height plus its border.
+const LABEL_ROW = 20;
+const labelGroup = new Map<string, { size: number }>();
+const labelSlot = paths0.map((e) => {
+  const k = `${Math.round(e.mx)}:${Math.round(e.my)}`;
+  let group = labelGroup.get(k);
+  if (!group) labelGroup.set(k, (group = { size: 0 }));
+  // The group is still filling, so a row is claimed now and only centred once
+  // every edge that shares this point has claimed one.
+  return { group, row: group.size++ };
+});
+const paths = paths0.map((e, i) => {
+  const { group, row } = labelSlot[i]!;
+  return { ...e, my: e.my + (row - (group.size - 1) / 2) * LABEL_ROW };
 });
 
 const artifactName = (id: string) => nameOf(team.artifacts, id);
@@ -138,7 +191,7 @@ const idleCells = steps.flatMap((s) =>
   team.roles.flatMap((_, l) =>
     cells.has(cellKey(s.col, l))
       ? []
-      : [{ x: GUTTER + s.col * COLW, y: laneY[l]!, w: COLW, h: laneHpx[l]!, last: s.col === d.cols - 1 }]
+      : [{ x: GUTTER + s.col * COLW, y: laneY[l]!, w: COLW, h: lanes[l]!.h, last: s.col === d.cols - 1 }]
   )
 );
 ---
@@ -198,7 +251,7 @@ const idleCells = steps.flatMap((s) =>
       ))}
 
       {team.roles.map((r, i) => (
-        <div class="fig__lane" style={`top:${laneY[i]}px;height:${laneHpx[i]}px`} data-roles={r.id}>
+        <div class="fig__lane" style={`top:${laneY[i]}px;height:${lanes[i]!.h}px`} data-roles={r.id}>
           <button type="button" class="fig__lane-name" data-detail-key={`role:${r.id}`}>{r.name}</button>
           <span class="fig__lane-note">{r.note}</span>
         </div>
@@ -323,6 +376,7 @@ const idleCells = steps.flatMap((s) =>
       ))}
     </div>
   </div>
+
   {team.constraint && (
     <p class="fig__note" tabindex="0" data-roles={team.roles.map((r) => r.id).join(' ')}>
       <span class="fig__one" aria-hidden="true">①</span>

@@ -25,9 +25,15 @@
 
   --font: 'Archivo Variable', 'Archivo', 'Yu Gothic', sans-serif;
 
-  /* One width for both drawers and for the trailing room a scroll track has to
-     leave them: the room only works while it matches the panel exactly. */
+  /* One width for both drawers. */
   --drawer-w: min(400px, 94vw);
+  /* How much of the column an open drawer takes, which is all of the panel: the
+     document is pushed aside rather than covered, and the push only works while
+     it matches the panel exactly. Zeroed at the breakpoint where the panel is
+     nearly the whole viewport and there is nothing left to push — that is a fact
+     about this width, so it is decided here rather than in the one component
+     that consumes it. */
+  --drawer-push: var(--drawer-w);
 
   --display-xl: 56px;
   --display-md: 28px;
@@ -151,6 +157,109 @@ ol {
 }
 
 /* ---- shared world components ---- */
+
+/* A panel section: a hairline rule, a micro label, and whatever is filed under
+   it. Both drawers draw this same shape, and the shared ref components draw it
+   too — an Astro `<style>` is scoped to the component that renders the markup,
+   so a section built by one component and styled by another silently renders
+   naked. A pattern three components draw belongs here beside `.tab`, not copied
+   into each of them. */
+.panel-section {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  margin-top: 12px;
+}
+/* The team panel is read at arm's length rather than beside a figure, so every
+   section in it breathes wider — a fact about the panel, not about each section,
+   so it is asked of the panel once instead of marked at each of its twenty-odd
+   sections. The rule belongs to the section under it, so it needs more air above
+   than below: at 12px/8px it read as a line through the previous section's last
+   row. */
+.tdrawer .panel-section {
+  padding-top: 10px;
+  margin-top: 20px;
+}
+.panel-label {
+  font-size: var(--micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sub);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* A reference is a door out of the document, and a reader scanning a column of
+   them is asking which system each one opens — Confluence, the corpus, the
+   tracker, the repo. So the host leads, in the same uppercase the rest of the
+   world names structure with, and the path follows underneath as the caption it
+   is. Printing the raw URL instead put `https://` at the head of every entry,
+   set the part that distinguishes them last, and wrapped a single link across
+   three lines of a 400px panel.
+   The hairline under the host is the standing mark of an exit: unlike the
+   panel's internal doors, this one leaves, and the reader has to be able to see
+   that without pointing at it first. Nothing is elided — a path wraps rather
+   than ending in an ellipsis, because a truncated URL is a door the reader
+   cannot read the name of. */
+.refs {
+  list-style: none;
+  margin-top: 4px;
+}
+.refs li + li {
+  margin-top: 9px;
+}
+.refs__link {
+  display: block;
+  color: inherit;
+}
+/* The arrow is the door. A hairline says "this is not body text"; it does not
+   say which way the reader leaves, and the panel's own doors — an artifact, a
+   role, a tool — look identical without it. The world already sends a reader
+   somewhere with a glyph: `→` on a process card, `↑` on the up-link. `↗` is the
+   third of that set and means the one thing neither covers, which is out of the
+   document entirely. */
+.refs__host {
+  display: inline-block;
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+}
+.refs__out {
+  font-size: var(--micro);
+  color: var(--muted);
+  margin-left: 3px;
+  transition: color 0.14s var(--ease-out);
+}
+/* The caption step a ref reads at, whether it is the path under a host or a ref
+   that is not a URL at all — a repo path, a shelf, a person. That one is named,
+   not linked, and says so by staying flat: no hairline, no host line, nothing to
+   press. Same voice either way, so the reader learns the column once. */
+.refs__path,
+.refs__plain {
+  display: block;
+  font-size: var(--micro);
+  letter-spacing: 0.04em;
+  line-height: 13px;
+  color: var(--sub);
+  overflow-wrap: anywhere;
+}
+.refs__path {
+  transition: color 0.14s var(--ease-out);
+}
+.refs__link:hover .refs__host,
+.refs__link:focus-visible .refs__host {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.refs__link:hover .refs__path,
+.refs__link:focus-visible .refs__path,
+.refs__link:hover .refs__out,
+.refs__link:focus-visible .refs__out {
+  color: var(--accent);
+}
 
 .tab {
   display: inline-flex;
@@ -593,6 +702,9 @@ main {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --drawer-push: 0px;
+  }
   /* The head's guidance line drops under the title instead of squeezing it. */
   .module__head {
     flex-wrap: wrap;

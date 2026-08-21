@@ -75,6 +75,8 @@ roles:
   - id: checker
     name: Checker
     note: Has a note and no description.
+    refs:
+      - https://example.invalid/who-the-checker-is
 
 artifacts:
   - id: brief
@@ -95,6 +97,11 @@ artifacts:
   - id: sketch
     name: Sketch
     description: A single plain sentence — markdown is allowed here, not required.
+    # An artifact's own `refs:`, drawn as "Where it lives". One linkable, one not,
+    # so both branches of `isLinkableRef` are exercised on an artifact panel.
+    refs:
+      - https://example.invalid/where-the-sketch-lives
+      - docs/sketch-template.md
   - id: trace
     name: Trace
   - id: record
@@ -113,6 +120,8 @@ harnesses:
   - id: full-harness
     name: Full Harness
     note: Has both optional fields.
+    refs:
+      - https://example.invalid/harness-console
     description: |-
       A harness with a `note` **and** a `description`. It holds two tools, so the
       harness panel draws a list rather than a single entry.
@@ -132,6 +141,8 @@ events:
   - id: full-event
     name: Full Event
     description: An event carrying a description, kept to one plain sentence.
+    refs:
+      - https://example.invalid/where-the-event-is-seen
   # bare: no description
   - id: bare-event
     name: Bare Event

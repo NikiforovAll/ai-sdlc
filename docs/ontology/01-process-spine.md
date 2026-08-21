@@ -135,7 +135,11 @@ activities:
     consumes: [evidence-pack, acceptance-criteria]
     produces: [review-verdict]
     why: The review judges evidence against criteria — not the diff against taste.
+    refs:
+      - https://wiki.example/standards/review-checklist
 ```
+
+An optional `refs:` is the step's own reading list: the template, the standard, the section of the process page that governs *this* step. It is distinct from the two other `refs:` an activity can be near — a tool's, which is where that tool lives, and a fill's, which is how that tool is used here. Because it belongs to the step rather than to a capability, an unclaimed activity carries one just as well as a filled one, and often needs it more.
 
 **How it renders.** A node card in every figure. In FIG.01 it sits in the lane of the role named first, at the column its dependencies dictate; every further role gets the activity's name echoed in its own lane, in the hairline skin the figure uses for anything drawn in full elsewhere. The card is not centred across the roles' lanes: lanes are roles in catalog order, so a midpoint names a third role rather than a shared one. Clicking either the card or an echo opens the detail drawer, and marks both.
 
@@ -162,7 +166,11 @@ artifacts:
     description: |-
       What proves the change does what it claims: test runs, checks, and the
       output a reviewer would otherwise have to reproduce by hand.
+    refs:
+      - https://wiki.example/spaces/QA/evidence-pack-template
 ```
+
+`refs:` is optional and points at where the thing itself lives — the published board, the space it is written in, the template it is written from. A reader who stops on an artifact to ask what it is usually wants to go and look at one.
 
 Then referenced by id from activities' `consumes:` / `produces:` lists.
 

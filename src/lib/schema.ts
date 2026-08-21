@@ -5,6 +5,18 @@ import { z } from 'astro/zod';
 
 const id = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'ids are kebab-case');
 
+// One field with one meaning wherever it appears: where the thing lives, in
+// whatever form "lives" takes for it. Declared once so the day it gains a
+// constraint it gains it on every shelf at the same time.
+const refs = z.array(z.string()).optional();
+
+// The two catalog-entry shapes. Artifacts and events are named and described;
+// roles and harnesses add the one-line caption a figure prints beside them.
+// Written once because four shelves being the same shape is the point, not a
+// coincidence four inline literals would let drift.
+const entry = z.object({ id, name: z.string(), description: z.string().optional(), refs });
+const captioned = entry.extend({ note: z.string().optional() });
+
 export const DELEGATION_LEVELS = ['manual', 'assisted', 'delegated-review', 'gated-autonomous'] as const;
 
 // A fill names a catalog tool by id — the catalog owns the name and the harness,
@@ -14,7 +26,7 @@ const fill = z.object({
   level: z.enum(DELEGATION_LEVELS),
   usage: z.string().optional(),
   asset: z.string().optional(),
-  refs: z.array(z.string()).optional(),
+  refs,
 });
 
 // A recommendation has no identity: it is a pointer from one activity to one
@@ -64,6 +76,7 @@ export interface SubActivity {
   tooling?: Fill;
   open?: OpenSlot;
   recommends?: Recommendation[];
+  refs?: string[];
   activities?: SubActivity[];
 }
 
@@ -80,6 +93,7 @@ const subActivity: z.ZodType<SubActivity> = z.lazy(() =>
     tooling: fill.optional(),
     open: openSlot.optional(),
     recommends: z.array(recommendation).optional(),
+    refs,
     activities: z.array(subActivity).optional(),
   }).superRefine(oneOrTheOther)
 );
@@ -96,6 +110,12 @@ const activity = z
     tooling: fill.optional(),
     open: openSlot.optional(),
     recommends: z.array(recommendation).optional(),
+    // The step's own reading list. A tool's `refs` are where that tool lives and
+    // a fill's are how it is used here; these are the pages the person doing the
+    // step reads to do it — a template, a standard, the section of the process
+    // page that governs it. They belong to the step, not to whatever tool the
+    // step happens to have, so an unclaimed activity can carry them too.
+    refs,
     activities: z.array(subActivity).optional(),
   })
   .superRefine(oneOrTheOther);
@@ -118,7 +138,7 @@ const tool = z.object({
   // the entry most likely to be unfamiliar to the reader, so it needs the long
   // form more than the artifact it acts on does.
   description: z.string().optional(),
-  refs: z.array(z.string()).optional(),
+  refs,
 });
 
 // The same `note` / `description` split the catalogs use, applied to the two
@@ -134,21 +154,24 @@ export const teamSchema = z.object({
   name: z.string(),
   note: z.string().optional(),
   description: z.string().optional(),
-  refs: z.array(z.string()).optional(),
+  refs,
   version: z.string(),
   status: z.enum(['living', 'draft']).default('living'),
   // `note` is the one line a figure can afford to print beside the thing;
   // `description` is markdown the drawer renders when a reader stops on it. Two
   // fields rather than one because the figure has no room for the long form and
   // the drawer has no use for a caption truncated to fit a lane.
-  roles: z
-    .array(z.object({ id, name: z.string(), note: z.string().optional(), description: z.string().optional() }))
-    .min(1),
-  artifacts: z.array(z.object({ id, name: z.string(), description: z.string().optional() })).min(1),
-  harnesses: z
-    .array(z.object({ id, name: z.string(), note: z.string().optional(), description: z.string().optional() }))
-    .default([]),
-  events: z.array(z.object({ id, name: z.string(), description: z.string().optional() })).default([]),
+  // Every catalog entry takes the same optional `refs:` — where the thing lives,
+  // in whatever form "lives" takes for it: a role's charter, a harness's console,
+  // the dashboard where an event is actually seen. One field with one meaning
+  // across five shelves, so a reader learns it once.
+  roles: z.array(captioned).min(1),
+  // An artifact's `refs` are where the thing itself lives — the published board,
+  // the space it is written in, the template it is written from. A reader who
+  // stops on an artifact to ask what it is usually wants to go and look at one.
+  artifacts: z.array(entry).min(1),
+  harnesses: z.array(captioned).default([]),
+  events: z.array(entry).default([]),
   tools: z.array(tool).default([]),
 });
 
@@ -156,7 +179,7 @@ export const processSchema = z.object({
   name: z.string(),
   note: z.string().optional(),
   description: z.string().optional(),
-  refs: z.array(z.string()).optional(),
+  refs,
   stages: z.array(z.object({ id, name: z.string() })).min(1),
   activities: z.array(activity).min(1),
   constraint: z.object({ artifact: id, note: z.string() }).optional(),

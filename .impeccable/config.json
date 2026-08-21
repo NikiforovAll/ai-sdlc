@@ -18,7 +18,7 @@
         "rule": "layout-transition",
         "value": "stroke-width",
         "createdAt": "2026-08-17T06:11:51.844Z",
-        "reason": "SVG paint property, not a layout box property: stroke-width repaints the path and triggers no reflow. Matched by the substring 'width'."
+        "reason": "false positive: stroke-width is SVG paint, not box layout"
       }
     ]
   }

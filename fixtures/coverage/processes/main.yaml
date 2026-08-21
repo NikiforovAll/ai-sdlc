@@ -48,6 +48,12 @@ activities:
       asset: fixtures/brief-outline.md
       refs:
         - https://example.invalid/fill-ref
+    # The step's own reading list, drawn as "Read for this step" and distinct from
+    # the fill's refs directly above it — both are present here so the drawer has
+    # to keep them apart.
+    refs:
+      - https://example.invalid/step-reading
+      - docs/naming-standard.md
 
   # Multi-role, a minimal fill, a minimal recommendation, and children.
   - id: shape
@@ -78,6 +84,10 @@ activities:
             level: assisted
             event: bare-event
             usage: A recommendation at depth 1, bound to a moment.
+        # A sub-activity's own reading list — the same field the parent carries,
+        # one level down, so the flattened panel has to draw it at depth too.
+        refs:
+          - https://example.invalid/sub-step-reading
         activities:
           - id: shape-a-1
             name: Shape Detail Inner
