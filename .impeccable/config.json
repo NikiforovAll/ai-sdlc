@@ -19,6 +19,15 @@
         "value": "stroke-width",
         "createdAt": "2026-08-17T06:11:51.844Z",
         "reason": "false positive: stroke-width is SVG paint, not box layout"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "src/components/FlowFigure.astro"
+        ],
+        "createdAt": "2026-08-22T11:46:12.328Z",
+        "reason": "stroke-width transition on an SVG path is paint, not layout; pre-existing edge-lighting design per DESIGN.md, untouched by this change"
       }
     ]
   }

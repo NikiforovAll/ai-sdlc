@@ -233,6 +233,12 @@ export const isLinkableRef = (ref: string) => /^(https?:\/\/|mailto:|\/\/)/.test
 // position on the scale rather than spend a text row on its name.
 export const LEVEL_ORDER = ['manual', 'assisted', 'delegated-review', 'gated-autonomous'];
 
+// Where an activity's fill sits on the ramp; an open slot sits at the foot.
+// Both flow figures draw the same 2px track from this, so the mapping lives
+// here rather than once per template.
+export const levelIndex = (a: AnyActivity) =>
+  a.tooling ? LEVEL_ORDER.indexOf(a.tooling.level) : 0;
+
 export const LEVEL_LABELS: Record<string, string> = {
   manual: 'MANUAL',
   assisted: 'ASSISTED',

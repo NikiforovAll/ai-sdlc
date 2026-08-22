@@ -1,6 +1,6 @@
 ---
 import type { Team, SubActivity } from '../lib/derive';
-import { deriveSub, LEVEL_LABELS, nameOf, statesCapability } from '../lib/derive';
+import { deriveSub, LEVEL_LABELS, levelIndex, nameOf, statesCapability } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -43,7 +43,16 @@ const cols = [...Array(d.cols).keys()];
                 <span class="subflow__name">{p.activity.name}</span>
                 {statesCapability(p.activity) && (
                   <span class="subflow__level">
-                    {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
+                    <span class="subflow__level-name">
+                      {p.activity.tooling ? LEVEL_LABELS[p.activity.tooling.level] : 'OPEN SLOT'}
+                    </span>
+                    <span
+                      class={`subflow__track${p.activity.tooling ? '' : ' subflow__track--open'}`}
+                      aria-hidden="true"
+                      style={`--lv:${levelIndex(p.activity)}`}
+                    >
+                      <span class="subflow__fill" />
+                    </span>
                   </span>
                 )}
               </button>
@@ -157,10 +166,36 @@ const cols = [...Array(d.cols).keys()];
     line-height: 12px;
     font-weight: 700;
   }
+  /* The parent card's level ramp, unchanged: the word answers "which level", the
+     2px track answers "how far along" — one activity must state its level the
+     same way at every depth it is drawn. */
   .subflow__level {
-    font-size: var(--micro);
-    letter-spacing: 0.06em;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    line-height: 1;
+    font-size: 8px;
+    letter-spacing: 0.08em;
     color: var(--sub);
+  }
+  .subflow__track {
+    height: 2px;
+    background: var(--line);
+  }
+  .subflow__fill {
+    display: block;
+    height: 100%;
+    width: calc((var(--lv) + 1) / 4 * 100%);
+    background: var(--accent);
+  }
+  .subflow__track--open .subflow__fill {
+    width: 0;
+  }
+  .subflow__act[aria-current='true'] .subflow__track {
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .subflow__act[aria-current='true'] .subflow__fill {
+    background: var(--accent-on-ink);
   }
   /* The parent figure's echo skin, at the inset's scale: a hairline box rather
      than the card's ink border, because the border weight is what separates work

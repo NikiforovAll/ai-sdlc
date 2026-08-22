@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { derive, LEVEL_LABELS, LEVEL_ORDER, nameOf, statesCapability } from '../lib/derive';
+import { derive, LEVEL_LABELS, levelIndex, nameOf, statesCapability } from '../lib/derive';
 import SubFlow from './SubFlow.astro';
 
 interface Props {
@@ -204,7 +204,21 @@ const idleCells = steps.flatMap((s) =>
     <span class="module__meta">columns are steps · topological · ordinal, not time · stage sits on the box · select a card to light what it hands over</span>
   </div>
   <div class="fig__scroll">
-    <div class="fig__canvas" data-flow style={`min-width:${width}px;height:${height}px`}>
+    <div class="fig__canvas" data-flow style={`min-width:${width}px;height:${height}px;--gutter:${GUTTER}px`}>
+      {/* The role gutter rides the horizontal scroll: a zero-height sticky strip
+          is the one in-flow child of the canvas, so `left: 0` pins it to the
+          scrollport while the lanes stay absolutely placed inside it. The lanes
+          go opaque here — floating over the figure they must cover it — which is
+          also why they carry their own hairlines: the SVG's rules sit underneath
+          them now. */}
+      <div class="fig__lanes">
+        {team.roles.map((r, i) => (
+          <div class="fig__lane" style={`top:${laneY[i]}px;height:${lanes[i]!.h}px`} data-roles={r.id}>
+            <button type="button" class="fig__lane-name" data-detail-key={`role:${r.id}`}>{r.name}</button>
+            <span class="fig__lane-note">{r.note}</span>
+          </div>
+        ))}
+      </div>
       <svg width="100%" height={height} role="img" aria-label="Activity flow: artifact handoffs between roles">
         <defs>
           <pattern id={hatchId} width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
@@ -223,11 +237,13 @@ const idleCells = steps.flatMap((s) =>
         {idleCells.map((c) => (
           <rect x={c.x} y={c.y} width={c.last ? '100%' : c.w} height={c.h} fill={`url(#${hatchId})`} />
         ))}
+        {/* The gutter's paint belongs to the sticky lanes now — their borders draw
+            the hairlines there, so the SVG rules start where the figure does and
+            the vertical gutter line is the lanes' own right border. */}
         {team.roles.map((_, i) => (
-          <line x1={0} x2="100%" y1={laneY[i]} y2={laneY[i]} stroke="#dadada" stroke-width="1" />
+          <line x1={GUTTER} x2="100%" y1={laneY[i]} y2={laneY[i]} stroke="#dadada" stroke-width="1" />
         ))}
-        <line x1={0} x2="100%" y1={height - 0.5} y2={height - 0.5} stroke="#dadada" stroke-width="1" />
-        <line x1={GUTTER - 0.5} x2={GUTTER - 0.5} y1={0} y2={height} stroke="#dadada" stroke-width="1" />
+        <line x1={GUTTER} x2="100%" y1={height - 0.5} y2={height - 0.5} stroke="#dadada" stroke-width="1" />
         {paths.map((e) => (
           <path
             d={e.d}
@@ -247,13 +263,6 @@ const idleCells = steps.flatMap((s) =>
         <div class="fig__stephead" style={`left:${GUTTER + s.col * COLW + 8}px;top:4px;max-width:${COLW - 16}px`}>
           <span class="tab">STEP {String(s.col + 1).padStart(2, '0')}</span>
           <span class="fig__stepmeta">{s.acts} ACT</span>
-        </div>
-      ))}
-
-      {team.roles.map((r, i) => (
-        <div class="fig__lane" style={`top:${laneY[i]}px;height:${lanes[i]!.h}px`} data-roles={r.id}>
-          <button type="button" class="fig__lane-name" data-detail-key={`role:${r.id}`}>{r.name}</button>
-          <span class="fig__lane-note">{r.note}</span>
         </div>
       ))}
 
@@ -320,9 +329,7 @@ const idleCells = steps.flatMap((s) =>
                   <span
                     class={`fig__act-track${p.activity.tooling ? '' : ' fig__act-track--open'}`}
                     aria-hidden="true"
-                    style={`--lv:${
-                      p.activity.tooling ? LEVEL_ORDER.indexOf(p.activity.tooling.level) : 0
-                    }`}
+                    style={`--lv:${levelIndex(p.activity)}`}
                   >
                     <span class="fig__act-fill" />
                   </span>
@@ -429,15 +436,31 @@ const idleCells = steps.flatMap((s) =>
     font-weight: 600;
     white-space: nowrap;
   }
+  /* Zero-height so it takes no room in the flow the SVG measures; sticky so the
+     role names stay readable however far right the reader has scrolled. z-index
+     clears the artifact labels' selection tier (24/26) but stays under the fixed
+     constraint chip (30) and the drawer (40). */
+  .fig__lanes {
+    position: sticky;
+    left: 0;
+    width: var(--gutter);
+    height: 0;
+    z-index: 28;
+  }
   .fig__lane {
     position: absolute;
     left: 0;
-    width: 150px;
+    width: 100%;
     padding: 8px 10px;
+    background: var(--white);
+    border-top: 1px solid var(--line);
     border-right: 1px solid var(--line);
     display: flex;
     flex-direction: column;
     gap: 3px;
+  }
+  .fig__lane:last-child {
+    border-bottom: 1px solid var(--line);
   }
   /* The label became a button when artifacts and roles got a panel of their own.
      It keeps the label's exact skin — the global button reset plus the same box —
