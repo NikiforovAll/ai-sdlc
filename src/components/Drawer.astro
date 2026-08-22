@@ -1,8 +1,9 @@
 ---
 import type { Team } from '../lib/derive';
 import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, nameOf, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
-import { catalogDescriptions, md, paragraphs } from '../lib/markdown';
+import { catalogDescriptions, md, proseBlocks } from '../lib/markdown';
 import { VERB } from '../lib/docs';
+import type { Ref } from '../lib/schema';
 import RefList from './RefList.astro';
 import RefSection from './RefSection.astro';
 
@@ -13,7 +14,7 @@ interface Props {
     name: string;
     note?: string;
     description?: string;
-    refs?: string[];
+    refs?: Ref[];
     stages: number;
     activities: number;
     file?: string;
@@ -38,6 +39,16 @@ const descriptions = await catalogDescriptions(team);
 // The process's own long form is not a catalog entry, so it renders on its own —
 // same treatment, one document up.
 const processProse = process?.description ? await md(process.description) : null;
+// The prose authored on the steps themselves: the same processor, rendered once
+// for every block the panels below draw inline.
+const prose = await proseBlocks(
+  flat.flatMap(({ activity: a }) => [
+    a.why,
+    a.tooling?.usage,
+    a.open?.need,
+    ...(a.recommends ?? []).map((r) => r.usage),
+  ]).concat(team.tools.flatMap((s) => usesOfTool(team, s.id).map((u) => u.rec?.usage)))
+);
 
 const actsOfRole = (r: string) => flat.filter((f) => f.activity.roles.includes(r));
 // An event is named by recommendations, never by a fill: it says when a tool is
@@ -107,7 +118,7 @@ const recsOfEvent = (ev: string) =>
             <button class="chip chip--link" data-detail-key={`role:${r}`}>{roleName(r)}</button>
           ))}
         </div>
-        {a.why && <p class="drawer__why">{a.why}</p>}
+        {a.why && <div class="drawer__why prose-md" set:html={prose.get(a.why)} />}
 
         <div class="panel-section">
           <h4 class="panel-label">Consumes</h4>
@@ -195,7 +206,7 @@ const recsOfEvent = (ev: string) =>
                 <span class="drawer__ladder-loop">{LEVEL_NOTES[a.tooling.level].loop}</span>
               </div>
               <p class="drawer__ladder-note">{LEVEL_NOTES[a.tooling.level].note}</p>
-              {a.tooling.usage && paragraphs(a.tooling.usage).map((t) => <span class="drawer__usage">{t}</span>)}
+              {a.tooling.usage && <div class="drawer__usage prose-md" set:html={prose.get(a.tooling.usage)} />}
               <RefList refs={a.tooling.refs} />
             </div>
           ) : (
@@ -204,16 +215,11 @@ const recsOfEvent = (ev: string) =>
               {/* The team's own words about what would fill it. That sentence is
                   the whole reason the slot is declared rather than inferred, so
                   it is the content here — not a house line about roadmaps. */}
-              {paragraphs(a.open!.need).map((t) => <p class="drawer__open-need">{t}</p>)}
+              <div class="drawer__open-need prose-md" set:html={prose.get(a.open!.need)} />
             </div>
           )}
         </div>
         )}
-
-        {/* The step's reading list, drawn whatever state the step is in: a
-            template and a naming standard are what the work is done against, and
-            an unclaimed step needs them more than a filled one does. */}
-        <RefSection refs={a.refs} label="Read for this step" />
 
         {(a.activities?.length ?? 0) > 0 && (
           <div class="panel-section">
@@ -250,12 +256,20 @@ const recsOfEvent = (ev: string) =>
                   {r.event && (
                     <button class="drawer__event drawer__link" data-detail-key={`event:${r.event}`}> <svg class="drawer__bolt" viewBox="0 0 8 10" aria-hidden="true"><path d="M4.6 0 1 5.6h2.3L2.7 10 7 4.2H4.4Z" fill="currentColor" /></svg>{eventName(r.event)}</button>
                   )}
-                  {r.usage && paragraphs(r.usage).map((t) => <span class="drawer__usage">{t}</span>)}
+                  {r.usage && <div class="drawer__usage prose-md" set:html={prose.get(r.usage)} />}
                 </li>
               ))}
             </ul>
           </div>
         )}
+
+        {/* The step's reading list, drawn whatever state the step is in: a
+            template and a naming standard are what the work is done against, and
+            an unclaimed step needs them more than a filled one does. Last in the
+            panel: the tooling is what the reader opened the step for, and a
+            reading list read before it interrupts the fill and its
+            recommendations mid-sentence. */}
+        <RefSection refs={a.refs} label="Read for this step" />
       </div>
     ))}
 
@@ -294,7 +308,7 @@ const recsOfEvent = (ev: string) =>
                   {VERB[rec ? 'recommended' : 'fill']}{' '}
                   <button class="drawer__link drawer__here" data-detail-key={activity.id}>{activityLabel(activity.id)}</button>
                 </span>
-                {rec?.usage && paragraphs(rec.usage).map((t) => <span class="drawer__usage">{t}</span>)}
+                {rec?.usage && <div class="drawer__usage prose-md" set:html={prose.get(rec.usage)} />}
               </li>
             ))}
           </ul>
@@ -649,7 +663,6 @@ const recsOfEvent = (ev: string) =>
      The panel is 400px, so it is already the measure and a ch cap only wraps the
      line early. */
   .drawer__usage {
-    display: block;
     font-size: var(--body);
     line-height: 17px;
     color: var(--sub);
@@ -677,9 +690,6 @@ const recsOfEvent = (ev: string) =>
     font-size: var(--body);
     line-height: 17px;
     color: var(--sub);
-  }
-  .drawer__open-need + .drawer__open-need {
-    margin-top: 6px;
   }
   .drawer__open-mark {
     display: block;

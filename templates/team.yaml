@@ -1,11 +1,12 @@
-# The team document: the shared catalogs every process draws from.
+# The team document: who the team is, and the roles every process is drawn along.
 #
 # This is the skeleton `ai-sdlc new` writes — the smallest team the schema
-# accepts and the renderer draws. One role and one artifact are here because
-# both catalogs require at least one entry, not because they are right.
+# accepts and the renderer draws. The one role below is here because the schema
+# requires at least one, not because it is right.
 #
-# The catalogs below grow as you map. Add a role when someone owns work; add an
-# artifact when work leaves something behind. Nothing here should stay unused.
+# Each shared catalog is a file of its own beside this one, so a shelf can grow
+# without pushing the document that introduces the team off the screen. Roles
+# stay here: they are the axis the whole document is read along.
 #
 # The vocabulary is in docs/ontology/ — but you do not have to read it first.
 # Run the `map-team` skill and it will teach you the words as it writes them.
@@ -21,20 +22,3 @@ status: draft
 roles:
   - id: engineer
     name: Engineer
-
-# An artifact is a named thing work leaves behind. Artifacts are the joints of
-# the process: the arrows between activities are derived from one activity's
-# `produces` matching another's `consumes`. You never draw an arrow yourself.
-artifacts:
-  - id: change-set
-    name: Change Set
-
-# Three catalogs are deliberately absent rather than empty:
-#
-#   harnesses:  a runtime the team has — an agentic CLI, CI, a tracker
-#   tools:      a concrete thing inside a harness, named so activities can use it
-#   events:     a recurring moment a recommendation can be attached to
-#
-# Add them when you have one to add. Until then every activity is either an
-# open slot you declared with `open:` or work the team does itself, and both are
-# first-class states — the slots are the roadmap, not a gap to apologise for.

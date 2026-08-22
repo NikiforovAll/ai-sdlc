@@ -34,7 +34,7 @@ const USAGE = `ai-sdlc — render a team's delivery process document
   ai-sdlc status <team-dir>                         how far along the document is
   ai-sdlc example [--copy <dir>] [--path]           serve the worked example, copy it, or print its path
 
-<team-dir> holds team.yaml and processes/*.yaml.`;
+<team-dir> holds team.yaml, one file per shared catalog, and processes/*.yaml.`;
 
 function die(message) {
   console.error(message);
@@ -96,17 +96,20 @@ async function cmdNew(positionals, values) {
   const templates = join(PKG_ROOT, 'templates');
 
   const team = (await readFile(join(templates, 'team.yaml'), 'utf8')).replace('name: New Team', `name: ${name}`);
+  const artifacts = await readFile(join(templates, 'artifacts.yaml'), 'utf8');
   const process_ = await readFile(join(templates, 'processes', 'delivery.yaml'), 'utf8');
 
   await mkdir(join(dir, 'processes'), { recursive: true });
   await writeFile(join(dir, 'team.yaml'), team, 'utf8');
+  await writeFile(join(dir, 'artifacts.yaml'), artifacts, 'utf8');
   await writeFile(join(dir, 'processes', 'delivery.yaml'), process_, 'utf8');
 
   const here = basename(dir);
   console.log(
     [
       `${here}/`,
-      `  team.yaml                  ${name} — 1 role, 1 artifact, empty catalogs`,
+      `  team.yaml                  ${name} — 1 role`,
+      `  artifacts.yaml             1 artifact`,
       `  processes/delivery.yaml    1 stage, 1 activity, no tooling`,
       '',
       'next',

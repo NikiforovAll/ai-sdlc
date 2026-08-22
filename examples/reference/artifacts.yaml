@@ -1,0 +1,118 @@
+artifacts:
+  - id: spec
+    name: Spec
+    description: |-
+      What the change is for and what it must do, written before anyone builds it.
+
+      A spec is **done** when a reader who was not in the conversation can say what
+      is in scope and what is not.
+  - id: work-plan
+    name: Work Plan
+    description: |-
+      The route from spec to change: the order of the work, what it touches, and
+      what has to be true before it starts.
+  - id: acceptance-criteria
+    name: Acceptance Criteria
+    description: |-
+      The checks the change is measured against, agreed before the work begins.
+
+      Written as observable outcomes, not as instructions — a criterion that
+      describes *how* the work is done cannot fail honestly.
+  - id: task-list
+    name: Task List
+    description: |-
+      The spec cut into pieces small enough that one of them can be finished,
+      reviewed, and shipped without holding the rest in your head.
+  - id: context-notes
+    name: Context Notes
+    description: |-
+      What the code and the history already say about the area being changed:
+      constraints, prior decisions, and the traps a reader would otherwise walk into.
+  - id: draft-change
+    name: Draft Change
+    description: |-
+      The change while it is still being argued with — compiling, incomplete, and
+      not yet asking anyone for judgment.
+  - id: change-set
+    name: Change Set
+    description: |-
+      The change offered for review: the diff, its tests, and nothing left in it
+      that its author would not defend.
+  - id: test-suite
+    name: Test Suite
+    description: |-
+      The executable statement of what must keep working. It is the evidence the
+      rest of the process quotes.
+  - id: evidence-pack
+    name: Evidence Pack
+    description: |-
+      What proves the change does what it claims: test runs, checks, and the
+      output a reviewer would otherwise have to reproduce by hand.
+  - id: review-verdict
+    name: Review Verdict
+    description: |-
+      The reviewer's decision on conformance — the change matches the intent, or
+      it does not and here is where.
+  - id: release-candidate
+    name: Release Candidate
+    description: |-
+      A change set that has passed review and is packaged for production, waiting
+      only on the decision to go.
+  - id: release
+    name: Release
+    description: |-
+      The change in production, with the record of when it went and what it
+      contained.
+  - id: bug-report
+    name: Bug Report
+    description: |-
+      The claim that something is wrong, as it arrived — from a user, an alert, or
+      a colleague. It is a report, not yet a fact.
+  - id: reproduction
+    name: Reproduction
+    description: |-
+      The steps that make the bug happen on demand. Until this exists, the root
+      cause is a hypothesis and any fix is a guess.
+  - id: root-cause
+    name: Root Cause
+    description: |-
+      The mechanism that produced the bug, stated deeply enough that the fix is
+      obvious and the class of bug — not the instance — is closed.
+  - id: regression-test
+    name: Regression Test
+    description: |-
+      The test that fails on the old code and passes on the new one. It is what
+      turns a fix into a guarantee.
+  - id: incident-record
+    name: Incident Record
+    description: |-
+      The live account of an open incident: what is known, what was tried, and
+      when. Written while it is happening, because memory rewrites it afterwards.
+  - id: impact-assessment
+    name: Impact Assessment
+    description: |-
+      Who is affected and how badly. Severity is set from this, and every
+      communication downstream quotes it.
+  - id: status-update
+    name: Status Update
+    description: |-
+      What people outside the response need to know right now: current state,
+      what is being done, and when the next update comes.
+  - id: mitigation
+    name: Mitigation
+    description: |-
+      The action that stops the harm. It is not the fix — a mitigation that is
+      mistaken for one leaves the cause in place.
+  - id: postmortem
+    name: Postmortem
+    description: |-
+      The account written after the incident closes: what happened, why the system
+      allowed it, and what changes so the next one is smaller.
+  - id: follow-up-work
+    name: Follow-Up Work
+    description: |-
+      The commitments a postmortem makes, handed back to the delivery process as
+      real work rather than as good intentions.
+
+# The shelf. Entries name themselves and the harness they run in — nothing more.
+# Where each is reached for is written on the activity that reaches for it.

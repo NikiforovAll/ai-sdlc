@@ -159,16 +159,17 @@
           <div>
             <h3>A team folder</h3>
             <p>
-              A <code>team.yaml</code> holds the catalogs every process shares — roles, artifacts, harnesses, tools,
-              events. Each file under <code>processes/</code> is one way work flows through the team, and its file name
-              is the process id.
+              A <code>team.yaml</code> says who the team is and lists its roles; each catalog every process shares —
+              artifacts, harnesses, tools, events — is a file of its own beside it. Each file under
+              <code>processes/</code> is one way work flows through the team, and its file name is the process id.
             </p>
             <p>
               Nothing else is authored. Ordering is a topological sort of the artifact edges; a handoff exists because
               one activity produces what another consumes.
             </p>
             <pre><code>acme/
-  team.yaml       <span class="c">roles, artifacts, harnesses, tools, events</span>
+  team.yaml       <span class="c">who the team is, and its roles</span>
+  artifacts.yaml  <span class="c">one shelf per file — harnesses, tools, events beside it</span>
   processes/
     feature.yaml  <span class="c">stages, activities, tooling fills</span>
     bugfix.yaml   <span class="c">same team, same catalogs</span></code></pre>

@@ -1,36 +1,25 @@
 // Schema-only validation (D-CLI-7): parse the YAML, run the zod schemas, print
 // file + path + message. No referential-integrity pass, no cycle detection — and
 // no Astro, which is what makes it faster than a build.
-import { readFile, readdir } from 'node:fs/promises';
-import { join, relative } from 'node:path';
-import { parse } from 'yaml';
-import { teamSchema, processSchema } from '../src/lib/schema.ts';
+import { readdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { processSchema } from '../src/lib/schema.ts';
+import { address, formatProblem, loadTeam, validateFile } from '../src/lib/load.ts';
+
+export { address };
 
 export async function checkTeam(teamDir) {
   const problems = [];
   const docs = [];
 
-  const run = async (file, schema) => {
-    let data;
-    try {
-      data = parse(await readFile(file, 'utf8'));
-    } catch (err) {
-      problems.push({ file, path: '', message: err.message.split('\n')[0] });
-      return null;
-    }
-    const result = schema.safeParse(data);
-    if (!result.success) {
-      for (const issue of result.error.issues) {
-        problems.push({ file, path: issue.path.join('.'), message: issue.message });
-      }
-    }
-    return data;
-  };
-
   // The raw parse is returned alongside the verdict so `status` can describe a
   // document without parsing it a second time — including one that fails the
   // schema, which during authoring is the normal state.
-  const team = await run(join(teamDir, 'team.yaml'), teamSchema);
+  //
+  // The team half is several files merged into one document, so `load` reads it
+  // and addresses each problem back to the file that wrote the key.
+  const { team, problems: teamProblems, fileOf } = await loadTeam(teamDir);
+  problems.push(...teamProblems);
 
   const procDir = join(teamDir, 'processes');
   let files = [];
@@ -45,23 +34,14 @@ export async function checkTeam(teamDir) {
     problems.push({ file: procDir, path: '', message: 'no process files' });
   }
   for (const f of files) {
-    const data = await run(join(procDir, f), processSchema);
-    docs.push({ id: f.replace(/\.yaml$/, ''), file: join(procDir, f), data });
+    const file = join(procDir, f);
+    const data = await validateFile(file, processSchema, problems);
+    docs.push({ id: f.replace(/\.yaml$/, ''), file, data });
   }
 
-  return { problems, team, docs };
+  return { problems, team, docs, fileOf };
 }
 
-// A team folder outside the cwd relativizes into a stack of `..`; the absolute
-// path is the shorter and clearer address there.
-export const address = (file) => {
-  const rel = relative(process.cwd(), file);
-  return !rel || rel.startsWith('..') ? file : rel;
-};
-
 export function reportProblems(problems) {
-  for (const p of problems) {
-    const where = p.path ? `${p.path}: ` : '';
-    console.error(`${address(p.file)}\n  ${where}${p.message}`);
-  }
+  for (const p of problems) console.error(formatProblem(p));
 }

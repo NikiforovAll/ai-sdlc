@@ -24,6 +24,8 @@ Routes are flat — `/feature`, not `/acme/feature` — so one team folder is th
 
 The folder name is the team id and each process file name is its process id — renaming a folder renames the team.
 
+The team is several files read as one document: `team.yaml` plus a file per shared catalog (`artifacts.yaml`, `harnesses.yaml`, `events.yaml`, `tools.yaml`), or those keys inline in `team.yaml`, never both. `src/lib/load.ts` owns that merge and is imported by both readers — the Astro loader in `content.config.ts` and `bin/check.mjs` — so the rule is stated once. The glob loader cannot express it, which is why the team collection has a loader of its own; it clears the store on each load, because the entry id is the folder name and a stale entry from the last folder would otherwise render beside the new one.
+
 ## Verifying a change
 
 `npx astro build` is the gate. There is no test suite and no linter, so a clean build reporting the expected page count (5 for the reference team, 3 for a folder from `ai-sdlc new`) is the evidence that a change holds. `node bin/ai-sdlc.mjs check <team-dir>` validates YAML alone, without booting Astro.

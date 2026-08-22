@@ -28,14 +28,17 @@ export async function mdMap(entries: Array<[string, string | undefined]>): Promi
   return new Map(rendered);
 }
 
-/** Fold one authored YAML block into paragraphs. The blocks keep the soft wraps
-    the literal style preserved, and the only piece of markdown this prose
-    actually uses is the paragraph break — so the panels that render `usage`,
-    `need` and `note` split on it rather than reaching for the processor above.
-    One home, because three panels folding prose three ways is three answers to
-    what a blank line means. */
-export const paragraphs = (text: string) =>
-  text.trim().split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' '));
+/** Every authored block a panel renders inline — `why`, `usage`, `need` —
+    rendered through the same processor the descriptions use and keyed by the
+    block's own text. Splitting on the blank line by hand answered the paragraph
+    break and nothing else, so a backtick or a list authored in YAML reached the
+    page as literal characters. The text is its own key because two blocks with
+    the same words render the same HTML, which saves every panel inventing an id
+    to look its own prose up by. */
+export function proseBlocks(texts: Array<string | undefined>): Promise<Map<string, string>> {
+  const seen = [...new Set(texts.filter((t): t is string => Boolean(t)))];
+  return mdMap(seen.map((t) => [t, t]));
+}
 
 /** Every catalog description the drawers read, keyed the way the panels are.
     Which catalogs carry authored prose is a fact about the model, so it is

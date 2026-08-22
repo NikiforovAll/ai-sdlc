@@ -6,7 +6,11 @@
 // exit code has to mean one thing. This answers "how far along is this", and
 // counts open slots rather than flagging them — an open slot is the roadmap.
 import { basename } from 'node:path';
+import { CATALOG_KEYS } from '../src/lib/schema.ts';
 import { address, checkTeam } from './check.mjs';
+
+// Every shelf an id can be resolved against, in the order the report reads them.
+const KINDS = ['roles', ...CATALOG_KEYS];
 
 const list = (x) => (Array.isArray(x) ? x : []);
 const ids = (entries) => new Set(list(entries).map((e) => e?.id).filter((id) => typeof id === 'string'));
@@ -25,17 +29,10 @@ function walkActivities(doc) {
 }
 
 export async function describeTeam(teamDir) {
-  const { problems, team, docs } = await checkTeam(teamDir);
+  const { problems, team, docs, fileOf } = await checkTeam(teamDir);
 
-  const catalog = {
-    roles: ids(team?.roles),
-    artifacts: ids(team?.artifacts),
-    harnesses: ids(team?.harnesses),
-    tools: ids(team?.tools),
-    events: ids(team?.events),
-  };
-
-  const seen = { roles: new Set(), artifacts: new Set(), harnesses: new Set(), tools: new Set(), events: new Set() };
+  const catalog = Object.fromEntries(KINDS.map((k) => [k, ids(team?.[k])]));
+  const seen = Object.fromEntries(KINDS.map((k) => [k, new Set()]));
   const dangling = [];
 
   // One pass records both halves of the reference: what a catalog entry is used
@@ -46,8 +43,9 @@ export async function describeTeam(teamDir) {
     if (!catalog[kind].has(id)) dangling.push({ kind, id, file, path });
   };
 
-  const teamFile = `${teamDir}/team.yaml`;
-  list(team?.tools).forEach((t, i) => refer('harnesses', t?.harness, teamFile, `tools.${i}.harness`));
+  // The tool shelf may be a file of its own, and a dangling harness id is only
+  // actionable when the address names the file the line is actually in.
+  list(team?.tools).forEach((t, i) => refer('harnesses', t?.harness, fileOf.tools, `tools.${i}.harness`));
 
   let activities = 0;
   let filled = 0;
@@ -106,11 +104,7 @@ export async function describeTeam(teamDir) {
       filled,
       open,
       unclaimed,
-      roles: catalog.roles.size,
-      artifacts: catalog.artifacts.size,
-      harnesses: catalog.harnesses.size,
-      tools: catalog.tools.size,
-      events: catalog.events.size,
+      ...Object.fromEntries(KINDS.map((k) => [k, catalog[k].size])),
     },
     unused,
     dangling,
@@ -145,7 +139,7 @@ export function reportStatus(s) {
     )
   );
 
-  for (const kind of ['roles', 'artifacts', 'harnesses', 'tools', 'events']) {
+  for (const kind of KINDS) {
     const idle = s.unused[kind];
     out.push(row(kind, c[kind], idle.length ? `${idle.length} unreferenced: ${idle.join(' ')}` : ''));
   }

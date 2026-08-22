@@ -34,4 +34,4 @@ Everything below cites `processes/bugfix.yaml` by activity id, relative to that 
 
 - `processes/feature.yaml` — sub-activities. `implement` contains its own activities, two levels deep, and one of them is an open slot inside a sub-process.
 - `processes/incident.yaml` — an interrupt path, and the only process where the top of the ladder carries a `usage:` explaining why it is gated there.
-- `team.yaml` — how `note:` and `description:` divide the work: the caption a figure can afford, and the markdown the drawer renders.
+- `team.yaml` and the catalog files beside it — how `note:` and `description:` divide the work: the caption a figure can afford, and the markdown the drawer renders.

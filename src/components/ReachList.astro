@@ -7,7 +7,7 @@
 import { LEVEL_LABELS } from '../lib/derive';
 import { useHref, VERB } from '../lib/docs';
 import type { Reach } from '../lib/docs';
-import { paragraphs } from '../lib/markdown';
+import { proseBlocks } from '../lib/markdown';
 
 interface Props {
   rows: Reach[];
@@ -19,6 +19,8 @@ interface Props {
   inline?: boolean;
 }
 const { rows, empty, eventNames, inline = false } = Astro.props;
+
+const prose = await proseBlocks(rows.flatMap((r) => [r.usage, r.need]));
 
 // Grouped twice, both in first-seen order — the order the processes are listed in
 // everywhere else on the document. By process, because a reader is looking for a
@@ -99,8 +101,8 @@ for (const r of rows) {
                     </p>
                   )
                 )}
-                {r.usage && paragraphs(r.usage).map((t) => <p class="reach__usage">{t}</p>)}
-                {r.need && paragraphs(r.need).map((t) => <p class="reach__usage reach__need">{t}</p>)}
+                {r.usage && <div class="reach__usage prose-md" set:html={prose.get(r.usage)} />}
+                {r.need && <div class="reach__usage reach__need prose-md" set:html={prose.get(r.need)} />}
               </li>
             ))}
           </ul>

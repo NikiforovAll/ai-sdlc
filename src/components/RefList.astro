@@ -8,9 +8,10 @@
    markup is drawn here and consumed by two drawers, and an Astro `<style>`
    reaches only the component that renders the tags. */
 import { isLinkableRef } from '../lib/derive';
+import type { Ref } from '../lib/schema';
 
 interface Props {
-  refs?: string[];
+  refs?: Ref[];
 }
 
 const { refs = [] } = Astro.props;
@@ -38,16 +39,29 @@ const split = (ref: string): { host: string; path: string } | null => {
 {refs.length > 0 && (
   <ul class="refs">
     {refs.map((ref) => {
-      const parts = isLinkableRef(ref) ? split(ref) : null;
+      const { name, value } =
+        typeof ref === 'string' ? { name: undefined, value: ref } : { name: ref.name, value: ref.url };
+      const parts = isLinkableRef(value) ? split(value) : null;
       return (
         <li>
           {parts ? (
-            <a class="refs__link" href={ref} target="_blank" rel="noreferrer">
-              <span class="refs__host">{parts.host}</span><span class="refs__out" aria-hidden="true">↗</span>
-              {parts.path && <span class="refs__path">{parts.path}</span>}
+            /* A name the author gave is the whole of what the row says: the
+               address is what the reader was going to click anyway, and the
+               `title` keeps it one hover away for anyone who wants to check
+               where the door leads before opening it. */
+            <a class="refs__link" href={value} target="_blank" rel="noreferrer" title={name ? value : undefined}>
+              {name
+                ? <span class="refs__name">{name}</span>
+                : <span class="refs__host">{parts.host}</span>}<svg class="refs__out" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.4 6.6 6.4 1.6M3.6 1.6h2.8v2.8" fill="none" stroke="currentColor" stroke-width="1" /></svg>
+              {!name && parts.path && <span class="refs__path">{parts.path}</span>}
             </a>
           ) : (
-            <span class="refs__plain">{ref}</span>
+            /* Nothing to press, so nothing carries the address for the reader:
+               a named shelf or repo path prints both, the name leading. */
+            <>
+              {name && <span class="refs__name">{name}</span>}
+              <span class="refs__plain">{value}</span>
+            </>
           )}
         </li>
       );

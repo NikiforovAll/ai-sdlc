@@ -1,0 +1,41 @@
+artifacts:
+  - id: brief
+    name: Brief
+    description: |-
+      An artifact description carrying **bold**, *italic*, `inline code`, and a
+      fenced block:
+
+      ```yaml
+      produces: [brief]
+      ```
+
+      - a bullet
+      - and a second one, so the list is a list
+  # bare: no description
+  - id: draft
+    name: Draft
+  - id: sketch
+    name: Sketch
+    description: A single plain sentence — markdown is allowed here, not required.
+    # An artifact's own `refs:`, drawn as "Where it lives". All four branches of
+    # the row: linkable and not, each with and without an authored name.
+    refs:
+      - https://example.invalid/where-the-sketch-lives
+      - docs/sketch-template.md
+      - name: The sketch board
+        url: https://example.invalid/x/AbCd
+      - name: Sketch template
+        url: docs/sketch-template.md
+  - id: trace
+    name: Trace
+  - id: record
+    name: Record
+  - id: result
+    name: Result
+    description: |-
+      Two paragraphs, to prove the block is rendered rather than printed as one
+      run-on line.
+
+      The constraint does *not* name this artifact — `draft` is the bottleneck.
+  - id: release-note
+    name: Release Note

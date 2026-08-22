@@ -50,7 +50,7 @@ flowchart TB
 
 | Term | One-liner | Layer |
 |---|---|---|
-| Team | The document: one YAML file, one team, owning the shared catalogs and running one or more processes | 1 |
+| Team | The document: one folder, one team, owning the shared catalogs and running one or more processes | 1 |
 | Process | One named way work flows (feature, bugfix); owns its stages, activities, and optional constraint | 1 |
 | Role | A hat someone wears — a locus of ownership; the vertical axis of every figure | 1 |
 | Stage | A named phase labeling activities; a coarse map, never a gate | 1 |

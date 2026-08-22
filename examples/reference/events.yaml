@@ -1,0 +1,40 @@
+events:
+  - id: task-too-big
+    name: Task bigger than planned
+    description: Mid-task the work turns out larger than its plan — stop and re-decompose before pushing on.
+  - id: spec-ambiguous
+    name: Spec is ambiguous
+    description: Two readings of the spec survive contact with the work.
+  - id: rework-requested
+    name: Rework requested
+    description: The review verdict comes back with required changes.
+  - id: cannot-reproduce
+    name: Cannot reproduce
+    description: The report does not reproduce on demand — the bug is a hypothesis until it does.
+  - id: impact-unbounded
+    name: Blast radius unknown
+    description: The signals do not yet say who is affected or how badly — severity cannot be set.
+  - id: mitigation-fails
+    name: Mitigation does not hold
+    description: The service recovers and degrades again — the mitigation treated a symptom.
+  - id: context-exhausted
+    name: Context is full
+    description: The session has read more than it can hold, and decisions made earlier stop being honoured.
+  - id: agent-loops
+    name: Same failure survives correction
+    description: Two corrections in, the same thing is still wrong, and the history is now mostly failed approaches.
+  - id: nothing-can-check-it
+    name: No check to run
+    description: The work looks done and nothing in the repository produces a pass or a fail on it.
+  - id: investigation-unbounded
+    name: Question has no edges
+    description: A question was asked without a boundary, and the reading it needs has no natural end.
+  - id: review-finds-a-pattern
+    name: Verdict is about a class, not a change
+    description: The finding would apply to the next change too — it is a rule, not a defect.
+  - id: work-is-parallel
+    name: Work splits into independent units
+    description: The task is many similar pieces that do not depend on each other.
+  - id: prompts-pile-up
+    name: Approving without reading
+    description: Enough permission prompts have gone by that clicking has replaced reading.

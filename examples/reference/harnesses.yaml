@@ -1,0 +1,75 @@
+harnesses:
+  - id: claude-code
+    name: Claude Code
+    note: Agentic CLI — skills, plan mode, subagents.
+    description: |-
+      An agentic CLI that works in the repository: reads the code, runs commands,
+      and edits files under review. Skills, plan mode, and subagents are how a
+      team encodes its own practice into it.
+
+      Its reach is the reason most of the delivery process can be delegated at
+      all — and the reason review stays the gate.
+
+      ### What lives on this shelf
+
+      | Kind | Examples |
+      | --- | --- |
+      | Encoded practice | skills, `CLAUDE.md`, scoped rule files |
+      | Bounded delegation | plan mode, read-only subagents |
+      | Deterministic gates | lifecycle hooks, permission rules |
+      | Unattended runs | batch scripts, machine-readable results |
+
+      The last row runs with nobody there to answer a question, so the judgment
+      moves out of the session and into what is written before it starts — the
+      prompt, the permitted actions, the exit condition. Same agent, same shelf;
+      what changes is when the thinking happens, not where it runs.
+
+      The row above it is the one that changes the ladder. Instructions to the agent
+      are advisory and a long session forgets them; a hook is a script at a fixed
+      point that does not negotiate. Where this team runs `gated-autonomous`
+      inside a session, it is a hook doing the holding.
+  - id: github-actions
+    name: GitHub Actions
+    note: Agent work triggered by what happens on the repository.
+    description: |-
+      Runs the agent in response to repository events — an issue opened, a pull
+      request raised, a mention in a comment — inside a runner, under the app's
+      own permissions. Nobody's laptop is involved and no one has to remember to
+      start it.
+
+      ### What it changes
+
+      Work arrives where the conversation already is. A question asked on an
+      issue gets answered on that issue, and the answer is visible to everyone
+      who will later ask why the change looks like this.
+
+      ### Where the human stands
+
+      Deliberately low on the ladder here. An automated comment on every pull
+      request is **a second pair of eyes, never a verdict** — this team keeps the
+      verdict human, and an agent that posts on every change is not the thing
+      that should be allowed to approve one.
+    refs:
+      - name: Claude Code GitHub Actions
+        url: https://docs.claude.com/en/docs/claude-code/github-actions
+  - id: jira-rovo
+    name: Jira + Rovo
+    note: Work tracking with Rovo agents.
+    description: |-
+      Where work is tracked and where the team's written history lives. Rovo
+      agents act inside that record rather than beside it, which is what makes
+      planning and decomposition delegable.
+  - id: ci
+    name: CI Pipeline
+    note: Build, test, and release automation.
+    description: |-
+      The automation that builds, tests, and ships. It is the only harness that
+      routinely runs **gated-autonomous**: it proceeds on its own and a human
+      holds the stop.
+  - id: observability
+    name: Observability Stack
+    note: Metrics, logs, traces, and alert routing.
+    description: |-
+      Metrics, logs, traces, and the alert routing on top of them. It is what
+      turns "something is wrong" into an impact assessment, and what the incident
+      process reads from throughout.

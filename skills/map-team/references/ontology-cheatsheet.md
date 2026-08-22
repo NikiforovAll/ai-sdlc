@@ -15,14 +15,14 @@ Everything on the rendered page is either **authored** (someone wrote it) or **d
 
 If a team asks you to draw an arrow, the answer is to name an artifact.
 
-## Layer 1 — the spine (`team.yaml` + `processes/*.yaml`)
+## Layer 1 — the spine (the team folder + `processes/*.yaml`)
 
 | Term | Is | Lives in |
 | --- | --- | --- |
-| **Team** | the document; owns the shared catalogs | `team.yaml` |
+| **Team** | the document; owns the shared catalogs | `team.yaml` + one file per catalog |
 | **Process** | one named way work flows (feature, bugfix, incident) | one file in `processes/` |
-| **Role** | a hat someone wears; the vertical axis of every figure | team catalog |
-| **Artifact** | a named thing work leaves behind; the joints of the process | team catalog |
+| **Role** | a hat someone wears; the vertical axis of every figure | `team.yaml` |
+| **Artifact** | a named thing work leaves behind; the joints of the process | `artifacts.yaml` |
 | **Stage** | a coarse phase label — a map, never a gate | per process |
 | **Activity** | the atomic unit: roles + stage + consumes/produces | per process |
 
@@ -34,11 +34,24 @@ status: draft            # draft | living — prints in the masthead
 note: ...                # optional — one plain line; the caption and the page <meta>
 description: ...         # optional — markdown, rendered in the drawer
 refs:       [ ... ]      # optional — the sources the document was read out of
+                         #   each entry: "<url-or-path>" | { name, url }
 roles:      [{ id, name, note?, description? }]        # at least one
-artifacts:  [{ id, name, description? }]               # at least one
-harnesses:  [{ id, name, note?, description? }]        # optional
-events:     [{ id, name, description? }] # optional — keep to one plain sentence
-tools:      [{ id, name, harness, kind, note?, description?, refs? }]   # optional
+```
+
+Each other catalog is a file of its own beside `team.yaml`, holding the one key it is named for. A shelf may instead be written inline in `team.yaml` under that key, but never in both places — `check` fails a shelf declared twice.
+
+```yaml
+# artifacts.yaml
+artifacts:  [{ id, name, description?, refs? }]         # at least one
+
+# harnesses.yaml
+harnesses:  [{ id, name, note?, description?, refs? }]   # optional file
+
+# events.yaml
+events:     [{ id, name, description?, refs? }]  # optional file — one plain sentence
+
+# tools.yaml
+tools:      [{ id, name, harness, kind, note?, description?, refs? }]   # optional file
 ```
 
 ```yaml
@@ -47,6 +60,7 @@ name: Delivery
 note: ...                        # optional — one plain line; the caption and the page <meta>
 description: ...                 # optional — markdown, rendered in the drawer
 refs:   [ ... ]                  # optional — the sources this process was read out of
+                                 #   each entry: "<url-or-path>" | { name, url }
 stages: [{ id, name }]           # at least one
 constraint: { artifact: <id>, note: ... }   # optional, at most one
 activities:                      # at least one
@@ -75,7 +89,7 @@ activities:                      # at least one
 
 ```yaml
 tooling:
-  tool: agent-session          # must exist in team.yaml tools:
+  tool: agent-session          # must exist in the tools catalog
   level: delegated-review      # manual | assisted | delegated-review | gated-autonomous
   usage: ...                   # optional — advice true only here
 ```

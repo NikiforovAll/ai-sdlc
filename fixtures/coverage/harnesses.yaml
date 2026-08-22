@@ -1,0 +1,18 @@
+harnesses:
+  - id: full-harness
+    name: Full Harness
+    note: Has both optional fields.
+    refs:
+      - https://example.invalid/harness-console
+    description: |-
+      A harness with a `note` **and** a `description`. It holds two tools, so the
+      harness panel draws a list rather than a single entry.
+
+      #### What a harness is
+
+      A runtime the team already has. It states no activities of its own — the
+      tools inside it are named by the work, never the other way round.
+  # bare: no note, no description
+  - id: bare-harness
+    name: Bare Harness
+

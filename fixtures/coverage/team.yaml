@@ -78,62 +78,10 @@ roles:
     refs:
       - https://example.invalid/who-the-checker-is
 
-artifacts:
-  - id: brief
-    name: Brief
-    description: |-
-      An artifact description carrying **bold**, *italic*, `inline code`, and a
-      fenced block:
-
-      ```yaml
-      produces: [brief]
-      ```
-
-      - a bullet
-      - and a second one, so the list is a list
-  # bare: no description
-  - id: draft
-    name: Draft
-  - id: sketch
-    name: Sketch
-    description: A single plain sentence — markdown is allowed here, not required.
-    # An artifact's own `refs:`, drawn as "Where it lives". One linkable, one not,
-    # so both branches of `isLinkableRef` are exercised on an artifact panel.
-    refs:
-      - https://example.invalid/where-the-sketch-lives
-      - docs/sketch-template.md
-  - id: trace
-    name: Trace
-  - id: record
-    name: Record
-  - id: result
-    name: Result
-    description: |-
-      Two paragraphs, to prove the block is rendered rather than printed as one
-      run-on line.
-
-      The constraint does *not* name this artifact — `draft` is the bottleneck.
-  - id: release-note
-    name: Release Note
-
-harnesses:
-  - id: full-harness
-    name: Full Harness
-    note: Has both optional fields.
-    refs:
-      - https://example.invalid/harness-console
-    description: |-
-      A harness with a `note` **and** a `description`. It holds two tools, so the
-      harness panel draws a list rather than a single entry.
-
-      #### What a harness is
-
-      A runtime the team already has. It states no activities of its own — the
-      tools inside it are named by the work, never the other way round.
-  # bare: no note, no description
-  - id: bare-harness
-    name: Bare Harness
-
+# A catalog lives in a file of its own or inline here, never in both. Every
+# other shelf in this fixture is a sibling file; events stay inline so the
+# other half of the merge is drawn somewhere too.
+#
 # An event description is read twice — as markdown in the drawer, and as a plain
 # caption in the overview row. One plain sentence is the only form that reads
 # correctly in both.
@@ -146,47 +94,3 @@ events:
   # bare: no description
   - id: bare-event
     name: Bare Event
-
-tools:
-  # full: note + description + refs
-  - id: t-full
-    name: Full Tool
-    harness: full-harness
-    kind: fixture tool
-    note: Carries a note, a description and refs.
-    description: |-
-      A tool description is **markdown**, the same as a role's — the drawer is
-      where a reader learns what an unfamiliar tool actually does.
-
-      ### What it does
-
-      - one bullet, so a list renders inside a tool panel
-      - a second, so the spacing between them is visible
-
-      | Rung | Who holds the gate |
-      | --- | --- |
-      | `assisted` | the person driving |
-      | `delegated-review` | the reviewer |
-
-      > A blockquote, because a tool description is the one place a caveat has
-      > room to be stated rather than compressed into the note.
-    refs:
-      - https://example.invalid/full-tool
-      - https://example.invalid/full-tool/changelog
-      # A repo path, which the document cannot resolve — it draws as text, not a link.
-      - fixtures/coverage/full-tool
-  # bare: no note, no refs
-  - id: t-bare
-    name: Bare Tool
-    harness: bare-harness
-    kind: fixture tool
-  - id: t-rec
-    name: Recommended Tool
-    harness: full-harness
-    kind: fixture tool
-    note: Only ever recommended, never a fill.
-  - id: t-manual
-    name: Manual Tool
-    harness: bare-harness
-    kind: fixture tool
-    note: The only tool filled at the bottom rung of the ladder.

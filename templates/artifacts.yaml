@@ -1,0 +1,17 @@
+# An artifact is a named thing work leaves behind. Artifacts are the joints of
+# the process: the arrows between activities are derived from one activity's
+# `produces` matching another's `consumes`. You never draw an arrow yourself.
+#
+# Three more catalogs have no file yet, because absent says something empty
+# cannot:
+#
+#   harnesses.yaml  a runtime the team has — an agentic CLI, CI, a tracker
+#   tools.yaml      a concrete thing inside a harness, named so activities use it
+#   events.yaml     a recurring moment a recommendation can be attached to
+#
+# Write one when you have an entry for it. Until then every activity is either
+# an open slot you declared with `open:` or work the team does itself, and both
+# are first-class states — the slots are the roadmap, not a gap to apologise for.
+artifacts:
+  - id: change-set
+    name: Change Set

@@ -97,7 +97,7 @@ tools:
 - A fill is a claim about *practice*, not licensing: "this activity is done this way", not "this tool is available".
 - The fill never replaces the role. The activity's `roles:` still name who owns the work; the level says how much of the doing is delegated.
 
-> **Schema status.** Built. D15 landed on 2026-08-15 with the model-v3 migration: the fill is `{tool, level, usage?, asset?, refs?}` and names a catalog entry by id, so the harness is derived and can never contradict the tool. The catalog entry carries no level and no roles — the same tool is assisted in one activity and delegated in another. `usage` is authored as markdown; the drawer currently renders paragraphs only.
+> **Schema status.** Built. D15 landed on 2026-08-15 with the model-v3 migration: the fill is `{tool, level, usage?, asset?, refs?}` and names a catalog entry by id, so the harness is derived and can never contradict the tool. The catalog entry carries no level and no roles — the same tool is assisted in one activity and delegated in another. `usage` is authored as markdown, rendered by the same processor the descriptions use. A `refs` entry is either the address alone or `{name, url}`.
 
 ---
 

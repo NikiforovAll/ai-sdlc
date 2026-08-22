@@ -74,7 +74,7 @@ Write the spine first — stages, activities, roles, artifacts. Record a tool th
 
 Run `ai-sdlc status <dir>`. It exits 0 always — an inventory, not a gate. Two lines matter:
 
-- **`ids referenced but not in a catalog`** — fix every one before the next question. This is your most likely mistake: an activity naming a role or artifact you never added to `team.yaml`. Most fail silently. An unknown **role**, **artifact** or **stage** renders without complaint, and the only symptom is an arrow that never appears — in figures whose entire job is drawing arrows. An unknown **tool** id is the loud exception: it fails the build.
+- **`ids referenced but not in a catalog`** — fix every one before the next question. This is your most likely mistake: an activity naming a role or artifact you never added to a catalog. Most fail silently. An unknown **role**, **artifact** or **stage** renders without complaint, and the only symptom is an arrow that never appears — in figures whose entire job is drawing arrows. An unknown **tool** id is the loud exception: it fails the build.
 - **`unreferenced`** — a catalog entry no activity uses. Use it, or remove it.
 
 When the page stops updating, run `ai-sdlc check <dir>`: that is a schema error, and it prints the file, the path and the message.

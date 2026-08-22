@@ -214,9 +214,11 @@ ol {
 /* The arrow is the door. A hairline says "this is not body text"; it does not
    say which way the reader leaves, and the panel's own doors — an artifact, a
    role, a tool — look identical without it. The world already sends a reader
-   somewhere with a glyph: `→` on a process card, `↑` on the up-link. `↗` is the
+   somewhere with a glyph: `→` on a process card, `↑` on the up-link. This is the
    third of that set and means the one thing neither covers, which is out of the
-   document entirely. */
+   document entirely. It is drawn rather than typed: Archivo has no `↗`, so the
+   character fell through to whatever face the browser had and arrived as a bare
+   diagonal stroke with no head on it. */
 .refs__host {
   display: inline-block;
   font-size: var(--label);
@@ -227,10 +229,29 @@ ol {
   border-bottom: 1px solid var(--line);
   transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
 }
+/* A host is machine text and reads as the uppercase the world names structure
+   with. A name is not: the author wrote it in the case they meant, and setting
+   it in 10px caps at 0.06em both discards that and makes six words a slow read.
+   It takes the 12px/700 the catalogs already give an authored name, so the same
+   fact is set the same way on both surfaces. */
+.refs__name {
+  display: inline-block;
+  font-size: var(--body);
+  font-weight: 700;
+  line-height: 15px;
+  color: var(--ink);
+}
+.refs__link .refs__name {
+  border-bottom: 1px solid var(--line);
+  transition: color 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
+}
+/* The arrow sits on the lead line's own baseline rather than being centred on
+   it: level with the letters it follows at either type step. */
 .refs__out {
-  font-size: var(--micro);
+  width: 7px;
+  height: 7px;
   color: var(--muted);
-  margin-left: 3px;
+  margin-left: 4px;
   transition: color 0.14s var(--ease-out);
 }
 /* The caption step a ref reads at, whether it is the path under a host or a ref
@@ -249,15 +270,11 @@ ol {
 .refs__path {
   transition: color 0.14s var(--ease-out);
 }
-.refs__link:hover .refs__host,
-.refs__link:focus-visible .refs__host {
+.refs__link:is(:hover, :focus-visible) :is(.refs__host, .refs__name) {
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
-.refs__link:hover .refs__path,
-.refs__link:focus-visible .refs__path,
-.refs__link:hover .refs__out,
-.refs__link:focus-visible .refs__out {
+.refs__link:is(:hover, :focus-visible) :is(.refs__path, .refs__out) {
   color: var(--accent);
 }
 
@@ -430,7 +447,9 @@ ol {
   font-weight: 700;
 }
 /* A description is authored prose, so its headings take the panel's own label
-   voice rather than a second title size competing with the entry name. */
+   voice rather than a second title size competing with the entry name. The label
+   voice already reads as a break, so the space above it carries the division on
+   its own — a rule as well drew a section boundary the author never asked for. */
 .prose-md h1,
 .prose-md h2,
 .prose-md h3,
@@ -441,8 +460,6 @@ ol {
   color: var(--sub);
   font-weight: 700;
   margin: 12px 0 5px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
 }
 .prose-md blockquote {
   padding-left: 9px;
@@ -474,11 +491,9 @@ ol {
   border-bottom: 1px solid var(--line);
 }
 /* The panel already has a heading — the entry's name — so the first authored
-   block starts flush rather than opening with a rule and a gap. */
+   block starts flush rather than opening with a gap. */
 .prose-md > *:first-child {
   margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
 }
 
 .module {

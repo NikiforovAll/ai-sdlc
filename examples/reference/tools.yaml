@@ -1,0 +1,777 @@
+tools:
+  - id: grill-me
+    name: /grill-me
+    harness: claude-code
+    kind: interview skill
+    note: Interrogates a document until the unstated assumptions are on the page.
+    description: |-
+      A skill that reads a draft and asks about it, one question at a time,
+      instead of rewriting it. The output is a better document written by its
+      author — not a document written by the agent.
+
+      ### Reach for it when
+
+      - the draft reads as agreed but nobody can say what was ruled out
+      - two readers took different meanings from the same paragraph
+      - the work following the document has already been re-litigated once
+
+      ### Where the human stands
+
+      Every answer is the author's. The skill cannot settle a question about
+      intent, and a session that ends with the agent's guesses on the page has
+      produced a document nobody is accountable for.
+    refs: ["skills/grill-me"]
+
+  - id: spec-interview
+    name: /spec-interview
+    harness: claude-code
+    kind: interview skill
+    note: Turns a request into a written spec by asking, one question at a time.
+    description: |-
+      Inverts the usual order: the agent interviews the person who wants the
+      change, and the answers become the spec. Nobody writes a prompt describing
+      what they want and hopes the draft resembles it.
+
+      ### Reach for it when
+
+      - the request arrived as a sentence and the work is a fortnight
+      - two people are describing the same feature and neither has written it down
+      - the last change of this shape was rebuilt after review
+
+      ### Where the human stands
+
+      `assisted`. Intent is the one input that cannot be delegated — every answer
+      is the requester's, and the skill's contribution is the order of the
+      questions. Start a fresh session to build from the finished spec: the
+      interview transcript is how the spec was reached, not what it says.
+    refs: ["skills/spec-interview"]
+
+  - id: wayfinder
+    name: /wayfinder
+    harness: claude-code
+    kind: re-decomposition skill
+    note: Re-cuts oversized work into tasks an agent can hold in one context.
+    description: |-
+      Takes work that has turned out larger than planned and cuts it again, into
+      pieces each of which can be finished, reviewed and shipped on its own.
+
+      The cut is against **context**, not against effort. A task is the right
+      size when the code it touches, the tests it must pass, and the reasoning
+      behind it all fit in one session — not when it fits in one day.
+
+      ### Reach for it when
+
+      - the session is mostly re-reading files it already read
+      - the diff has grown past what one reviewer will read carefully
+      - finishing the task requires holding two unrelated subsystems at once
+
+      ### Where the human stands
+
+      `assisted`. Where the seams fall is a judgment about what the team can
+      hold and ship independently, and that judgment stays with the team.
+    refs: ["skills/wayfinder"]
+
+  - id: plan-mode
+    name: Plan Mode
+    harness: claude-code
+    kind: built-in mode
+    note: Reads and reasons without writing — the cheap place to be wrong.
+    description: |-
+      Reads the repository and reasons about the change while edits stay
+      blocked. The session produces a plan, and nothing is written until someone
+      approves it.
+
+      The value is where the mistake lands. A wrong plan costs a conversation; a
+      wrong change costs a review cycle, and sometimes a revert.
+
+      ### Reach for it when
+
+      - the change touches code nobody on the call has read recently
+      - there is more than one defensible approach and the choice matters
+      - the work will be handed to an unattended run afterwards
+
+      ### Where the human stands
+
+      `delegated-review` when planning the work: the agent drafts, and the
+      approval is a real gate — editing stays blocked until it is given.
+
+      `assisted` when the question is how to cut the work up rather than how to
+      do it, because that answer depends on the team, not on the code.
+    refs:
+      - name: Permission modes
+        url: https://docs.claude.com/en/docs/claude-code/permission-modes
+
+  - id: agent-session
+    name: Agent Session
+    harness: claude-code
+    kind: agentic edit loop
+    note: The default working loop — explore, edit, run, repeat, under review.
+    description: |-
+      The ordinary working loop: the agent reads, edits, runs the tests, reads
+      the failure, and goes again — with an engineer reading every diff.
+
+      ### What holds it
+
+      The loop is only as good as the check at the end of it. A session with a
+      test suite that actually fails on a wrong change can run a long way; a
+      session whose only oracle is the agent's own reading of its work cannot,
+      and should be kept short and reviewed closely.
+
+      ### Where the human stands
+
+      `delegated-review`, and this is the ceiling until verification is
+      mechanical. Running with permissions disabled is not a higher rung — it is
+      the same loop with nothing holding it.
+    refs: ["https://docs.claude.com/en/docs/claude-code/best-practices"]
+
+  - id: explore-subagent
+    name: Explore Subagent
+    harness: claude-code
+    kind: read-only search agent
+    note: Sweeps the codebase and returns the conclusion, not the file dumps.
+    description: |-
+      Answers a question about the codebase in a **separate context**, and
+      returns the answer rather than the files it read. Write and Edit are
+      denied to it, so the worst outcome of a wrong answer is a wasted read.
+
+      ### Reach for it when
+
+      - the question spans more directories than one reading will cover
+      - the answer is one paragraph but finding it means opening thirty files
+      - the main session's context is better spent on the change itself
+
+      ### Where the human stands
+
+      `delegated-review`. Read-only by construction, so the delegation is
+      genuinely cheap — but the conclusion is still a claim, and a claim that
+      decides the shape of a change deserves one file opened to confirm it.
+    refs: ["https://docs.claude.com/en/docs/claude-code/sub-agents"]
+
+  - id: test-from-criteria
+    name: /test-from-criteria
+    harness: claude-code
+    kind: test authoring skill
+    note: Writes the suite from acceptance criteria, so criteria become gates.
+    description: |-
+      Reads the acceptance criteria and writes the tests that check them, so a
+      criterion the team agreed to becomes something that can fail.
+
+      Criteria written as observable outcomes translate; criteria written as
+      instructions do not. "The import rejects a malformed row and reports the
+      line number" becomes a test. "Validate the input properly" becomes an
+      argument about what the test should assert.
+
+      ### Where the human stands
+
+      `delegated-review`. Writing the checks from criteria is mechanical enough
+      to delegate; deciding the criteria was the judgment, and it happened
+      earlier.
+    refs: ["skills/test-from-criteria"]
+
+  - id: test-from-repro
+    name: /test-from-repro
+    harness: claude-code
+    kind: test authoring skill
+    note: Turns a reproduction into a regression test that fails before the fix.
+    description: |-
+      Turns a reproduction into a test, written **before** the fix, that fails
+      on the current code.
+
+      The order is the whole point. A test written after the fix proves the fix
+      compiles. A test that failed first, and passes now, proves the fix
+      addressed the bug that was reported.
+
+      ### Where the human stands
+
+      `delegated-review`. The check is mechanical and the agent cannot argue
+      past it: red before, green after, or the work is not done.
+    refs: ["skills/test-from-repro"]
+
+  - id: evidence-block
+    name: /evidence-block
+    harness: claude-code
+    kind: evidence assembly skill
+    note: Collects the proof a reviewer needs into one block they can read.
+    description: |-
+      Gathers what a reviewer would otherwise reconstruct — what was run, what it
+      returned, which criteria it maps to — into one block at the top of the
+      change.
+
+      ### Reach for it when
+
+      - the change is larger than a reviewer will re-run themselves
+      - the interesting part of the work is a behaviour, not a diff
+      - the review is asynchronous and the author will not be there to answer
+
+      ### Where the human stands
+
+      `delegated-review`. Assembling the evidence is clerical; judging whether
+      it is *sufficient* is the review, and the review stays human here on
+      purpose.
+    refs: ["skills/evidence-block"]
+
+  - id: rework-loop
+    name: /address-verdict
+    harness: claude-code
+    kind: rework skill
+    note: Works a review verdict item by item instead of re-reading the diff.
+    description: |-
+      Takes a review verdict and works it one finding at a time, so each item is
+      answered — changed, or argued with — instead of the whole diff being read
+      again and quietly re-litigated.
+
+      ### The failure it prevents
+
+      Rework that starts from the diff rather than the verdict tends to fix the
+      findings that were easy to locate and lose the ones phrased as questions.
+      Ending item by item makes the omission visible.
+
+      ### Where the human stands
+
+      `delegated-review`. Not every finding should be actioned: a reviewer
+      prompted to find gaps will report some even when the work is sound, and
+      chasing all of them produces over-engineering. Which findings matter is
+      the author's call, and it is a call the team makes by hand today.
+    refs: ["skills/address-verdict"]
+
+  - id: bisect
+    name: /bisect
+    harness: claude-code
+    kind: history search skill
+    note: Searches history for the change that introduced the behaviour.
+    description: |-
+      Searches the history for the commit where the behaviour changed, by
+      running the reproduction against successive revisions.
+
+      It needs a reliable reproduction to be worth anything. Against an
+      intermittent failure it finds the commit where the failure happened to
+      show up, which is not the same claim and is more convincing than it should
+      be.
+
+      ### Where the human stands
+
+      `assisted`. The search is mechanical, but reading the guilty commit and
+      deciding whether it is the cause or merely the trigger is the diagnosis,
+      and that is the work.
+    refs: ["skills/bisect"]
+
+  - id: postmortem-draft
+    name: /postmortem
+    harness: claude-code
+    kind: incident writeup skill
+    note: Drafts the timeline from the incident record while detail is recoverable.
+    description: |-
+      Drafts the timeline from what the incident actually left behind — pages,
+      messages, deploys, dashboards — while the detail is still recoverable.
+
+      ### Why the timing matters
+
+      A timeline assembled a week later is assembled from memory, and memory
+      arranges events so that the eventual cause looks like it was visible from
+      the start. The record does not do that.
+
+      ### Where the human stands
+
+      `assisted`. The draft is a timeline. Deciding what the incident *means* —
+      which contributing factors are worth a follow-up and which are noise — is
+      the postmortem, and no draft settles it.
+    refs: ["skills/postmortem"]
+
+  - id: code-review-skill
+    name: /code-review
+    harness: claude-code
+    kind: review skill
+    note: Reads the diff in a fresh context that never saw the reasoning behind it.
+    description: |-
+      Reviews the current change in a **separate context** that has seen the diff
+      and the criteria, and none of the argument that produced them.
+
+      The freshness is the mechanism. An author — human or agent — reads their own
+      diff already knowing what it was supposed to do, and reads that intention
+      into code that does not contain it. A reader with no such knowledge cannot.
+
+      ### Prompt it for the gaps that matter
+
+      A reviewer asked to find gaps will find some, whether or not any exist.
+      Left open-ended it reports style, hypotheticals and defensive rewrites, and
+      chasing all of them produces over-engineering. Ask it for findings that
+      affect correctness, and treat the rest as optional.
+
+      ### Where the human stands
+
+      `delegated-review`. It reports; it does not decide. Which findings are
+      worth acting on is a judgment this team still makes entirely by hand — two
+      teams that scored hundreds of AI review comments ranked them differently
+      depending on the criterion, and one accepted none.
+    refs: ["https://docs.claude.com/en/docs/claude-code/best-practices"]
+
+  - id: claude-md
+    name: CLAUDE.md
+    harness: claude-code
+    kind: memory file
+    note: Standing instructions every session reads — advice, not policy.
+    description: |-
+      The repository's standing instructions to the agent, read at the start of
+      every session. This is where a correction stops being something a person
+      repeats and becomes something the next session already knows.
+
+      ### Advisory, not enforced
+
+      The file is delivered as guidance, not as a constraint the runtime applies.
+      A long session drifts from it; a rule that must hold belongs in a hook,
+      where nothing negotiates with it.
+
+      ### It goes stale, and staleness is expensive
+
+      The documented failure is not too few rules but too many: an over-specified
+      file whose real rules are lost among dead ones, and the agent ignoring all
+      of them equally. Treat it like code — review it when something goes wrong,
+      and prune it on purpose.
+
+      ### Where the human stands
+
+      `manual`, and the gauge should say so. Knowing which rule stopped being
+      true is knowing why it was written, and nothing else in the toolchain
+      knows that.
+    refs: ["https://docs.claude.com/en/docs/claude-code/memory"]
+
+  - id: project-rules
+    name: Scoped Rule Files
+    harness: claude-code
+    kind: scoped instruction files
+    note: Conventions that hold in one directory, filed where they hold.
+    description: |-
+      Instructions attached to a part of the repository rather than to all of it,
+      so a rule that is true of one package does not tax every session that never
+      opens it.
+
+      ### Where the human stands
+
+      `manual`. The decision is whether a convention is a house rule or a local
+      one, and getting it wrong in the generous direction is how a standing
+      instruction file becomes noise.
+    refs: ["https://docs.claude.com/en/docs/claude-code/memory"]
+
+  - id: pretooluse-hook
+    name: Policy Hook
+    harness: claude-code
+    kind: policy hook
+    note: Blocks a forbidden action before it runs, and does not negotiate.
+    description: |-
+      A script that runs before an action and can refuse it. Where a written
+      instruction is advice the session may drift from, this is a gate that
+      either passes or does not.
+
+      ### Reach for it when
+
+      - the same instruction has been ignored more than once
+      - the rule is mechanical enough to express as a check
+      - the cost of the action going through is worse than the cost of a false block
+
+      ### Where the human stands
+
+      `gated-autonomous`. No model is in the loop: a person decided once, when
+      they wrote the hook, and holds the gate by leaving it in place. That is the
+      same shape as the release gate, at a smaller scale.
+    refs: ["https://docs.claude.com/en/docs/claude-code/hooks"]
+
+  - id: stop-hook
+    name: Completion Hook
+    harness: claude-code
+    kind: lifecycle gate hook
+    note: A script decides whether the turn may end, and nothing talks it round.
+    description: |-
+      Runs when the session tries to finish, and blocks the finish until the
+      check passes. It is the difference between an agent that believes it is
+      done and an agent that has been shown to be done.
+
+      ### The caveat worth authoring
+
+      The gate is firm, not absolute — after a run of consecutive blocks the
+      runtime stops honouring it, on the assumption that the check itself is
+      broken. Treat it as a strong default, not as a guarantee.
+
+      ### Where the human stands
+
+      `gated-autonomous`. The check is a script the team wrote, at a fixed point,
+      with no model judgment in it. This is what turns a session somebody watches
+      into one they can walk away from.
+    refs: ["https://docs.claude.com/en/docs/claude-code/hooks"]
+
+  - id: goal-condition
+    name: Completion Condition
+    harness: claude-code
+    kind: completion condition
+    note: Keeps working toward a stated end state — judged from the transcript.
+    description: |-
+      States the condition the work must reach, and keeps the session going until
+      it holds or is judged impossible, with a separate evaluator checking after
+      each turn.
+
+      ### Read the evaluator honestly
+
+      It judges **what the session surfaced**, not the repository. It does not run
+      the suite itself or open the files. So the condition has to be something a
+      transcript can demonstrate — "the suite passes, with the output shown"
+      rather than "the code is correct".
+
+      ### Where the human stands
+
+      `delegated-review`, not the top rung. The proof is still a claim, and a
+      claim is what the review exists to check. Pair it with a hook when the
+      claim needs to be a fact.
+    refs: ["https://docs.claude.com/en/docs/claude-code/goal"]
+
+  - id: context-reset
+    name: Session Reset
+    harness: claude-code
+    kind: session hygiene
+    note: Ends a session that has become mostly a record of what did not work.
+    description: |-
+      Ends the session and starts again, carrying forward what was learned rather
+      than the history of learning it.
+
+      ### Why starting over beats pushing on
+
+      A session that has failed twice at the same thing is now mostly failed
+      approaches, and each new attempt is read against all of them. The rule of
+      thumb is blunt on purpose: after the second failed correction, stop, and
+      write a better opening prompt using what the failures taught.
+
+      ### Where the human stands
+
+      `manual`, honestly. Deciding what mattered out of a long session is the
+      whole job, and it is the part no summary does for you.
+    refs: ["https://docs.claude.com/en/docs/claude-code/costs"]
+
+  - id: effort-escalation
+    name: Reasoning Budget
+    harness: claude-code
+    kind: reasoning control
+    note: Buys more thinking where a wrong answer is expensive to discover.
+    description: |-
+      Raises how much reasoning a run spends before it acts.
+
+      Spend it where a mistake is found late — on the decomposition, on the
+      diagnosis — not on the edit loop, where the tests find the mistake in
+      seconds. The highest setting is prone to overthinking, and a plan that
+      argues with itself is not a better plan.
+
+      ### Where the human stands
+
+      `assisted`. Knowing which decisions are expensive to get wrong is the
+      judgment, and it is the team's.
+    refs: ["https://docs.claude.com/en/docs/claude-code/model-config"]
+
+  - id: permission-allowlist
+    name: Permission Rules
+    harness: claude-code
+    kind: permission config
+    note: Pre-approves what you already approve, so the rest gets read.
+    description: |-
+      Declares in advance which actions run without asking, which always ask, and
+      which are refused outright.
+
+      ### The failure it addresses
+
+      Prompt fatigue is a safety problem, not an ergonomic one. When every
+      command asks, approval becomes a reflex, and the one prompt that mattered
+      is approved at the same speed as the fifty that did not.
+
+      ### Where the human stands
+
+      `manual`. Writing the list *is* the decision — it is where the team says
+      once, deliberately, what it is willing not to look at.
+    refs: ["https://docs.claude.com/en/docs/claude-code/settings"]
+
+  - id: sandbox-mode
+    name: Sandboxed Session
+    harness: claude-code
+    kind: OS isolation
+    note: Bounds what a session can touch instead of approving it action by action.
+    description: |-
+      Restricts the filesystem and network the session can reach, so most
+      commands can run without a prompt because the blast radius is bounded by
+      construction rather than by attention.
+
+      ### Where the human stands
+
+      `assisted`. The bound is set once by a person; inside it the work proceeds.
+      It answers the same problem as the allowlist from the other end — bounding
+      consequences rather than enumerating permissions.
+    refs: ["https://docs.claude.com/en/docs/claude-code/sandboxing"]
+
+  - id: worktree-session
+    name: Worktree Session
+    harness: claude-code
+    kind: parallel isolated checkout
+    note: A separate checkout per session, so parallel work cannot collide.
+    description: |-
+      Gives each concurrent session its own checkout, so two agents working at
+      once cannot edit the same file out from under each other.
+
+      ### Where the human stands
+
+      `assisted`. Isolation is mechanical; deciding which pieces of work are
+      genuinely independent is not, and being wrong about that produces two
+      changes that merge cleanly and contradict each other.
+    refs: ["https://docs.claude.com/en/docs/claude-code/worktrees"]
+
+  - id: dynamic-workflow
+    name: Orchestrated Fan-Out
+    harness: claude-code
+    kind: subagent orchestration script
+    note: Runs many subagents in the background when one session cannot hold the work.
+    description: |-
+      A script that runs many agents over a work list — a sweep across the whole
+      codebase, a migration touching hundreds of files, a question attacked from
+      several angles at once — and returns the result rather than the transcript.
+
+      ### Where the human stands
+
+      `delegated-review`. The fan-out is mechanical once the work list exists.
+      Writing the list, and stating what "done" looks like for one item, is the
+      part that decides whether the run is worth anything.
+    refs: ["https://docs.claude.com/en/docs/claude-code/workflows"]
+
+  - id: agent-team
+    name: Agent Team
+    harness: claude-code
+    kind: multi-session orchestration
+    note: Several agents on one problem — experimental, and expensive.
+    description: |-
+      A lead agent and teammates, each with its own session and context, working
+      one problem together.
+
+      ### Read the caveats before reaching for it
+
+      - **Experimental and off by default.** It is not the way work is done here.
+      - **Roughly seven times the token spend** of a single session.
+      - Teammates may stop on an error rather than recovering from it, and an
+        interrupted team does not resume cleanly.
+
+      ### Where the human stands
+
+      `assisted`, and only as advice bound to a moment — never as how an activity
+      is performed. Start with work that writes no code, such as a review or a
+      piece of research, where parallel exploration pays and coordination does
+      not bite.
+    refs: ["https://docs.claude.com/en/docs/claude-code/agent-teams"]
+
+  - id: session-rewind
+    name: Session Rewind
+    harness: claude-code
+    kind: checkpoint restore
+    note: Returns to the point the work turned, keeping the opening intact.
+    description: |-
+      Restores the session to an earlier point, so a run that went wrong can be
+      resumed from before it did rather than argued out of.
+
+      ### What it does not restore
+
+      Changes made by shell commands are not tracked, and edits made by subagents
+      usually are not either. So the conversation can rewind while the working
+      tree does not — check the tree before trusting the restore.
+
+      ### Where the human stands
+
+      `assisted`. Choosing the point to return to is a judgment about where the
+      reasoning went wrong, which is the same judgment as diagnosing the work.
+    refs: ["https://docs.claude.com/en/docs/claude-code/checkpointing"]
+
+  - id: fan-out-loop
+    name: Fan-Out Loop
+    harness: claude-code
+    kind: batch script
+    note: One unattended run per unit, with permissions scoped up front.
+    description: |-
+      Generates the work list, then runs the agent once per item with the
+      permitted actions declared in advance.
+
+      ### Prove the prompt before running the queue
+
+      Run two or three items, read the results, and fix the prompt. A queue of
+      two hundred does not report that the instruction was ambiguous — it applies
+      the ambiguity two hundred times, consistently, which is what makes it hard
+      to spot afterwards.
+
+      ### Let a script be the referee
+
+      The pattern holds when something mechanical decides whether an item is
+      done — a compiler, a test suite, a diff. Where the only judge is the
+      agent's own reading of its work, the loop should be short and watched.
+
+      ### Where the human stands
+
+      `delegated-review`. Each unit is reviewed; the queue is not re-run by hand.
+    refs: ["https://claude.com/blog/ai-code-migration"]
+
+  - id: structured-output
+    name: Structured Result
+    harness: claude-code
+    kind: machine-readable result
+    note: Returns a result against a schema, so a pipeline can gate on it.
+    description: |-
+      Returns the answer in a declared shape rather than as prose, so a script
+      can branch on it instead of a person reading it.
+
+      This is what moves a check from something a reviewer performs to something
+      the pipeline performs — the difference between evidence a human assembles
+      and a gate that holds on its own.
+
+      ### Where the human stands
+
+      `delegated-review`. The schema is the contract, and a result that satisfies
+      the schema can still be wrong about the world.
+    refs: ["https://docs.claude.com/en/docs/claude-code/headless"]
+
+  - id: claude-mention
+    name: Mention on the Thread
+    harness: github-actions
+    kind: event-triggered agent
+    note: Answers on the issue or pull request where the work is already discussed.
+    description: |-
+      Answers where the conversation is already happening: mentioned on an issue
+      or a pull request, it replies on that thread and can push changes to it.
+
+      The value is placement as much as capability. The answer lands next to the
+      question, in the record someone will read in a year when they ask why the
+      change looks like this.
+
+      ### Where the human stands
+
+      `delegated-review`. It can answer a report; deciding the report is work
+      remains a triage decision.
+    refs: ["https://docs.claude.com/en/docs/claude-code/github-actions"]
+
+  - id: action-pr-review
+    name: Automated PR Review
+    harness: github-actions
+    kind: review workflow
+    note: Comments on every change — a second pair of eyes, never the verdict.
+    description: |-
+      Runs on every pull request and comments, without being asked.
+
+      ### Deliberately not the verdict
+
+      Because it runs on everything, it comments on everything, and its findings
+      arrive without any sense of which ones matter. It is well suited to what is
+      mechanical and locally checkable — a missing case, an inconsistent
+      signature — and poorly suited to whether the change does what was asked.
+
+      ### Where the human stands
+
+      `assisted`, and this is the honest ceiling. The verdict on conformance
+      stays with the reviewer, because conformance is a question about intent and
+      intent is not in the diff.
+    refs: ["https://www.anthropic.com/news/how-anthropic-teams-use-claude-code"]
+
+  - id: rovo-triage
+    name: Backlog Triage Agent
+    harness: jira-rovo
+    kind: rovo agent
+    note: Reads the backlog for what is already known about this work.
+    description: |-
+      Searches the backlog and the issue history for what has already been said
+      about this work: the duplicate, the earlier attempt, the decision that
+      closed it last time.
+
+      ### Reach for it when
+
+      - the request sounds familiar and nobody can name the ticket
+      - the area has been changed before by someone who has since left
+      - triage is about to estimate work that was already estimated once
+
+      ### Where the human stands
+
+      `assisted`. It surfaces what exists. Whether a prior ticket makes this one
+      a duplicate, a regression, or a genuinely new request is a triage
+      decision.
+
+  - id: rovo-followup
+    name: Follow-Up Agent
+    harness: jira-rovo
+    kind: rovo agent
+    note: Turns agreed actions into tracked work with owners.
+    description: |-
+      Turns the actions a review or a postmortem agreed on into tracked issues,
+      each with an owner, so the agreement survives the meeting that produced
+      it.
+
+      ### Where the human stands
+
+      `delegated-review`. Creating the issues is clerical. Assigning them is
+      not — an owner who did not agree to be one is a ticket that ages, and the
+      document would rather show an unassigned action than a fictional one.
+
+  - id: release-gate
+    name: Release Gate
+    harness: ci
+    kind: pipeline gate
+    note: Releases on green; a human can always hold the gate.
+    description: |-
+      The pipeline builds, runs the suite, and proceeds unless someone holds it.
+      No model is in the loop: the checks are the checks the team wrote.
+
+      ### Where the human stands
+
+      `gated-autonomous` — the top rung, honestly earned. The release happens
+      without anyone approving it, and a human can stop it at any point. Both
+      halves have to be true; a gate nobody can hold is not this rung, and a
+      release that waits for approval is not either.
+
+  - id: alert-routing
+    name: Alert Routing
+    harness: observability
+    kind: paging rule
+    note: Puts a page in front of an owner and starts the clock.
+    description: |-
+      Matches a firing alert to whoever is on call for it, pages them, and
+      starts the clock the response is measured against.
+
+      ### Where the human stands
+
+      `gated-autonomous`. The rule fires on its own, at three in the morning,
+      with nobody to approve it — which is the entire reason it exists. The
+      roster it routes against is reviewed by people, not generated.
+
+  - id: signal-correlation
+    name: Signal Correlation
+    harness: observability
+    kind: query agent
+    note: Reads metrics, logs, and traces together to say who is affected.
+    description: |-
+      Reads metrics, logs and traces together and answers the question the first
+      minutes of an incident turn on: **who is affected, and how many of them.**
+
+      ### What it cannot do
+
+      It bounds the blast radius from what the signals cover. Traffic that never
+      reached the failing component, or a dependency nobody instrumented, is
+      invisible to it — and invisible reads as unaffected. When the dashboards
+      will not say, reading the code for who calls the failing component gives a
+      bound the signals cannot.
+
+      ### Where the human stands
+
+      `delegated-review`. The correlation is fast and usually right; the
+      incident lead owns the impact statement, because that is what gets
+      communicated.
+
+  - id: recovery-check
+    name: Recovery Check
+    harness: observability
+    kind: signal check
+    note: Confirms the same signal that paged has gone quiet, and stayed quiet.
+    description: |-
+      Watches the signal that paged, and confirms it has gone quiet **and stayed
+      quiet** for long enough that the quiet means something.
+
+      Same signal, deliberately. An incident closed on a different metric than
+      the one that opened it is closed on a change of subject.
+
+      ### Where the human stands
+
+      `delegated-review`. The check is mechanical. Whether the service has
+      recovered or merely stopped being asked — a quiet caused by traffic that
+      gave up rather than by a fix — is a judgment the responder makes.

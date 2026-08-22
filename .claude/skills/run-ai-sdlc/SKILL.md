@@ -5,8 +5,8 @@ description: Use when the user wants to run, serve, build, export, screenshot, s
 
 # Running ai-sdlc
 
-An Astro 5 static site that renders one team folder — `team.yaml` plus
-`processes/*.yaml` — into a team document at `/` and a process document at
+An Astro 5 static site that renders one team folder — `team.yaml`, one file per
+shared catalog, and `processes/*.yaml` — into a team document at `/` and a process document at
 `/<process>`, each with three figures (FLOW / GRID / PLAYBOOK) and a detail
 drawer. Everything interesting is client-side, so **reading the HTML is not
 verification**. Drive it with `driver.mjs`.

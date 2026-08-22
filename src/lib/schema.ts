@@ -8,7 +8,12 @@ const id = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'ids are kebab-case');
 // One field with one meaning wherever it appears: where the thing lives, in
 // whatever form "lives" takes for it. Declared once so the day it gains a
 // constraint it gains it on every shelf at the same time.
-const refs = z.array(z.string()).optional();
+// A ref is the address alone, or the address under a name the reader already
+// knows it by. Two Confluence pages differ only in an opaque `/x/AbCd`, so an
+// address is the worst name a door can have when the author has a better one.
+const ref = z.union([z.string(), z.object({ name: z.string(), url: z.string() })]);
+export type Ref = z.infer<typeof ref>;
+const refs = z.array(ref).optional();
 
 // The two catalog-entry shapes. Artifacts and events are named and described;
 // roles and harnesses add the one-line caption a figure prints beside them.
@@ -76,7 +81,7 @@ export interface SubActivity {
   tooling?: Fill;
   open?: OpenSlot;
   recommends?: Recommendation[];
-  refs?: string[];
+  refs?: Ref[];
   activities?: SubActivity[];
 }
 
@@ -150,6 +155,13 @@ const tool = z.object({
 // page: the same field as the catalog carries, one level up, so a reader who
 // wants the original can leave from the document panel instead of guessing which
 // tool happens to link the root.
+// The catalogs a document keeps in a file of their own, one shelf per file,
+// beside `team.yaml`. Roles are not among them: they are the lanes of every
+// figure and the axis the document is read along, so they stay with the
+// identity they belong to. `src/lib/load.ts` owns the merge; this is the list
+// it merges, and the same list is still legal inline for a small document.
+export const CATALOG_KEYS = ['artifacts', 'harnesses', 'events', 'tools'] as const;
+
 export const teamSchema = z.object({
   name: z.string(),
   note: z.string().optional(),

@@ -1,0 +1,43 @@
+tools:
+  # full: note + description + refs
+  - id: t-full
+    name: Full Tool
+    harness: full-harness
+    kind: fixture tool
+    note: Carries a note, a description and refs.
+    description: |-
+      A tool description is **markdown**, the same as a role's — the drawer is
+      where a reader learns what an unfamiliar tool actually does.
+
+      ### What it does
+
+      - one bullet, so a list renders inside a tool panel
+      - a second, so the spacing between them is visible
+
+      | Rung | Who holds the gate |
+      | --- | --- |
+      | `assisted` | the person driving |
+      | `delegated-review` | the reviewer |
+
+      > A blockquote, because a tool description is the one place a caveat has
+      > room to be stated rather than compressed into the note.
+    refs:
+      - https://example.invalid/full-tool
+      - https://example.invalid/full-tool/changelog
+      # A repo path, which the document cannot resolve — it draws as text, not a link.
+      - fixtures/coverage/full-tool
+  # bare: no note, no refs
+  - id: t-bare
+    name: Bare Tool
+    harness: bare-harness
+    kind: fixture tool
+  - id: t-rec
+    name: Recommended Tool
+    harness: full-harness
+    kind: fixture tool
+    note: Only ever recommended, never a fill.
+  - id: t-manual
+    name: Manual Tool
+    harness: bare-harness
+    kind: fixture tool
+    note: The only tool filled at the bottom rung of the ladder.

@@ -73,11 +73,17 @@ npm run dev        # serves examples/reference at http://localhost:4321
 
 ```
 acme/
-  team.yaml                 roles, artifacts, harnesses, tools, events — the shared catalogs
+  team.yaml                 who the team is, and the roles every figure is drawn along
+  artifacts.yaml            one shelf per file — the joints every arrow is derived from
+  harnesses.yaml            the runtimes the team has
+  tools.yaml                the concrete things inside them, named so activities can use them
+  events.yaml               the recurring moments a recommendation can hang on
   processes/
     delivery.yaml           stages, activities, tooling fills, the ① constraint
     bugfix.yaml             a second process, same team, same catalogs
 ```
+
+A catalog file may also be written inline in `team.yaml` under the same key, which is the shorter form for a document with four artifacts and no tools yet. Never both: `check` fails a shelf declared twice rather than pick one.
 
 An activity is the atomic unit:
 

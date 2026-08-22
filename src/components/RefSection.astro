@@ -5,10 +5,11 @@
    sites. Which panel it lands in is the panel's business: `global.css` gives the
    team drawer's sections their wider rules, so nothing here has to be told
    where it is. */
+import type { Ref } from '../lib/schema';
 import RefList from './RefList.astro';
 
 interface Props {
-  refs?: string[];
+  refs?: Ref[];
   label?: string;
 }
 

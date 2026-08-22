@@ -8,9 +8,11 @@ The load-bearing idea: **you never author the flow**. You author activities and 
 
 ## Team
 
-**Definition.** The document itself: one YAML file, one team. The team owns the shared catalogs — who we are (roles), what we pass around (artifacts), what we have (harnesses and tools), what happens to us (events) — and runs one or more processes over them.
+**Definition.** The document itself: one folder, one team. `team.yaml` says who the team is and lists the roles; each other catalog — what we pass around (artifacts), what we have (harnesses and tools), what happens to us (events) — is a file of its own beside it. One or more processes run over them.
 
-**Why it exists.** The unit of comparison and evolution is a team's *whole* way of working, not a single practice. One file means it can be versioned, diffed, and copied as a starting point for another team — and the catalogs are declared once, because a bugfix process doesn't have different people or different tools than the feature process.
+**Why it exists.** The unit of comparison and evolution is a team's *whole* way of working, not a single practice. One folder means it can be versioned, diffed, and copied as a starting point for another team — and the catalogs are declared once, because a bugfix process doesn't have different people or different tools than the feature process.
+
+**One shelf per file.** A mature artifact catalog is longer than everything else in the document put together, and a reader who came to learn who the team is should not have to scroll past it. The split also makes a diff legible: a session that only added tools touches only `tools.yaml`. A catalog may still be written inline in `team.yaml` under the same key, which is the honest form for a document small enough to read at once — but a shelf declared in both places is an error, not a merge.
 
 **Shape.**
 
@@ -30,6 +32,7 @@ status: living   # living | draft
 - `status: living` is the normal state — the document is expected to change as the team does. `draft` marks a document not yet in use.
 - `note` and `description` mean the same two things here as on a role: caption versus what a reader gets after stopping. The split reaches every entity in the model, the two documents included.
 - A team document describes *one* team. Shared practice across teams is expressed by copying, not by referencing another document.
+- The folder is the document. `team.yaml`, `artifacts.yaml`, `harnesses.yaml`, `tools.yaml`, `events.yaml` and `processes/` are read as one thing, and a catalog file is named for the single key it holds. `check` fails any other YAML file beside them: `harness.yaml` or `tools.yml` would be read by nothing, and an unread optional shelf is indistinguishable from an absent one.
 
 ---
 
@@ -140,6 +143,15 @@ activities:
 ```
 
 An optional `refs:` is the step's own reading list: the template, the standard, the section of the process page that governs *this* step. It is distinct from the two other `refs:` an activity can be near — a tool's, which is where that tool lives, and a fill's, which is how that tool is used here. Because it belongs to the step rather than to a capability, an unclaimed activity carries one just as well as a filled one, and often needs it more.
+
+Every `refs:` entry, on this shelf and on all the others, is one of two forms: the address alone, or `{name, url}` when the author has a better name for the door than its address. Two pages in the same wiki can differ only in an opaque id, so a name is worth giving:
+
+```yaml
+    refs:
+      - https://wiki.example/standards/review-checklist
+      - name: Definition of Done
+        url: https://wiki.example/x/AbCd
+```
 
 **How it renders.** A node card in every figure. In FIG.01 it sits in the lane of the role named first, at the column its dependencies dictate; every further role gets the activity's name echoed in its own lane, in the hairline skin the figure uses for anything drawn in full elsewhere. The card is not centred across the roles' lanes: lanes are roles in catalog order, so a midpoint names a third role rather than a shared one. Clicking either the card or an echo opens the detail drawer, and marks both.
 
