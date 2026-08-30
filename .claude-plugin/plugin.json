@@ -1,7 +1,7 @@
 {
   "name": "ai-sdlc",
-  "version": "0.1.0",
-  "description": "Map a team's delivery process into a rendered page — the ontology, a live mapping session, and unattended mining of a repository that already documents itself. Drives the ai-sdlc CLI, which installs separately.",
+  "version": "0.2.0",
+  "description": "Map a team's delivery process into a rendered page — the ontology, a live mapping session, unattended mining of a repository that already documents itself, and ingestion of the notes readers leave on the served page. Drives the ai-sdlc CLI, which installs separately.",
   "author": {
     "name": "Oleksii Nikiforov",
     "url": "https://github.com/NikiforovAll/ai-sdlc"

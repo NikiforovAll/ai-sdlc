@@ -9,7 +9,7 @@
     {
       "name": "ai-sdlc",
       "source": "./",
-      "description": "Map a team's delivery process into a rendered page — the ontology, a live mapping session, and unattended mining of a repository that already documents itself",
+      "description": "Map a team's delivery process into a rendered page — the ontology, a live mapping session, unattended mining of a repository that already documents itself, and ingestion of the notes readers leave on the served page",
       "category": "productivity",
       "tags": ["sdlc", "process-mapping", "ontology", "delivery", "yaml"]
     }

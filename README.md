@@ -78,6 +78,13 @@ Arming the mode marks every node that already carries a note. Click one and its 
 
 Each note lands as one file under `<team-dir>/annotations/`, so it is versioned with the YAML it is about. `ai-sdlc annotations <team-dir>` prints what is waiting and `--resolve <id>` deletes one that has been folded into the document — the YAML is the record, so a note whose change is already made is noise.
 
+Draining that inbox is the `skills/sdlc-annotate/` skill's job: it reads the notes, folds each one into the YAML — reading `context` to tell a note about a tool from a note about one activity's use of it — and resolves only the ones it landed, leaving open whatever needs a decision the note does not contain.
+
+```sh
+# in Claude Code, after a reading session
+/ai-sdlc:sdlc-annotate ~/teams/acme
+```
+
 Annotations exist on `serve` only. The exported file has no server to write to and carries no annotation layer, and `check` and `status` never read them: a reader's note cannot break a build.
 
 `check` and `status` answer different questions and only `check` is a gate. `check` is schema-only. An id that an activity references but no catalog defines is schema-legal, so `check` passes it — `status` is what reports it.
@@ -122,14 +129,14 @@ Three states an activity can be in, and they render differently on purpose:
 
 A document is meant to be written *live*, in a mapping session: editor and browser side by side, the team talking, the page redrawing as their sentences become YAML. The `skills/mapping-session/` skill conducts that interview — it translates the team's own words into the model, so nobody has to learn the schema before speaking. It reads the vocabulary from `skills/sdlc-ontology/`, the base skill both authoring skills share.
 
-This repository is also a Claude Code plugin marketplace holding all three skills:
+This repository is also a Claude Code plugin marketplace holding all four skills:
 
 ```sh
 claude plugin marketplace add NikiforovAll/ai-sdlc
 claude plugin install ai-sdlc@ai-sdlc
 ```
 
-Installed that way the skills are namespaced — `/ai-sdlc:mapping-session`, `/ai-sdlc:auto-mine-repo`.
+Installed that way the skills are namespaced — `/ai-sdlc:mapping-session`, `/ai-sdlc:auto-mine-repo`, `/ai-sdlc:sdlc-annotate`.
 
 For any other agent, the [skills](https://github.com/vercel-labs/skills) CLI reads the same `skills/` folder:
 
