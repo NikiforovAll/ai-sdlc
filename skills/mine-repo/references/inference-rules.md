@@ -54,7 +54,7 @@ Read the mechanism, never the tone. The ladder is *where the human stands*: **ma
 
 Two rules that follow from the ladder and are easy to get wrong:
 
-- **The same tool takes different levels in different activities.** A review orchestrator whose verdict *informs a human* is `delegated-review`; the same orchestrator whose verdict *resolves a gate* is `gated-autonomous`. The catalog deliberately carries no level — do not resolve the difference by picking one.
+- **The same tool takes different levels in different activities.** A review orchestrator whose verdict *informs a human* is `delegated-review`; the same orchestrator whose verdict *resolves a gate* is `gated-autonomous`. The catalog deliberately carries no level: resolve it once per activity, from the mechanism that activity uses.
 - **`gated-autonomous` is not "very automated".** It is a human at the gate. If nothing in the source can hold the gate — no hook, no exit code, no escalation rule — the level is lower.
 
 ## Fill, recommendation, open, or nothing

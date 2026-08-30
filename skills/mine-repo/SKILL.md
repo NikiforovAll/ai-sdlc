@@ -1,6 +1,6 @@
 ---
 name: mine-repo
-description: Mine an ai-sdlc team document out of a repository whose process is already written down — a plugin, bundle, or toolkit. Nobody is interviewed.
+description: Mine an ai-sdlc team document out of a repository that already describes its own process. Nobody is interviewed.
 disable-model-invocation: true
 ---
 
@@ -19,14 +19,14 @@ The output is not the end of the work. It is the thing a coach reads *at* a team
 ## Before the first file
 
 1. **Know what you are reading and where it goes.** The source package and the destination folder are the arguments — `/mine-repo <source> --into <dir>` — and either one that is missing is a question, not a guess.
-2. **Do not land it here.** This repository is vendor-neutral by invariant: no client, product, or employer vocabulary belongs in it, and neither do documents mined from someone else's licensed package. Write the folder outside this repo — beside the source, or wherever that team's material already lives. The folder name becomes the team id.
+2. **Write the folder outside this repo** — beside the source, or wherever that team's material already lives. This repository is vendor-neutral by invariant: no client, product, or employer vocabulary belongs in it, and neither do documents mined from someone else's licensed package. The folder name becomes the team id.
 3. **Run `ai-sdlc new <dir>`** for a renderable skeleton, then replace its contents. It writes the team as several files read as one document: `team.yaml` introduces the team and holds the roles, and every other shared catalog is a file of its own beside it — `artifacts.yaml`, plus `harnesses.yaml`, `tools.yaml` and `events.yaml` once you have entries for them. A shelf may be written inline in `team.yaml` instead, but never in both places: `check` fails a catalog declared twice.
 4. **Read the ontology.** `skills/map-team/references/ontology-cheatsheet.md` is the model on one page; `docs/ontology/` is the long form. The authored-versus-derived distinction is the one that matters: if you find yourself wanting to draw an arrow, name an artifact instead.
 5. **Read `references/inference-rules.md`** in this skill. It is the mapping from repository evidence to model element, and it is the reference you consult all the way through.
 
 ## Take the inventory before you author anything
 
-**REQUIRED, and first.** Enumerate the whole surface of the package into a scratch file, then author against that list and strike entries off as they land:
+Enumerate the whole surface of the package into a scratch file, then author against that list and strike entries off as they land:
 
 ```bash
 find <pkg> -maxdepth 2 -type d \( -name 'skills' -o -name 'agents' -o -name 'commands' \
@@ -109,9 +109,9 @@ The second is usually the truer one. A rework loop is not a step in the flow; it
 Three checks, in order, and all three must pass before you report:
 
 ```bash
-node bin/ai-sdlc.mjs check  <dir>          # schema; must exit 0
-node bin/ai-sdlc.mjs status <dir>          # no dangling ids, no unreferenced catalog entries
-AISDLC_TEAM_DIR=<dir> npx astro build      # pages == processes + 2
+ai-sdlc check  <dir>       # schema; must exit 0
+ai-sdlc status <dir>       # no dangling ids, no unreferenced catalog entries
+ai-sdlc export <dir>       # the build prints the page count: processes + 2
 ```
 
 `status` is the one that catches mining mistakes specifically. An id an activity names but no catalog defines is schema-legal — the page renders and the arrow silently never appears. An unreferenced catalog entry is the other direction: a tool you inventoried and never placed, which means either an activity is missing or the entry is not part of this document.
@@ -121,18 +121,7 @@ AISDLC_TEAM_DIR=<dir> npx astro build      # pages == processes + 2
 Then report, in this order:
 
 1. The counts `status` prints — activities, filled, open, unclaimed.
-2. **The two decisions** you made, and that they are reversible.
+2. **The three decisions** you put to the user, and that only the first is expensive to reverse.
 3. **What you left out**, from the inventory list, and why.
 4. That the roles are inferred and the `why:` lines are quoted, so the team knows which parts are evidence and which are reading.
 5. That the next step is `map-team` against this folder, with the team in the room.
-
-## Red flags
-
-- You are authoring a process file and have not written the inventory list.
-- You are writing an `open:` block and cannot point at the sentence you are quoting.
-- You are writing a `why:` in your own voice.
-- A role in your document holds a hat no source document mentions.
-- You chose the process cut, or the number of documents, silently.
-- The document renders and you have not run `status`.
-- The honest-about paragraph was written before the processes it counts.
-- Your report says the document describes the team.
