@@ -91,7 +91,7 @@ activities:                      # at least one
 ```yaml
 tooling:
   tool: agent-session          # must exist in the tools catalog
-  level: delegated-review      # manual | assisted | delegated-review | gated-autonomous
+  level: delegated-review      # manual | assisted | delegated-review | gated-autonomous | autonomous
   usage: ...                   # optional — advice true only here
   asset: ...                   # optional — the prompt, config or rule the fill runs on
   refs:  [ ... ]               # optional — where this use of the tool is written down
@@ -105,7 +105,9 @@ open:
 
 Open is declared, never inferred. Stating both `tooling:` and `open:` fails `check`.
 
-The level ladder reads as *where the human stands*: **manual** (doing it) → **assisted** (in the loop) → **delegated-review** (on the loop) → **gated-autonomous** (at the gate).
+The level ladder reads as *where the human stands*: **manual** (doing it) → **assisted** (in the loop) → **delegated-review** (on the loop) → **gated-autonomous** (at the gate) → **autonomous** (nowhere).
+
+The top rung claims nothing can stop the run: no hook, no exit code, no protection rule, no person. A gate somebody could stand at but does not is still `gated-autonomous`. Write `autonomous` when the absence is a fact about the system, not about the day.
 
 A tool carries no level in the catalog, deliberately. The same tool is legitimately assisted in one activity and delegated in another.
 

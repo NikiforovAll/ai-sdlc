@@ -1,4 +1,4 @@
-# The loaded process: description, constraint, sub-activities two deep, all four
+# The loaded process: description, constraint, sub-activities two deep, all five
 # rungs of the ladder, and every optional field on a fill and a recommendation.
 name: Main
 note: >-
@@ -129,7 +129,7 @@ activities:
     why: The exit activity, filled at the top of the ladder.
     tooling:
       tool: t-full
-      level: gated-autonomous
+      level: autonomous
     recommends:
       - tool: t-rec
         level: manual
@@ -138,8 +138,11 @@ activities:
       - tool: t-bare
         level: gated-autonomous
         event: bare-event
-      # The fourth rung, so every level on the ladder is drawn on a recommendation
-      # as well as on a fill.
+      # The remaining rungs, so every level on the ladder is drawn on a
+      # recommendation as well as on a fill.
       - tool: t-manual
         level: delegated-review
         usage: A recommendation with a level and no event — standing advice.
+      - tool: t-auto
+        level: autonomous
+        usage: The top rung on a recommendation, where nothing holds a gate.

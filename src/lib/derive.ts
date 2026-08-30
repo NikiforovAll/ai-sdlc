@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+import { DELEGATION_LEVELS } from './schema';
 import type { Recommendation, SubActivity } from './schema';
 
 export type TeamDoc = CollectionEntry<'teams'>['data'];
@@ -230,8 +231,10 @@ export const statesCapability = (a: AnyActivity) => Boolean(a.tooling || a.open)
 export const isLinkableRef = (ref: string) => /^(https?:\/\/|mailto:|\/\/)/.test(ref);
 
 // The levels are an ordinal ramp, not a set: a figure can draw the level as a
-// position on the scale rather than spend a text row on its name.
-export const LEVEL_ORDER = ['manual', 'assisted', 'delegated-review', 'gated-autonomous'];
+// position on the scale rather than spend a text row on its name. The schema's
+// own list is that ramp already, in order, so a new rung is one edit there and
+// every figure grows on its own.
+export const LEVEL_ORDER: readonly string[] = DELEGATION_LEVELS;
 
 // Where an activity's fill sits on the ramp; an open slot sits at the foot.
 // Both flow figures draw the same 2px track from this, so the mapping lives
@@ -244,6 +247,7 @@ export const LEVEL_LABELS: Record<string, string> = {
   assisted: 'ASSISTED',
   'delegated-review': 'DELEGATED + REVIEW',
   'gated-autonomous': 'GATED AUTO',
+  autonomous: 'AUTONOMOUS',
 };
 
 /* The ladder measures delegation, not maturity, so the reader needs the loop
@@ -266,5 +270,9 @@ export const LEVEL_NOTES: Record<string, { loop: string; note: string }> = {
   'gated-autonomous': {
     loop: 'HUMAN AT THE GATE',
     note: 'The tool does the work and proceeds unless stopped; the human holds the gate.',
+  },
+  autonomous: {
+    loop: 'NO HUMAN',
+    note: 'The tool does the work and nothing holds a gate; the human learns about it afterwards.',
   },
 };

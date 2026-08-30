@@ -342,6 +342,22 @@ ol {
   border-color: var(--accent-on-ink);
 }
 
+/* The voice of "there is more behind this mark": a panel that opens from a mark
+   the reader is already looking at. Ink ground so it reads as an overlay rather
+   than another band of the page, and mint for the edge because it floats over
+   the figure's white and washi alike and must not become a fourth colour. The
+   constraint note and the drawer's level gloss both speak in it, so a reader
+   meets one object rather than learning two conventions. Placement and the
+   reveal itself stay with the component — only the skin is shared. */
+.note-panel {
+  background: var(--ink);
+  color: var(--white);
+  border: 1px solid var(--accent-on-ink);
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 15px;
+}
+
 /* The door out of a catalog entry and into the process that reaches for it.
    Both drawers and the team document draw it, so it is world, not component. */
 .row__go {

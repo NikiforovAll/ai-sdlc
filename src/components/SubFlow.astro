@@ -1,6 +1,6 @@
 ---
 import type { Team, SubActivity } from '../lib/derive';
-import { deriveSub, LEVEL_LABELS, levelIndex, nameOf, statesCapability } from '../lib/derive';
+import { deriveSub, LEVEL_LABELS, LEVEL_ORDER, levelIndex, nameOf, statesCapability } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -49,7 +49,7 @@ const cols = [...Array(d.cols).keys()];
                     <span
                       class={`subflow__track${p.activity.tooling ? '' : ' subflow__track--open'}`}
                       aria-hidden="true"
-                      style={`--lv:${levelIndex(p.activity)}`}
+                      style={`--lv:${levelIndex(p.activity)};--lv-n:${LEVEL_ORDER.length}`}
                     >
                       <span class="subflow__fill" />
                     </span>
@@ -185,7 +185,7 @@ const cols = [...Array(d.cols).keys()];
   .subflow__fill {
     display: block;
     height: 100%;
-    width: calc((var(--lv) + 1) / 4 * 100%);
+    width: calc((var(--lv) + 1) / var(--lv-n) * 100%);
     background: var(--accent);
   }
   .subflow__track--open .subflow__fill {

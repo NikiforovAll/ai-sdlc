@@ -103,7 +103,7 @@ tools:
 
 ## Level ladder
 
-**Definition.** The degree of delegation in a fill, on a four-step ladder: **manual → assisted → delegated-review → gated-autonomous**. Read the other way round, it is the model's human-in-the-loop ladder: the level names say what the machine does, the loop position says where the human stands.
+**Definition.** The degree of delegation in a fill, on a five-step ladder: **manual → assisted → delegated-review → gated-autonomous → autonomous**. Read the other way round, it is the model's human-in-the-loop ladder: the level names say what the machine does, the loop position says where the human stands.
 
 **Why it exists.** "Uses AI" hides the only distinction that matters operationally: who does the work and who checks it. The ladder makes delegation comparable across the whole document — and makes the team's overall HITL posture readable in one scan.
 
@@ -115,14 +115,18 @@ tools:
 | `assisted` | does the work, steers throughout | accelerates and drafts inside the human's loop | **in** the loop |
 | `delegated-review` | reviews the result | does the work, hands back for judgment | **on** the loop |
 | `gated-autonomous` | can hold the gate | does the work and proceeds unless stopped | **at** the gate |
+| `autonomous` | learns about it afterwards | does the work; nothing holds a gate | **no** human |
+
+The last rung is the one to reach for least. It is not "very automated", it is a claim that no hook, no exit code, no protection rule and no person can stop the run. A team that could stop it and chooses not to is at `gated-autonomous`, because the gate exists whether or not anybody stands at it. Read this rung as an audit finding as often as an achievement.
 
 The loop position is a derived gloss, not a field — nothing authors it, and it never contradicts the level.
 
-**How it renders.** A four-cell **delegation gauge** — cells ink-filled up to the level reached, hairline-outlined beyond — beside the uppercase level caption on every node and tooling item; the muted level chip in the drawer and PLAYBOOK. The gauge is the glanceable form: ordinal by construction, monochrome, and identical from a FLOW node to a GRID cell, so a GRID row reads as one role's HITL posture and a column as one stage's.
+**How it renders.** A five-cell **delegation gauge** — cells ink-filled up to the level reached, hairline-outlined beyond — beside the uppercase level caption on every node and tooling item; the muted level chip in the drawer and PLAYBOOK. The gauge is the glanceable form: ordinal by construction, monochrome, and identical from a FLOW node to a GRID cell, so a GRID row reads as one role's HITL posture and a column as one stage's.
 
 ```
-▮▮▮▯  DELEGATED + REVIEW      ▮▮▯▯  ASSISTED
-▮▮▮▮  GATED + AUTONOMOUS      ▯▯▯▯  OPEN SLOT
+▮▯▯▯▯  MANUAL                  ▮▮▯▯▯  ASSISTED
+▮▮▮▯▯  DELEGATED + REVIEW      ▮▮▮▮▯  GATED + AUTONOMOUS
+▮▮▮▮▮  AUTONOMOUS              ▯▯▯▯▯  OPEN SLOT
 ```
 
 An activity that is neither filled nor open draws no gauge and no caption. The row is absent rather than empty — an empty gauge says "nothing has reached the first rung", which is a claim, and the third state makes none.
@@ -131,7 +135,7 @@ An activity that is neither filled nor open draws no gauge and no caption. The r
 - The ladder measures *delegation*, not quality or maturity. `assisted` is not a worse state than `gated-autonomous` — shipping is gated-autonomous and spec-writing is assisted in the reference model precisely because the right level differs per activity.
 - It is not a maturity roadmap. Nothing in the model says a team should climb; it says a team should *know where it stands* on each activity.
 - Levels are per-fill, not per-tool: the same harness appears at `assisted` in one activity and `delegated-review` in another, and that spread is real information.
-- The gauge is an ordinal marker, not a progress bar or a percentage. Three filled cells mean "the third rung", not "75% automated" — the model has no quantities.
+- The gauge is an ordinal marker, not a progress bar or a percentage. Three filled cells mean "the third rung", not "60% automated" — the model has no quantities.
 
 ---
 
@@ -152,7 +156,7 @@ open:
 
 `open:` and `tooling:` are mutually exclusive: a slot is open until something fills it, and stating both fails `check`.
 
-**How it renders.** The dashed border + green stripe over washi, with a green "OPEN SLOT" caption and an empty four-cell gauge (no rung reached) — the loudest visual voice a node can have; the open-slots count is the accented stat in the masthead; the drawer's TOOLING section prints the `need:` text under an OPEN SLOT mark; a role whose PLAYBOOK has no tooling says so and stops there, because a slot is declared per activity and a role is not an activity.
+**How it renders.** The dashed border + green stripe over washi, with a green "OPEN SLOT" caption and an empty five-cell gauge (no rung reached) — the loudest visual voice a node can have; the open-slots count is the accented stat in the masthead; the drawer's TOOLING section prints the `need:` text under an OPEN SLOT mark; a role whose PLAYBOOK has no tooling says so and stops there, because a slot is declared per activity and a role is not an activity.
 
 **Invariants & non-meanings.**
 - **Open is declared, never inferred.** An activity with neither `tooling:` nor `open:` is the third state — work the team does itself and has asked for nothing on. It draws plain, with no tooling line at all, and counts as *unclaimed* rather than open.

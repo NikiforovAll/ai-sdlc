@@ -22,7 +22,7 @@ const refs = z.array(ref).optional();
 const entry = z.object({ id, name: z.string(), description: z.string().optional(), refs });
 const captioned = entry.extend({ note: z.string().optional() });
 
-export const DELEGATION_LEVELS = ['manual', 'assisted', 'delegated-review', 'gated-autonomous'] as const;
+export const DELEGATION_LEVELS = ['manual', 'assisted', 'delegated-review', 'gated-autonomous', 'autonomous'] as const;
 
 // A fill names a catalog tool by id — the catalog owns the name and the harness,
 // so a use can never drift from the entry it names.

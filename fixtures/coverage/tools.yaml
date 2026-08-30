@@ -41,3 +41,8 @@ tools:
     harness: bare-harness
     kind: fixture tool
     note: The only tool filled at the bottom rung of the ladder.
+  - id: t-auto
+    name: Autonomous Tool
+    harness: bare-harness
+    kind: fixture tool
+    note: Only ever recommended at the top rung, where nothing holds a gate.

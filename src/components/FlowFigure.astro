@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { derive, LEVEL_LABELS, levelIndex, nameOf, statesCapability } from '../lib/derive';
+import { derive, LEVEL_LABELS, LEVEL_ORDER, levelIndex, nameOf, statesCapability } from '../lib/derive';
 import SubFlow from './SubFlow.astro';
 
 interface Props {
@@ -292,7 +292,7 @@ const idleCells = steps.flatMap((s) =>
           {e.constraint && <span class="fig__one" aria-label="the constraint">①</span>}
           {artifactName(e.artifact)}
           {e.constraint && team.constraint && (
-            <span class="fig__artifact-note">{team.constraint.note}</span>
+            <span class="fig__artifact-note note-panel">{team.constraint.note}</span>
           )}
         </button>
       ))}
@@ -329,7 +329,7 @@ const idleCells = steps.flatMap((s) =>
                   <span
                     class={`fig__act-track${p.activity.tooling ? '' : ' fig__act-track--open'}`}
                     aria-hidden="true"
-                    style={`--lv:${levelIndex(p.activity)}`}
+                    style={`--lv:${levelIndex(p.activity)};--lv-n:${LEVEL_ORDER.length}`}
                   >
                     <span class="fig__act-fill" />
                   </span>
@@ -385,7 +385,7 @@ const idleCells = steps.flatMap((s) =>
   </div>
 
   {team.constraint && (
-    <p class="fig__note" tabindex="0" data-roles={team.roles.map((r) => r.id).join(' ')}>
+    <p class="fig__note note-panel" tabindex="0" data-roles={team.roles.map((r) => r.id).join(' ')}>
       <span class="fig__one" aria-hidden="true">①</span>
       <span class="fig__note-text">{team.constraint.note}</span>
     </p>
@@ -537,7 +537,7 @@ const idleCells = steps.flatMap((s) =>
   .fig__act-fill {
     display: block;
     height: 100%;
-    width: calc((var(--lv) + 1) / 4 * 100%);
+    width: calc((var(--lv) + 1) / var(--lv-n) * 100%);
     background: var(--accent);
   }
   .fig__act-track--open .fig__act-fill {
@@ -760,18 +760,8 @@ const idleCells = steps.flatMap((s) =>
      panel inherits it, which runs the whole sentence off one line. */
   /* One skin, two placements: the constraint speaks from the artifact label and
      from the pinned corner chip, and a reader has to recognise them as the same
-     object saying the same thing. Mint is the edge because the chip floats over
-     the figure's own white and washi bands and needs a border that is not a
-     fourth colour — it is the voice the ① inside it already speaks in. */
-  .fig__artifact-note,
-  .fig__note {
-    background: var(--ink);
-    color: var(--white);
-    border: 1px solid var(--accent-on-ink);
-    padding: 8px 10px;
-    font-size: 11px;
-    line-height: 15px;
-  }
+     object saying the same thing. The skin itself is `.note-panel` in the world
+     stylesheet, because the drawer's level gloss is the same voice. */
   .fig__artifact-note {
     display: none;
     position: absolute;

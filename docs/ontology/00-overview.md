@@ -63,7 +63,7 @@ flowchart TB
 | Harness | A runtime the team has: agentic CLI, tracker agents, CI | 3 |
 | Tool | A concrete usable thing inside a harness; inventory with an id, never usage | 3 |
 | Fill | `{tool, level, usage?}` on an activity — capability attached to work | 3 |
-| Level ladder | Degree of delegation: manual → assisted → delegated-review → gated-autonomous; read as HITL, where the human stands (in / on the loop, at the gate) | 3 |
+| Level ladder | Degree of delegation: manual → assisted → delegated-review → gated-autonomous → autonomous; read as HITL, where the human stands (in / on the loop, at the gate, or nowhere) | 3 |
 | Open slot | `{need}` on an activity — a gap the team has declared, and what would fill it: the roadmap | 3 |
 | Unclaimed | An activity with neither `tooling:` nor `open:` — work the team does itself and has asked for nothing on. Draws plain; not a gap | 3 |
 | Recommendation | An entry under an activity: another tool worth reaching for here, optionally for one moment | 4 |

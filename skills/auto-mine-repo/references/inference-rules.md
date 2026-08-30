@@ -57,6 +57,7 @@ Read the mechanism, never the tone. The ladder itself is in the cheatsheet; this
 | --- | --- |
 | A hook, a deterministic check, an exit-code gate — no model in the loop | `gated-autonomous` |
 | Runs unattended and only escalates on a named condition | `gated-autonomous` |
+| Runs unattended and nothing in the source can stop it — no gate, no escalation, no required check | `autonomous` |
 | An agent or subagent does the work and a human reads the result | `delegated-review` |
 | A tool produces a report and a human makes the decision | `delegated-review` |
 | A dialogue: the tool asks and a person answers | `assisted` |
@@ -66,7 +67,8 @@ Read the mechanism, never the tone. The ladder itself is in the cheatsheet; this
 Two rules that follow from the ladder and are easy to get wrong:
 
 - **The same tool takes different levels in different activities.** A review orchestrator whose verdict *informs a human* is `delegated-review`; the same orchestrator whose verdict *resolves a gate* is `gated-autonomous`. Resolve it once per activity, from the mechanism that activity uses.
-- **`gated-autonomous` is not "very automated".** It is a human at the gate. If nothing in the source can hold the gate — no hook, no exit code, no escalation rule — the level is lower.
+- **`gated-autonomous` is not "very automated".** It is a human at the gate, so the source has to show the gate: a hook, an exit code, a required check, an escalation rule.
+- **A missing gate splits two ways, and the split is the whole point.** If the work still passes through a person before it lands, the level is lower. If it lands unattended and nothing in the source could have stopped it, the level is `autonomous`. Read that rung as a finding, not a score: it says the team has no way to intervene, which is worth writing down whether they meant it or not.
 
 ## Fill, recommendation, open, or nothing
 
