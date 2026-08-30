@@ -1,6 +1,6 @@
 ---
 import type { Team, Activity, SubActivity } from '../lib/derive';
-import { LEVEL_LABELS, nameOf, statesCapability, toolOf } from '../lib/derive';
+import { LEVEL_LABELS, fillTool, nameOf, statesCapability } from '../lib/derive';
 
 interface Props {
   team: Team;
@@ -12,7 +12,7 @@ interface Props {
 }
 const { team, act, depth, otherRoles } = Astro.props;
 
-const tool = act.tooling ? toolOf(team, act.tooling.tool) : null;
+const tool = fillTool(team, act);
 ---
 
 <button
@@ -27,9 +27,11 @@ const tool = act.tooling ? toolOf(team, act.tooling.tool) : null;
   {otherRoles && otherRoles.length > 0 && <span class="gcard__role">{otherRoles.join(' · ')}</span>}
   {statesCapability(act) && (
     <span class="gcard__fill">
-      {act.tooling && tool ? (
+      {act.tooling ? (
         <>
-          <span class="gcard__tool">{nameOf(team.harnesses, tool.harness)} · {tool.name}</span>
+          {/* A fill with no tool keeps the chip and loses the line above it: the
+              level is the whole of what this card can say. */}
+          {tool && <span class="gcard__tool">{nameOf(team.harnesses, tool.harness)} · {tool.name}</span>}
           <span class="chip chip--muted">{LEVEL_LABELS[act.tooling.level]}</span>
         </>
       ) : (

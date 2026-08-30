@@ -63,15 +63,16 @@ export async function describeTeam(teamDir) {
       list(a.consumes).forEach((x, i) => refer('artifacts', x, file, `${path}.consumes.${i}`));
       list(a.produces).forEach((x, i) => refer('artifacts', x, file, `${path}.produces.${i}`));
 
-      if (a.tooling?.tool) {
-        filled += 1;
-        refer('tools', a.tooling.tool, file, `${path}.tooling.tool`);
-      }
+      // A fill counts as filled whether or not it names a tool: the state is
+      // declared by `tooling:`, and only the reference to the catalog depends on
+      // there being a tool id to refer to.
+      if (a.tooling) filled += 1;
+      if (a.tooling?.tool) refer('tools', a.tooling.tool, file, `${path}.tooling.tool`);
       // Declared, not inferred, and counted rather than subtracted: the third
       // state is work the team does itself, and a state nobody counts is a state
       // the next one silently lands in.
       if (a.open) open += 1;
-      if (!a.tooling?.tool && !a.open) unclaimed += 1;
+      if (!a.tooling && !a.open) unclaimed += 1;
       list(a.recommends).forEach((r, i) => {
         refer('tools', r?.tool, file, `${path}.recommends.${i}.tool`);
         if (r?.event) refer('events', r.event, file, `${path}.recommends.${i}.event`);

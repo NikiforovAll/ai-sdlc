@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, nameOf, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
+import { fillTool, flatten, LEVEL_LABELS, LEVEL_NOTES, LEVEL_ORDER, nameOf, statesCapability, toolOf, toolsOfHarness, usesOfTool } from '../lib/derive';
 import { catalogDescriptions, md, proseBlocks } from '../lib/markdown';
 import { VERB } from '../lib/docs';
 import type { Ref } from '../lib/schema';
@@ -186,10 +186,17 @@ const recsOfEvent = (ev: string) =>
                   not about this activity, and the tool's own panel is one click
                   away — repeating it here put the same runtime name at the top of
                   every activity that reaches for anything on that shelf. */}
-              <p class="drawer__tool-line">
-                <button class="drawer__artifact drawer__link" data-detail-key={`tool:${a.tooling.tool}`}>{toolOf(team, a.tooling.tool).name}</button>
-                {a.tooling.asset && <span class="drawer__via"> · {a.tooling.asset}</span>}
-              </p>
+              {/* A fill may name no tool: the level is claimed, and nothing on
+                  the shelf owns the step. The line is dropped rather than filled
+                  with a placeholder, so the ladder leads and the `usage:` says
+                  what the reader came for — which is the same reading order the
+                  named case has, one row shorter. */}
+              {a.tooling.tool && (
+                <p class="drawer__tool-line">
+                  <button class="drawer__artifact drawer__link" data-detail-key={`tool:${a.tooling.tool}`}>{toolOf(team, a.tooling.tool).name}</button>
+                  {a.tooling.asset && <span class="drawer__via"> · {a.tooling.asset}</span>}
+                </p>
+              )}
               <div class="drawer__ladder">
                 <span class="drawer__ladder-chip" tabindex="0">
                   <span class="chip">{LEVEL_LABELS[a.tooling.level]}</span>
@@ -227,20 +234,25 @@ const recsOfEvent = (ev: string) =>
           <div class="panel-section">
             <h4 class="panel-label">Sub-process</h4>
             <ul class="drawer__list">
-              {a.activities!.map((c) => (
+              {a.activities!.map((c) => {
+                const t = fillTool(team, c);
+                return (
                 <li>
                   <button class="drawer__artifact drawer__link" data-detail-key={c.id}>{c.name}</button>
                   <span class="drawer__via">
-                    {c.tooling ? (
+                    {t ? (
                       <>
-                        <button class="drawer__via drawer__link" data-detail-key={`harness:${toolOf(team, c.tooling.tool).harness}`}>{harnessName(toolOf(team, c.tooling.tool).harness)}</button>
+                        <button class="drawer__via drawer__link" data-detail-key={`harness:${t.harness}`}>{harnessName(t.harness)}</button>
                         {' · '}
-                        <button class="drawer__via drawer__link" data-detail-key={`tool:${c.tooling.tool}`}>{toolOf(team, c.tooling.tool).name}</button>
+                        <button class="drawer__via drawer__link" data-detail-key={`tool:${t.id}`}>{t.name}</button>
                       </>
+                    ) : c.tooling ? (
+                      LEVEL_LABELS[c.tooling.level].toLowerCase()
                     ) : c.open ? ' open slot' : ''}
                   </span>
                 </li>
-              ))}
+                );
+              })}
             </ul>
             <p class="drawer__none">Expand ▸ in the flow view to see it as a swimlane.</p>
           </div>

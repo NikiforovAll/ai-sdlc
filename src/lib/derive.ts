@@ -46,6 +46,13 @@ export function toolOf(team: Pick<TeamDoc, 'tools'>, id: string): Tool {
   return t;
 }
 
+// A fill may name no tool, so "resolve the fill's tool if it has one" is the shape
+// every reader of a fill actually wants. Written once for the same reason the
+// three states are: the alternative is the guard repeated at eight sites, where
+// one of them can quietly disagree about what a fill without a tool means.
+export const fillTool = (team: Pick<TeamDoc, 'tools'>, a: AnyActivity): Tool | null =>
+  a.tooling?.tool ? toolOf(team, a.tooling.tool) : null;
+
 // The other three catalogs are read the same way, and unlike a tool a dangling id
 // here is schema-legal: `status` reports it, the page prints the raw id, and the
 // only symptom is a name that reads like a slug. That fallback is one decision, so
@@ -87,7 +94,7 @@ export function view(team: TeamDoc, process: ProcessDoc): Team {
   // count: a role that only appears inside an inset still takes part.
   const staffed = new Set<string>();
   const walk = (a: AnyActivity) => {
-    if (a.tooling) used.add(a.tooling.tool);
+    if (a.tooling?.tool) used.add(a.tooling.tool);
     for (const r of a.recommends ?? []) used.add(r.tool);
     for (const r of a.roles) staffed.add(r);
     for (const c of a.activities ?? []) walk(c);

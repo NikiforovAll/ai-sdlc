@@ -1,6 +1,6 @@
 ---
 import type { Team } from '../lib/derive';
-import { LEVEL_LABELS, nameOf, toolOf } from '../lib/derive';
+import { LEVEL_LABELS, fillTool, nameOf, toolOf } from '../lib/derive';
 import { VERB } from '../lib/docs';
 
 interface Props {
@@ -16,7 +16,13 @@ const stageName = (id: string) => nameOf(team.stages, id);
 // button per tool, with a line per activity that reaches for it.
 const rows = team.roles.map((role) => {
   const owned = team.activities.filter((a) => a.roles.includes(role.id));
-  const fills = owned.filter((a) => a.tooling);
+  // The playbook shelves tooling under the harness that runs it, and a fill
+  // naming no tool has no harness to stand under. It is still a fill; there is
+  // simply nothing here to shelve.
+  const fills = owned.flatMap((a) => {
+    const tool = fillTool(team, a);
+    return tool ? [{ act: a, tool, level: a.tooling!.level }] : [];
+  });
   const byTool = new Map<string, { id: string; lines: { event?: string; activity: string }[] }>();
   for (const a of owned) {
     for (const r of a.recommends ?? []) {
@@ -29,7 +35,7 @@ const rows = team.roles.map((role) => {
   const harnesses = team.harnesses.filter(
     (h) =>
       tools.some((s) => s.harness === h.id) ||
-      fills.some((a) => toolOf(team, a.tooling!.tool).harness === h.id)
+      fills.some((f) => f.tool.harness === h.id)
   );
   return { role, tools, fills, harnesses };
 });
@@ -87,14 +93,14 @@ const rows = team.roles.map((role) => {
                 </button>
               ))}
             {fills
-              .filter((a) => toolOf(team, a.tooling!.tool).harness === h.id)
-              .map((a) => (
-                <button class="pb__item pb__item--fill" data-act={a.id} data-roles={a.roles.join(' ')} data-depth="pb" aria-label={`${a.name} — details`}>
+              .filter((f) => f.tool.harness === h.id)
+              .map(({ act, tool, level }) => (
+                <button class="pb__item pb__item--fill" data-act={act.id} data-roles={act.roles.join(' ')} data-depth="pb" aria-label={`${act.name} — details`}>
                   <span class="pb__itemname">
-                    {toolOf(team, a.tooling!.tool).name}
-                    <span class="chip chip--muted">{LEVEL_LABELS[a.tooling!.level]}</span>
+                    {tool.name}
+                    <span class="chip chip--muted">{LEVEL_LABELS[level]}</span>
                   </span>
-                  <span class="pb__when">{VERB.fill} {a.name} · {stageName(a.stage)}</span>
+                  <span class="pb__when">{VERB.fill} {act.name} · {stageName(act.stage)}</span>
                 </button>
               ))}
           </div>

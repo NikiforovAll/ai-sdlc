@@ -215,7 +215,8 @@ export async function overviewModel(): Promise<OverviewModel> {
         pushUse(roleUse, r, { slug: p.slug, label: p.data.name, focus: `act-${a.id}` });
         roleActs.set(r, (roleActs.get(r) ?? 0) + 1);
       }
-      for (const id of [...(a.tooling ? [a.tooling.tool] : []), ...(a.recommends ?? []).map((r) => r.tool)]) {
+      for (const id of [a.tooling?.tool, ...(a.recommends ?? []).map((r) => r.tool)]) {
+        if (!id) continue;
         const { harness } = toolOf(team, id);
         pushUse(harnessUse, harness, { slug: p.slug, label: p.data.name, focus: `tool-${id}` });
         pushUse(toolUse, id, { slug: p.slug, label: p.data.name, focus: `tool-${id}` });
@@ -241,7 +242,10 @@ export async function overviewModel(): Promise<OverviewModel> {
         openReach.push(row);
         pushReach(openByProc, p.slug, row);
       }
-      if (a.tooling) {
+      // A fill with no tool has no catalog entry to be listed under, so it
+      // reaches nothing here. The activity still states its level; the shelf is
+      // simply not where that fact is read.
+      if (a.tooling?.tool) {
         pushReach(toolReach, a.tooling.tool, { ...at, kind: 'fill', level: a.tooling.level, usage: a.tooling.usage });
       }
       for (const r of a.recommends ?? []) {

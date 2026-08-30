@@ -26,8 +26,14 @@ export const DELEGATION_LEVELS = ['manual', 'assisted', 'delegated-review', 'gat
 
 // A fill names a catalog tool by id — the catalog owns the name and the harness,
 // so a use can never drift from the entry it names.
+//
+// The tool is optional because a level is a fact about where the human stands,
+// and that fact can be true with no single tool under it: a step a person drives
+// with three things open is delegated whichever one they reached for last.
+// Naming one of them to get the level said would be the worse lie. The level
+// stays required — a fill with neither a tool nor a level says nothing at all.
 const fill = z.object({
-  tool: id,
+  tool: id.optional(),
   level: z.enum(DELEGATION_LEVELS),
   usage: z.string().optional(),
   asset: z.string().optional(),

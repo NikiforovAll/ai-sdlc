@@ -99,6 +99,19 @@ activities:
               need: >-
                 A gap declared inside a sub-process, so the dashed treatment has
                 to survive two levels of nesting.
+      # A fill that names no tool: the level is claimed and nothing on the shelf
+      # owns the step, so the drawer draws the ladder with no tool line above it.
+      - id: shape-c
+        name: Shape Untooled
+        roles: [builder]
+        consumes: [sketch]
+        produces: [tally]
+        why: A fill stating a level with no tool under it.
+        tooling:
+          level: assisted
+          usage: >-
+            The rung without a tool id. Three things are open and none of them
+            is the one that does this, so naming one would be the worse claim.
       # unclaimed, and no `why:` either — the emptiest legal sub-activity. Its
       # second role is the only one an inset echoes rather than draws.
       - id: shape-b
@@ -118,6 +131,22 @@ activities:
       need: >-
         Something that reads a draft against the brief and says where they
         disagree. Today that comparison is done from memory.
+
+  # The tool-less fill at the top level, where the playbook can see it: the
+  # checker's shelf stays empty because a fill naming no tool has no harness to
+  # stand under, which the sub-activity version of this state cannot exercise.
+  - id: sign-off
+    name: Sign Off
+    stage: beta
+    roles: [checker]
+    consumes: [result]
+    produces: [signoff]
+    why: A top-level fill with a level and no tool.
+    tooling:
+      level: gated-autonomous
+      usage: >-
+        Stated at a rung nothing else in the fixture reaches from a tool-less
+        fill, so the gauge is drawn from the level alone.
 
   # The top rung, plus recommendations carrying every optional field.
   - id: finish

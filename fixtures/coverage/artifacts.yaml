@@ -28,8 +28,12 @@ artifacts:
         url: docs/sketch-template.md
   - id: trace
     name: Trace
+  - id: tally
+    name: Tally
   - id: record
     name: Record
+  - id: signoff
+    name: Signoff
   - id: result
     name: Result
     description: |-

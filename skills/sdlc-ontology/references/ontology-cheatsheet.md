@@ -90,7 +90,7 @@ activities:                      # at least one
 
 ```yaml
 tooling:
-  tool: agent-session          # must exist in the tools catalog
+  tool: agent-session          # optional — must exist in the tools catalog when present
   level: delegated-review      # manual | assisted | delegated-review | gated-autonomous | autonomous
   usage: ...                   # optional — advice true only here
   asset: ...                   # optional — the prompt, config or rule the fill runs on
@@ -110,6 +110,8 @@ The level ladder reads as *where the human stands*: **manual** (doing it) → **
 The top rung claims nothing can stop the run: no hook, no exit code, no protection rule, no person. A gate somebody could stand at but does not is still `gated-autonomous`. Write `autonomous` when the absence is a fact about the system, not about the day.
 
 A tool carries no level in the catalog, deliberately. The same tool is legitimately assisted in one activity and delegated in another.
+
+A fill may state a `level:` with no `tool:`. The level is the load-bearing half — it says where the human stands, which stays true when no one tool owns the step and the person works with three things open. Such a fill is still **filled**, not open and not unclaimed, but it appears under no tool's uses and in no role's playbook, because it names no catalog entry to appear under. Write it when naming one of several tools would be the falser claim, never to avoid looking up an id.
 
 ## Layer 4 — recommendations and events
 

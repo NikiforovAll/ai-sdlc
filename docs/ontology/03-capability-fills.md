@@ -65,7 +65,9 @@ tools:
 
 ## Fill
 
-**Definition.** The statement that an activity is done with AI leverage: `{tool, level, usage?}` — *with what*, *at what degree of delegation*, and optionally *how it's applied here and what problem that solves*. It fills the activity's capability slot; the harness comes along for free, derived from the tool.
+**Definition.** The statement that an activity is done with AI leverage: `{tool?, level, usage?}` — *with what*, *at what degree of delegation*, and optionally *how it's applied here and what problem that solves*. It fills the activity's capability slot; the harness comes along for free, derived from the tool.
+
+The tool is optional and the level is not, because the level is the load-bearing half. A level is a fact about where the human stands, and that fact survives with nothing named under it: a step somebody drives with three things open is `assisted` whichever one they reached for last. Naming one of the three to get the level said would be a worse claim than naming none, so a fill may carry a level and no tool. What it loses by doing so is the catalog: the step appears under no tool's uses and in no harness's playbook, because there is no entry for it to appear under. Reach for it when no single tool owns the work, never to skip looking up an id.
 
 **Why it exists.** One uniform shape means every piece of capability in the document — a top-level activity's fill, a nested sub-activity's, or a recommendation on any of them (Layer 4) — reads the same way and is comparable at a glance. The fields answer the questions the inventory can't: which tool, how much is trusted to it, and what this particular use is *for* — the same tool solves a different problem in every fill, and that difference is exactly what a reader drilling into a node wants to know.
 
@@ -91,13 +93,14 @@ tools:
 **How it renders.** The level caption on the node card ("DELEGATED + REVIEW"); the "harness · tool" line in GRID cells and the drawer (harness derived); a per-role tooling item in PLAYBOOK. The `usage` markdown renders in the drawer only — figures stay dense, prose lives in the detail surface.
 
 **Invariants & non-meanings.**
-- The fill states no harness — it can't, and that's the point: the tool implies it, so a contradictory pairing is unstatable.
+- The fill states no harness — it can't, and that's the point: the tool implies it, so a contradictory pairing is unstatable. A fill with no tool therefore has no harness either, and drops out of PLAYBOOK, which shelves by harness.
+- A fill with no tool is still filled, not open and not unclaimed. `status` counts it under **filled**; the figure draws a solid track and the level caption; the drawer draws the ladder with no tool line above it.
 - Three proses, three homes: the tool's `note` says what the tool *is* (identity, once), the activity's `why` says why the *work* exists, the fill's `usage` says how the tool is applied *here* and what problem that solves. If a sentence would be true for every use of the tool, it belongs on the tool, not in a fill.
 - One fill per activity — it names the *primary* way the work is done. A second tool is either a recommendation (Layer 4) or, if it's doing distinct work, two sub-activities wanting to exist (Layer 5).
 - A fill is a claim about *practice*, not licensing: "this activity is done this way", not "this tool is available".
 - The fill never replaces the role. The activity's `roles:` still name who owns the work; the level says how much of the doing is delegated.
 
-> **Schema status.** Built. D15 landed on 2026-08-15 with the model-v3 migration: the fill is `{tool, level, usage?, asset?, refs?}` and names a catalog entry by id, so the harness is derived and can never contradict the tool. The catalog entry carries no level and no roles — the same tool is assisted in one activity and delegated in another. `usage` is authored as markdown, rendered by the same processor the descriptions use. A `refs` entry is either the address alone or `{name, url}`.
+> **Schema status.** Built. D15 landed on 2026-08-15 with the model-v3 migration: the fill is `{tool?, level, usage?, asset?, refs?}` and names a catalog entry by id, so the harness is derived and can never contradict the tool. The tool became optional afterwards, for the step no single tool owns. The catalog entry carries no level and no roles — the same tool is assisted in one activity and delegated in another. `usage` is authored as markdown, rendered by the same processor the descriptions use. A `refs` entry is either the address alone or `{name, url}`.
 
 ---
 
