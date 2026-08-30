@@ -2,7 +2,7 @@
 
 The full version is `docs/ontology/` — six documents in dependency order, in the ai-sdlc repository only. This is what you need while a session is running.
 
-## The one distinction that matters
+## The one distinction that matters (layer 2, first here because the rest reads differently without it)
 
 Everything on the rendered page is either **authored** (someone wrote it) or **derived** (the composer computed it). Confusing the two is the most common authoring mistake, because the derived things are the ones that look most like drawings.
 
@@ -71,6 +71,7 @@ activities:                      # at least one
     consumes: [spec]             # optional
     produces: [change-set]       # at least one
     why: One sentence on why this exists.   # optional, worth writing
+    refs:   [ ... ]              # optional — what the person doing this step reads
     tooling: { ... }             # optional — what does this work today
     open: { need: ... }          # optional — a gap the team declared; excludes tooling:
     recommends: [ ... ]          # optional

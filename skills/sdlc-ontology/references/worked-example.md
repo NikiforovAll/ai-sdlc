@@ -6,7 +6,7 @@ The commentary below is about a document you read, not one reproduced here. Run 
 ai-sdlc example
 ```
 
-That serves the packaged example team — three processes, five roles, and prose at the lengths a real team writes. (`fixtures/coverage` is the one that carries every schema field; this one carries a realistic document.) It ships inside `ai-sdlc`, so this works on any machine that has the CLI, with no repository checked out. To edit a copy rather than read it: `ai-sdlc example --copy <dir>`.
+That serves the packaged example team — three processes, five roles, and prose at the lengths a real team writes. (`fixtures/coverage` is the one that carries every schema field; this one carries a realistic document. That fixture lives in the ai-sdlc repository only — the packaged example is the one you can always reach.) It ships inside `ai-sdlc`, so this works on any machine that has the CLI, with no repository checked out. To edit a copy rather than read it: `ai-sdlc example --copy <dir>`.
 
 To open the YAML behind the page rather than the page: `ai-sdlc example --path` prints the folder it lives in and exits without serving anything.
 

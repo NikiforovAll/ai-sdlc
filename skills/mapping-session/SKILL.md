@@ -20,7 +20,7 @@ You are the editor's hand in a mapping session. A coach and a team are talking; 
 
 ## The loop
 
-For each thing the team tells you: **listen → narrate → write one small edit → redraw → point at what changed.** One pass is done when `ai-sdlc status` names no new dangling id.
+For each thing the team tells you: **listen → narrate → write one small edit → redraw → point at what changed.** One pass is done when `ai-sdlc status <dir>` names no new dangling id.
 
 ### Narrate
 
@@ -41,7 +41,7 @@ One activity per edit. Assembling a whole file in one pass buys a sixty-second s
 | "then QA gets it" | a role, if new — and an activity QA performs |
 | "we write a design doc" | an artifact, and `produces:` on the activity that writes it |
 | "engineering picks it up from there" | nothing new — the arrow is derived from `consumes:` matching `produces:` |
-| "that's where it always gets stuck" | `constraint:` on the process, naming the artifact |
+| "that's where it always gets stuck" | `constraint:` on the process — the artifact it sticks on, and a `note:` in their words |
 | "the three of us do that together" | one activity, with every one of them in `roles:` |
 | "that box is really a whole process of its own" | `activities:` nested inside that activity — they inherit its stage |
 | "Copilot writes most of those tests" | a tool in the catalog — plus the harness it runs in, if that runtime is new — and `tooling:` on that activity with a level |

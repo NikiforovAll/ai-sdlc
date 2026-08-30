@@ -20,9 +20,9 @@ The output is not the end of the work. It is the thing a coach reads *at* a team
 
 ## Before the first file
 
-1. **Know what you are reading and where it goes.** The source package and the destination folder are the arguments — `/auto-mine-repo <source> --into <dir>` — and either one that is missing is a question, not a guess.
+1. **Know what you are reading and where it goes.** The source package and the destination folder are the arguments — `/ai-sdlc:auto-mine-repo <source> --into <dir>` — and either one that is missing is a question, not a guess.
 2. **Write the folder outside this repo** — beside the source, or wherever that team's material already lives. This repository is vendor-neutral by invariant: no client, product, or employer vocabulary belongs in it, and neither do documents mined from someone else's licensed package. The folder name becomes the team id.
-3. **Run `ai-sdlc new <dir>`** for a renderable skeleton, then replace its contents. It writes the team as several files read as one document; the cheatsheet's folder section says which.
+3. **Run `ai-sdlc new <dir>`** for a renderable skeleton, then replace its contents. It writes the team as several files read as one document; the cheatsheet's *Layer 1* section says which.
 4. **Read the `sdlc-ontology` skill**, and its `references/ontology-cheatsheet.md` — the model on one page. The authored-versus-derived distinction is the one that matters: if you find yourself wanting to draw an arrow, name an artifact instead.
 5. **Read `references/inference-rules.md`** in this skill. It is the mapping from repository evidence to model element, and it is the reference you consult all the way through.
 
@@ -79,7 +79,7 @@ Carry the `refs:` as you go, never afterwards. Every shelf entry takes one, and 
 
 Write the spine before the tooling. A stage, a role, an artifact and an activity are cheap to get right and expensive to retrofit; a fill is a two-line edit.
 
-Two YAML traps cost a round-trip every time, and both come from quoting a package that writes in Markdown. A plain scalar may not **start with a backtick**, and may not **contain a colon followed by a space** — `note: \`make test\` is the gate` and `description: reviewed against master: architecture, tests` both fail to parse. Wrap the value in double quotes, or make it a `>-` block. Mining hits this far more often than an interview does, because so much of what you are quoting is prose about file names and commands.
+Two YAML traps cost a round-trip every time, and both come from quoting a package that writes in Markdown. A plain scalar may not **start with a backtick**, and may not **contain a colon followed by a space** — `note: \`make test\` is the gate` and `description: reviewed against master: architecture, tests` both fail to parse. Wrap the value in double quotes, or make it a block scalar — and for a markdown `description:` the block must be literal `|-`, never folded `>-`, which joins consecutive lines and silently collapses a table or a list into one paragraph. Mining hits this far more often than an interview does, because so much of what you are quoting is prose about file names and commands.
 
 ## Four things only the source can say
 
