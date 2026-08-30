@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/harnesses.schema.json
 harnesses:
   - id: claude-code
     name: Claude Code

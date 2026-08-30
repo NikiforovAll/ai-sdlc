@@ -18,12 +18,17 @@
     "check:coverage": "node bin/ai-sdlc.mjs check fixtures/coverage",
     "dev:coverage": "node bin/ai-sdlc.mjs serve fixtures/coverage",
     "export": "node bin/ai-sdlc.mjs export examples/reference --out _exports/reference.html",
-    "export:coverage": "node bin/ai-sdlc.mjs export fixtures/coverage --out _exports/coverage.html"
+    "export:coverage": "node bin/ai-sdlc.mjs export fixtures/coverage --out _exports/coverage.html",
+    "schemas": "node bin/gen-schemas.mjs",
+    "schemas:check": "node bin/gen-schemas.mjs --check"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^6.3.11",
     "@fontsource-variable/archivo": "^5.2.5",
     "astro": "^5.13.0",
     "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "zod-to-json-schema": "^3.25.2"
   }
 }

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/artifacts.schema.json
 # An artifact is a named thing work leaves behind. Artifacts are the joints of
 # the process: the arrows between activities are derived from one activity's
 # `produces` matching another's `consumes`. You never draw an arrow yourself.
@@ -9,9 +10,16 @@
 #   tools.yaml      a concrete thing inside a harness, named so activities use it
 #   events.yaml     a recurring moment a recommendation can be attached to
 #
-# Write one when you have an entry for it. Until then every activity is either
-# an open slot you declared with `open:` or work the team does itself, and both
-# are first-class states — the slots are the roadmap, not a gap to apologise for.
+# Write one when you have an entry for it — and give it the schema line for its
+# own shelf, so the editor helps you fill it the way it helps you fill this one:
+#
+#   # yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/harnesses.schema.json
+#   # yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/tools.schema.json
+#   # yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/events.schema.json
+#
+# Until then every activity is either an open slot you declared with `open:` or
+# work the team does itself, and both are first-class states — the slots are the
+# roadmap, not a gap to apologise for.
 artifacts:
   - id: change-set
     name: Change Set

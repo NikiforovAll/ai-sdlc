@@ -28,22 +28,23 @@ Node.js >= 22.18.
 git clone <this repo> ai-sdlc
 cd ai-sdlc
 npm install
+npm link
 ```
 
-The CLI is exposed as `ai-sdlc` (via `package.json` `bin`). Either `npm link` it, or call it directly:
+`npm link` puts the `ai-sdlc` command on your PATH (via `package.json` `bin`), pointing at this clone — a `git pull` updates the command in place:
 
 ```sh
-node bin/ai-sdlc.mjs --help
+ai-sdlc --help
 ```
 
 ## Quick start
 
 ```sh
 # 1. write a skeleton team folder anywhere on disk
-node bin/ai-sdlc.mjs new ~/teams/acme --name "Acme Delivery"
+ai-sdlc new ~/teams/acme --name "Acme Delivery"
 
 # 2. render it, and leave this running
-node bin/ai-sdlc.mjs serve ~/teams/acme
+ai-sdlc serve ~/teams/acme
 
 # 3. edit the YAML — the page hot-reloads beside you
 ```
@@ -156,6 +157,18 @@ ai-sdlc new ~/teams/acme
 ai-sdlc serve ~/teams/acme      # put this on the shared screen
 # then, in Claude Code: /ai-sdlc:mapping-session ~/teams/acme
 ```
+
+### Autocomplete while you type
+
+Every file `ai-sdlc new` writes opens with a line naming its JSON Schema:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/team.schema.json
+```
+
+With the [`redhat.vscode-yaml`](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) extension installed, that gives you completion on every field, hover documentation for the ones worth explaining — the five delegation levels especially — and a squiggle under a misspelt key, which matters most when you are typing in front of the team. The schemas are generated from the same zod contract the CLI validates against, so they cannot describe a different document than `ai-sdlc check` accepts.
+
+They describe **one file at a time**, which is all JSON Schema can see. An id that names a role or tool no catalog declares is still `ai-sdlc status`'s job to catch. `schemas/README.md` has the full boundary, and the modeline for a catalog file you add by hand.
 
 ### When the process is already written down
 

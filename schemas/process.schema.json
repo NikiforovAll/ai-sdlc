@@ -1,0 +1,447 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/process.schema.json",
+  "title": "ai-sdlc processes/*.yaml",
+  "$ref": "#/$defs/Process",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "A kebab-case identifier, unique within its catalog."
+    },
+    "ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "url"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "Where the thing lives: a bare URL, or `{ name, url }` when the author has a better name for it than its address."
+    },
+    "entry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "description": "The label a figure prints for this entry."
+        },
+        "description": {
+          "type": "string",
+          "description": "Markdown the drawer renders when a reader stops on this entry."
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "description": "Links to where this lives — one meaning wherever the field appears."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "captioned": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/entry/properties/name"
+        },
+        "description": {
+          "$ref": "#/$defs/entry/properties/description"
+        },
+        "refs": {
+          "$ref": "#/$defs/entry/properties/refs"
+        },
+        "note": {
+          "type": "string",
+          "description": "The one line a figure can afford to print beside this entry."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "fill": {
+      "type": "object",
+      "properties": {
+        "tool": {
+          "$ref": "#/$defs/id",
+          "description": "The id of a tool in the Tooling catalog. Optional: a step driven with three things open is still delegated."
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "delegated-review",
+            "gated-autonomous",
+            "autonomous"
+          ],
+          "description": "Where the human stands: `manual` (person does it), `assisted` (tool helps, person drives), `delegated-review` (tool does it, person reviews), `gated-autonomous` (tool does it, a gate stops it), `autonomous` (tool does it unattended)."
+        },
+        "usage": {
+          "type": "string",
+          "description": "How the tool is used *here* — advice true of this activity, not of the tool everywhere."
+        },
+        "asset": {
+          "type": "string",
+          "description": "The concrete thing this use is configured by — a prompt, a config file, a template."
+        },
+        "refs": {
+          "$ref": "#/$defs/entry/properties/refs"
+        }
+      },
+      "required": [
+        "level"
+      ],
+      "additionalProperties": false,
+      "description": "The activity is filled: something does this work today, at a stated delegation level."
+    },
+    "recommendation": {
+      "type": "object",
+      "properties": {
+        "tool": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "The id of the tool being recommended."
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "delegated-review",
+            "gated-autonomous",
+            "autonomous"
+          ],
+          "description": "The level this tool would reach here, if adopted."
+        },
+        "event": {
+          "$ref": "#/$defs/id",
+          "description": "The id of an event that is the moment to reach for this."
+        },
+        "usage": {
+          "type": "string",
+          "description": "How this tool would be used here."
+        }
+      },
+      "required": [
+        "tool"
+      ],
+      "additionalProperties": false,
+      "description": "A pointer from this activity to a tool it could use. Never fills the slot — an activity with ten of these is still open."
+    },
+    "openSlot": {
+      "type": "object",
+      "properties": {
+        "need": {
+          "type": "string",
+          "description": "What this slot wants — the sentence only the team can write. Required: a slot with nothing to say is a blank, not a slot."
+        }
+      },
+      "required": [
+        "need"
+      ],
+      "additionalProperties": false,
+      "description": "The activity is open: work the team has decided to hand to a tool and has not yet. A roadmap item, drawn as a dashed box."
+    },
+    "tool": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "description": "What the tool is called."
+        },
+        "harness": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "The id of the harness this tool runs in."
+        },
+        "kind": {
+          "type": "string",
+          "description": "What sort of thing it is — a skill, a command, an agent, a check."
+        },
+        "note": {
+          "type": "string",
+          "description": "Advice that holds wherever this tool is used. Advice true in only one activity belongs on that recommendation instead."
+        },
+        "description": {
+          "type": "string"
+        },
+        "refs": {
+          "$ref": "#/$defs/entry/properties/refs"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "harness",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "subActivity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "description": "What the step is called."
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 1,
+          "description": "Ids of the roles who do this step. At least one."
+        },
+        "consumes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "description": "Ids of the artifacts this step reads. Half of an arrow — the other half is a `produces` somewhere else."
+        },
+        "produces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 1,
+          "description": "Ids of the artifacts this step leaves behind. At least one; this is what arrows are derived from."
+        },
+        "why": {
+          "type": "string",
+          "description": "Why the step exists — the reason a reader would otherwise have to ask for."
+        },
+        "tooling": {
+          "$ref": "#/$defs/fill",
+          "description": "The activity is filled: something does this work today, at a stated delegation level."
+        },
+        "open": {
+          "$ref": "#/$defs/openSlot",
+          "description": "The activity is open: work the team has decided to hand to a tool and has not yet. A roadmap item, drawn as a dashed box."
+        },
+        "recommends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recommendation"
+          },
+          "description": "Tools this step could use. Does not fill it."
+        },
+        "refs": {
+          "$ref": "#/$defs/entry/properties/refs"
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/subActivity"
+          },
+          "description": "A sub-process: steps inside this step, using the same roles and artifacts."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "roles",
+        "produces"
+      ],
+      "additionalProperties": false,
+      "not": {
+        "required": [
+          "tooling",
+          "open"
+        ]
+      }
+    },
+    "Process": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "One named way work flows through this team. The file name is the process id."
+        },
+        "note": {
+          "type": "string",
+          "description": "The one line the process index prints and the page hands to `<meta>`."
+        },
+        "description": {
+          "type": "string",
+          "description": "Markdown the drawer renders: what this process assumes and how it wants to be read."
+        },
+        "refs": {
+          "$ref": "#/$defs/entry/properties/refs"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string",
+                "description": "The label the stage prints."
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "description": "The coarse phases activities are labelled with. A map, never a gate."
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string",
+                "description": "What the step is called."
+              },
+              "stage": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "The id of the stage this step is labelled with. A map, never a gate."
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "minItems": 1,
+                "description": "Ids of the roles who do this step. At least one — roles are the lanes every figure is drawn along."
+              },
+              "consumes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "default": [],
+                "description": "Ids of the artifacts this step reads. Half of an arrow — the other half is a `produces` somewhere else."
+              },
+              "produces": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                },
+                "minItems": 1,
+                "description": "Ids of the artifacts this step leaves behind. At least one; this is what arrows are derived from."
+              },
+              "why": {
+                "type": "string",
+                "description": "Why the step exists — the reason a reader would otherwise have to ask for."
+              },
+              "tooling": {
+                "$ref": "#/$defs/fill",
+                "description": "The activity is filled: something does this work today, at a stated delegation level."
+              },
+              "open": {
+                "$ref": "#/$defs/openSlot",
+                "description": "The activity is open: work the team has decided to hand to a tool and has not yet. A roadmap item, drawn as a dashed box."
+              },
+              "recommends": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/recommendation"
+                },
+                "description": "Tools this step could use. Does not fill it."
+              },
+              "refs": {
+                "$ref": "#/$defs/entry/properties/refs"
+              },
+              "activities": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/subActivity"
+                },
+                "description": "A sub-process: steps inside this step, living in the parent stage."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "stage",
+              "roles",
+              "produces"
+            ],
+            "additionalProperties": false,
+            "not": {
+              "required": [
+                "tooling",
+                "open"
+              ]
+            }
+          },
+          "minItems": 1,
+          "description": "The steps of this process. At least one."
+        },
+        "constraint": {
+          "type": "object",
+          "properties": {
+            "artifact": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "description": "The id of the artifact the constraint is about."
+            },
+            "note": {
+              "type": "string",
+              "description": "What the constraint says."
+            }
+          },
+          "required": [
+            "artifact",
+            "note"
+          ],
+          "additionalProperties": false,
+          "description": "The one thing that governs this whole process, named against the artifact it governs."
+        }
+      },
+      "required": [
+        "name",
+        "stages",
+        "activities"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

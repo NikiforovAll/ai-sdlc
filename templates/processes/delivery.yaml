@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/process.schema.json
 # One process: a named way work flows through this team.
 #
 # The file name is the process id — this file renders at /delivery. Rename the

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/team.schema.json
 # A fixture, not a team. Its only job is to put every field the schema allows in
 # front of the renderer at least once, and to leave every optional field absent
 # at least once — the reference team fills nearly all of them, so the empty

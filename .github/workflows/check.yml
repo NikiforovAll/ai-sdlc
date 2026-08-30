@@ -1,0 +1,46 @@
+name: Check
+
+# The gates CLAUDE.md already names, run where a push lands rather than only in
+# whoever's terminal happened to be open. `deploy.yml` validates the reference
+# team too, but it only runs on a push to main and its `paths-ignore` skips
+# templates/ and fixtures/ — so it is a deploy, not a gate, and this is the gate.
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # schemas/ is generated from src/lib/schema.ts. This is what stops the
+      # hosted copy from drifting away from the contract it claims to describe.
+      - name: Schemas match the zod contract
+        run: npm run schemas:check
+
+      # Both teams: `reference` is the realistic document, `coverage` is the one
+      # that has every schema branch in it. A rendering change is not verified
+      # until both hold.
+      - name: Validate the reference team
+        run: npm run check
+
+      - name: Validate the coverage fixture
+        run: npm run check:coverage
+
+      # The real gate — there is no test suite, so a clean build reporting the
+      # expected page count is the evidence.
+      - name: Build the reference team
+        run: npx astro build
+
+      - name: Build the coverage fixture
+        env:
+          AISDLC_TEAM_DIR: fixtures/coverage
+        run: npx astro build

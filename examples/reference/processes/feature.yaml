@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/process.schema.json
 name: Feature
 note: >-
   The long path: an intent becomes a spec, a plan, a change, proof, and a release.

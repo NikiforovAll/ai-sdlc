@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/team.schema.json
 # The team document: who the team is, and the roles every process is drawn along.
 #
 # This is the skeleton `ai-sdlc new` writes — the smallest team the schema

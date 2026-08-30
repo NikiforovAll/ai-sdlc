@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/process.schema.json
 # The loaded process: description, constraint, sub-activities two deep, all five
 # rungs of the ladder, and every optional field on a fill and a recommendation.
 name: Main

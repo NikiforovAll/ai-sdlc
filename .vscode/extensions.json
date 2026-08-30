@@ -1,0 +1,7 @@
+{
+  // The team YAML carries a `# yaml-language-server: $schema=…` modeline on line
+  // one. Without this extension that line is an ordinary comment and the
+  // autocomplete, hover docs and inline errors it buys simply do not appear —
+  // no warning, no error, nothing. See schemas/README.md.
+  "recommendations": ["redhat.vscode-yaml"]
+}

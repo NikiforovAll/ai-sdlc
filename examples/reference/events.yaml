@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/events.schema.json
 events:
   - id: task-too-big
     name: Task bigger than planned

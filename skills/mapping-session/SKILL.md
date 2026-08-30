@@ -11,6 +11,14 @@ You are the editor's hand in a mapping session. A coach and a team are talking; 
 ## Before the first question
 
 1. **Know which folder you are writing.** It is the argument, or ask. If it does not exist yet, run `ai-sdlc new <dir>`. Done when `team.yaml` exists in that folder.
+
+   Every YAML file you create during the session opens with the schema line for its own shelf, so the coach's editor offers the fields and flags a typo as it is typed. `ai-sdlc new` writes it into the files it emits; a catalog file you add later needs it from you:
+
+   ```yaml
+   # yaml-language-server: $schema=https://raw.githubusercontent.com/NikiforovAll/ai-sdlc/main/schemas/tools.schema.json
+   ```
+
+   Swap the file name for the shelf you are writing — `team`, `artifacts`, `harnesses`, `events`, `tools`, or `process` for anything under `processes/`.
 2. **Start the renderer yourself.** Run `ai-sdlc serve <dir>` in a background shell so it outlives the command — it runs until the session ends, and a foreground call would hang the conversation. Wait for the URL it prints, open it, and hand it over:
 
    > The page is live at *the URL the server just printed* — put it on the shared screen where the team can see it.
