@@ -107,7 +107,7 @@ Three states an activity can be in, and they render differently on purpose:
 
 ## Authoring a team
 
-A document is meant to be written *live*, in a mapping session: editor and browser side by side, the team talking, the page redrawing as their sentences become YAML. The `skills/map-team/` skill conducts that interview — it knows the vocabulary and translates the team's own words into the model, so nobody has to learn the schema before speaking.
+A document is meant to be written *live*, in a mapping session: editor and browser side by side, the team talking, the page redrawing as their sentences become YAML. The `skills/mapping-session/` skill conducts that interview — it translates the team's own words into the model, so nobody has to learn the schema before speaking. It reads the vocabulary from `skills/sdlc-ontology/`, the base skill both authoring skills share.
 
 Install it into your agent with the [skills](https://github.com/vercel-labs/skills) CLI — no clone needed:
 
@@ -123,19 +123,19 @@ Then, with a team folder and the renderer up:
 ```sh
 ai-sdlc new ~/teams/acme
 ai-sdlc serve ~/teams/acme      # put this on the shared screen
-# then, in Claude Code: /map-team ~/teams/acme
+# then, in Claude Code: /mapping-session ~/teams/acme
 ```
 
 ### When the process is already written down
 
-Some repositories describe their own delivery process — an agentic bundle names its skills, its agents, its gates and the artifacts they pass. There is nothing to interview: the `skills/mine-repo/` skill reads that package and writes the YAML from it, then hands the folder to `map-team` so a team can cut what does not apply to them.
+Some repositories describe their own delivery process — an agentic bundle names its skills, its agents, its gates and the artifacts they pass. There is nothing to interview: the `skills/auto-mine-repo/` skill reads that package unattended and writes the YAML from it, then hands the folder to `mapping-session` so a team can cut what does not apply to them.
 
 ```sh
 # in Claude Code, pointed at the package you want read
-/mine-repo ~/src/some-bundle --into ~/teams/some-bundle
+/auto-mine-repo ~/src/some-bundle --into ~/teams/some-bundle
 ```
 
-A mined document says so in its own masthead — `status: draft` — because it describes a package until a team has confirmed it. Its roles are inferred, its open slots are quoted from the package's own roadmap, and nothing is filled that the source did not state.
+It stops once, for the three calls the source cannot settle — how many documents, how the processes are cut, how fine the artifacts are — and finishes without stopping again. A mined document says so in its own masthead — `status: draft` — because it describes a package until a team has confirmed it. Its roles are inferred, its open slots are quoted from the package's own roadmap, and nothing is filled that the source did not state.
 
 ## The model
 

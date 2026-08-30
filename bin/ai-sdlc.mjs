@@ -12,7 +12,7 @@
 // repo's own entry point.
 //
 // `new` and `status` are the authoring layer — see `_plans/spec-authoring.md`.
-// Neither asks a question: the interview lives in the `map-team` skill, because
+// Neither asks a question: the interview lives in the `mapping-session` skill, because
 // the model is a graph and a prompt sequence can only walk a list (D-AUTH-1).
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -114,7 +114,7 @@ async function cmdNew(positionals, values) {
       '',
       'next',
       `  ai-sdlc serve ${positionals[0]}      render it, and leave this running`,
-      `  claude → /map-team           map the team into it while the page redraws`,
+      `  claude → /mapping-session    map the team into it while the page redraws`,
     ].join('\n')
   );
 }
@@ -184,7 +184,7 @@ async function cmdExport(positionals, values) {
 }
 
 // The example ships inside the package, so a coach who has never cloned this
-// repo can still read a finished document — and the `map-team` skill can point
+// repo can still read a finished document — and the `mapping-session` skill can point
 // at one command instead of a path that only exists here. `--copy` is for the
 // team that wants to edit it rather than read it; without it, this is `serve`
 // against a folder the CLI already knows.
