@@ -9,7 +9,7 @@
 # stay here: they are the axis the whole document is read along.
 #
 # The vocabulary is in docs/ontology/ — but you do not have to read it first.
-# Run the `map-team` skill and it will teach you the words as it writes them.
+# Run the `mapping-session` skill and it will teach you the words as it writes them.
 
 name: New Team
 version: "0.1"

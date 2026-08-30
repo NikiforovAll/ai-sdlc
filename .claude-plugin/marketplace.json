@@ -1,0 +1,17 @@
+{
+  "name": "ai-sdlc",
+  "owner": {
+    "name": "NikiforovAll",
+    "url": "https://github.com/NikiforovAll"
+  },
+  "repository": "https://github.com/NikiforovAll/ai-sdlc",
+  "plugins": [
+    {
+      "name": "ai-sdlc",
+      "source": "./",
+      "description": "Map a team's delivery process into a rendered page — the ontology, a live mapping session, and unattended mining of a repository that already documents itself",
+      "category": "productivity",
+      "tags": ["sdlc", "process-mapping", "ontology", "delivery", "yaml"]
+    }
+  ]
+}
