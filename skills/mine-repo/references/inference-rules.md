@@ -28,7 +28,15 @@ Two things that look like model elements and are not:
 - **A tool's `name` is what the source calls it** when invoked — including a namespace prefix if the source uses one.
 - **`kind`** carries provenance, and is where a tool's origin goes: `entry-point skill`, `orchestrator skill`, `agent`, `lifecycle hook`, `adapter`, and the plugin name when tools come from more than one package. Provenance in `kind` is what lets the harness stay a runtime instead of becoming a bundle list.
 - **Activity ids and names are verb phrases in the source's own vocabulary.** If the package says "intake", the activity is not called "Gather Requirements".
-- **`refs` on every tool that has a file.** One URL or repo-relative path, pointing at the thing you read. A mined document's whole claim to accuracy is that each entry can be opened.
+- **`refs` on every entry that has a file.** Every shelf takes one — artifacts, harnesses, events and tools alike — and so do processes, activities and fills. A mined document's whole claim to accuracy is that each entry can be opened.
+
+  An entry is either the address alone or the address under a name, and the second is the better one whenever the address is not readable:
+
+  ```yaml
+  refs:
+    - agents/complexity-assessor.md          # a path a reader can already read
+    - { name: Review contract, url: https://example.com/x/AbCd }
+  ```
 
 ## The delegation ladder
 

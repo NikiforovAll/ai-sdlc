@@ -20,7 +20,7 @@ The output is not the end of the work. It is the thing a coach reads *at* a team
 
 1. **Know what you are reading and where it goes.** The source package and the destination folder are the arguments — `/mine-repo <source> --into <dir>` — and either one that is missing is a question, not a guess.
 2. **Do not land it here.** This repository is vendor-neutral by invariant: no client, product, or employer vocabulary belongs in it, and neither do documents mined from someone else's licensed package. Write the folder outside this repo — beside the source, or wherever that team's material already lives. The folder name becomes the team id.
-3. **Run `ai-sdlc new <dir>`** for a renderable skeleton, then replace its contents.
+3. **Run `ai-sdlc new <dir>`** for a renderable skeleton, then replace its contents. It writes the team as several files read as one document: `team.yaml` introduces the team and holds the roles, and every other shared catalog is a file of its own beside it — `artifacts.yaml`, plus `harnesses.yaml`, `tools.yaml` and `events.yaml` once you have entries for them. A shelf may be written inline in `team.yaml` instead, but never in both places: `check` fails a catalog declared twice.
 4. **Read the ontology.** `skills/map-team/references/ontology-cheatsheet.md` is the model on one page; `docs/ontology/` is the long form. The authored-versus-derived distinction is the one that matters: if you find yourself wanting to draw an arrow, name an artifact instead.
 5. **Read `references/inference-rules.md`** in this skill. It is the mapping from repository evidence to model element, and it is the reference you consult all the way through.
 
@@ -68,7 +68,9 @@ State each choice in the document's `description` once it is made. A reader who 
 
 ## The loop
 
-Catalogs first, then one process at a time. Within a process: read the source for that flow end to end, then write it, then run `ai-sdlc status <dir>` and fix what it names before starting the next.
+Catalogs first — one file per shelf — then one process at a time. Within a process: read the source for that flow end to end, then write it, then run `ai-sdlc status <dir>` and fix what it names before starting the next.
+
+Carry the `refs:` as you go, never afterwards. Every shelf entry takes one, and on a mined document it is not decoration: the whole claim to accuracy is that a reader can open the file each entry was read from. Write it while the file is still on your screen — a `refs:` pass at the end is a pass where you guess.
 
 Write the spine before the tooling. A stage, a role, an artifact and an activity are cheap to get right and expensive to retrofit; a fill is a two-line edit.
 
