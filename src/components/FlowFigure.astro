@@ -631,6 +631,10 @@ const idleCells = steps.flatMap((s) =>
     padding: 8px 10px 6px;
     min-width: 420px;
     max-width: 720px;
+    /* The inset holds one grid whose columns cannot shrink below their minimum, so
+       a sub-process wide enough to pass the cap would otherwise draw its last steps
+       outside the panel, over the lanes behind it. Scroll instead of spill. */
+    overflow-x: auto;
     transition: opacity 0.28s var(--ease-out);
   }
   .fig__inset-head {
