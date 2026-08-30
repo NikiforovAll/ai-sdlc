@@ -109,21 +109,32 @@ Three states an activity can be in, and they render differently on purpose:
 
 A document is meant to be written *live*, in a mapping session: editor and browser side by side, the team talking, the page redrawing as their sentences become YAML. The `skills/mapping-session/` skill conducts that interview — it translates the team's own words into the model, so nobody has to learn the schema before speaking. It reads the vocabulary from `skills/sdlc-ontology/`, the base skill both authoring skills share.
 
-Install it into your agent with the [skills](https://github.com/vercel-labs/skills) CLI — no clone needed:
+This repository is also a Claude Code plugin marketplace holding all three skills:
+
+```sh
+claude plugin marketplace add NikiforovAll/ai-sdlc
+claude plugin install ai-sdlc@ai-sdlc
+```
+
+Installed that way the skills are namespaced — `/ai-sdlc:mapping-session`, `/ai-sdlc:auto-mine-repo`.
+
+For any other agent, the [skills](https://github.com/vercel-labs/skills) CLI reads the same `skills/` folder:
 
 ```sh
 npx skills add NikiforovAll/ai-sdlc            # this project only
 npx skills add NikiforovAll/ai-sdlc --global   # every project
 ```
 
-It reads the skills out of the repository and writes them where your agent looks for them; `-a`/`--agent` picks the agent when you have more than one, `npx skills list` shows what is installed, and `npx skills update` pulls later revisions. The skill drives the `ai-sdlc` CLI, so install that too — see [Install](#install).
+`-a`/`--agent` picks the agent when you have more than one, `npx skills list` shows what is installed, and `npx skills update` pulls later revisions.
+
+Either way the skills drive the `ai-sdlc` CLI, which is a separate install — see [Install](#install).
 
 Then, with a team folder and the renderer up:
 
 ```sh
 ai-sdlc new ~/teams/acme
 ai-sdlc serve ~/teams/acme      # put this on the shared screen
-# then, in Claude Code: /mapping-session ~/teams/acme
+# then, in Claude Code: /ai-sdlc:mapping-session ~/teams/acme
 ```
 
 ### When the process is already written down
@@ -132,7 +143,7 @@ Some repositories describe their own delivery process — an agentic bundle name
 
 ```sh
 # in Claude Code, pointed at the package you want read
-/auto-mine-repo ~/src/some-bundle --into ~/teams/some-bundle
+/ai-sdlc:auto-mine-repo ~/src/some-bundle --into ~/teams/some-bundle
 ```
 
 It stops once, for the three calls the source cannot settle — how many documents, how the processes are cut, how fine the artifacts are — and finishes without stopping again. A mined document says so in its own masthead — `status: draft` — because it describes a package until a team has confirmed it. Its roles are inferred, its open slots are quoted from the package's own roadmap, and nothing is filled that the source did not state.

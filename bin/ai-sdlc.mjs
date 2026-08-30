@@ -114,7 +114,7 @@ async function cmdNew(positionals, values) {
       '',
       'next',
       `  ai-sdlc serve ${positionals[0]}      render it, and leave this running`,
-      `  claude → /mapping-session    map the team into it while the page redraws`,
+      `  claude → /ai-sdlc:mapping-session    map the team into it while the page redraws`,
     ].join('\n')
   );
 }

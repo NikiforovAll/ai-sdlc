@@ -1,0 +1,12 @@
+{
+  "name": "ai-sdlc",
+  "version": "0.1.0",
+  "description": "Map a team's delivery process into a rendered page — the ontology, a live mapping session, and unattended mining of a repository that already documents itself. Drives the ai-sdlc CLI, which installs separately.",
+  "author": {
+    "name": "Oleksii Nikiforov",
+    "url": "https://github.com/NikiforovAll/ai-sdlc"
+  },
+  "homepage": "https://github.com/NikiforovAll/ai-sdlc",
+  "keywords": ["sdlc", "process-mapping", "ontology", "delivery", "yaml", "astro"],
+  "license": "MIT"
+}
