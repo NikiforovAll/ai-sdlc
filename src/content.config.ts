@@ -3,12 +3,11 @@ import { glob } from 'astro/loaders';
 import { basename, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { teamSchema, processSchema } from './lib/schema';
-import { loadTeamOrThrow, teamFiles } from './lib/load';
+import { loadTeamOrThrow, teamDirFromEnv, teamFiles } from './lib/load';
 
 // One team folder per run: `team.yaml`, the catalog files beside it, and
-// `processes/*.yaml`. The CLI points this at any folder on disk; the packaged
-// example is the fallback so `npm run dev` keeps working with no environment set.
-const TEAM_DIR = resolve(process.env.AISDLC_TEAM_DIR ?? './examples/reference');
+// `processes/*.yaml`. The CLI points this at any folder on disk.
+const TEAM_DIR = teamDirFromEnv();
 
 // The folder name is the team id; the process file name is the process id.
 const TEAM_ID = basename(TEAM_DIR);

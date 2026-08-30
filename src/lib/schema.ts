@@ -2,8 +2,9 @@
 // rather than `astro:content` so `check` can run it from plain Node without
 // booting Astro — `content.config.ts` wraps these in collections, nothing more.
 import { z } from 'astro/zod';
+import { ID_PATTERN } from './anchor.ts';
 
-const id = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'ids are kebab-case');
+const id = z.string().regex(new RegExp(`^${ID_PATTERN}$`), 'ids are kebab-case');
 
 // One field with one meaning wherever it appears: where the thing lives, in
 // whatever form "lives" takes for it. Declared once so the day it gains a

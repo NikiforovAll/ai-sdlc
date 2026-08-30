@@ -64,8 +64,19 @@ npm run dev        # serves examples/reference at http://localhost:4321
 | `ai-sdlc check <team-dir>` | Validate the YAML against the schema. Exits non-zero on problems |
 | `ai-sdlc status <team-dir>` | Inventory how complete the document is. Always exits 0 |
 | `ai-sdlc example [--copy <dir>] [--path]` | Serve the worked example that ships with the package, copy it to edit, or print the folder it lives in |
+| `ai-sdlc annotations <team-dir> [--json] [--resolve <id>]` | List what readers flagged on the served page, or delete one that has been dealt with |
 
 `<team-dir>` is required everywhere — there is no default and no cwd sniffing. The folder name is the team id; each file name under `processes/` is that process id.
+
+## Annotations
+
+A reader who disagrees with the document says so on the page. On a served page press `a`, click the thing that is wrong, write a sentence. The note is anchored to the model id underneath the click — an activity, a tool, a role — so it survives a re-render and an edit that moves the node; a click that names nothing is a note about the whole document.
+
+Arming the mode marks every node that already carries a note. Click one and its note opens for editing — the composer floats beside the node, prefilled, and saving rewrites that note in place; `+ NEW NOTE` starts a separate one on the same node.
+
+Each note lands as one file under `<team-dir>/annotations/`, so it is versioned with the YAML it is about. `ai-sdlc annotations <team-dir>` prints what is waiting and `--resolve <id>` deletes one that has been folded into the document — the YAML is the record, so a note whose change is already made is noise.
+
+Annotations exist on `serve` only. The exported file has no server to write to and carries no annotation layer, and `check` and `status` never read them: a reader's note cannot break a build.
 
 `check` and `status` answer different questions and only `check` is a gate. `check` is schema-only. An id that an activity references but no catalog defines is schema-legal, so `check` passes it — `status` is what reports it.
 

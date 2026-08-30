@@ -37,7 +37,10 @@ const openPanels = [
 ];
 ---
 
-<aside class="tdrawer" id="team-drawer" hidden aria-label="Team document detail">
+<!-- `data-drawer` is what anything outside asks "is a drawer over the right
+     edge right now" with. `global.css` already treats the two drawers as one
+     width; the attribute is the same statement in markup. -->
+<aside class="tdrawer" id="team-drawer" data-drawer hidden aria-label="Team document detail">
   <div class="module__head tdrawer__head">
     <span class="tab">DETAIL</span>
     <span class="module__title" data-drawer-title>Team Document</span>

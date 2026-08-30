@@ -2,7 +2,7 @@
 // CLI (`check`, `status`) and the Astro loader in `content.config.ts`. The
 // merge rule below is a spec fact, so it is written once and imported twice.
 import { readFile, readdir } from 'node:fs/promises';
-import { basename, join, relative } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 import type { ZodType } from 'zod';
 import { parse } from 'yaml';
 import { CATALOG_KEYS, teamSchema, type TeamData } from './schema.ts';
@@ -23,6 +23,14 @@ export interface LoadedTeam {
 
 const isMap = (x: unknown): x is Record<string, unknown> =>
   typeof x === 'object' && x !== null && !Array.isArray(x);
+
+/**
+ * Which folder renders this run. The CLI sets the variable; the packaged example
+ * is the fallback so `npm run dev` needs no environment. Stated here rather than
+ * where it is read, so the page and the annotation endpoint can never disagree
+ * about which folder they are looking at.
+ */
+export const teamDirFromEnv = (): string => resolve(process.env.AISDLC_TEAM_DIR ?? './examples/reference');
 
 /** The files a team folder may hold, in the order a reader meets them. */
 export const teamFiles = (teamDir: string): string[] => [

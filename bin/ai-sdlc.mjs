@@ -6,6 +6,7 @@
 //   ai-sdlc export <team-dir> [--out <file>]
 //   ai-sdlc check  <team-dir>
 //   ai-sdlc status <team-dir>
+//   ai-sdlc annotations <team-dir> [--json] [--resolve <id>]
 //
 // `<team-dir>` is required in all of them. No default and no cwd sniffing: the
 // CLI is always explicit about what it renders, and `npm run dev` stays the
@@ -33,6 +34,8 @@ const USAGE = `ai-sdlc — render a team's delivery process document
   ai-sdlc check  <team-dir>                         validate the YAML, print errors
   ai-sdlc status <team-dir>                         how far along the document is
   ai-sdlc example [--copy <dir>] [--path]           serve the worked example, copy it, or print its path
+  ai-sdlc annotations <team-dir> [--json]           what readers flagged on the served page
+                      [--resolve <id>]              delete one that has been dealt with
 
 <team-dir> holds team.yaml, one file per shared catalog, and processes/*.yaml.`;
 
@@ -245,6 +248,8 @@ const { values, positionals } = parseArgs({
     name: { type: 'string' },
     copy: { type: 'string' },
     path: { type: 'boolean' },
+    json: { type: 'boolean' },
+    resolve: { type: 'string' },
   },
 });
 
@@ -255,7 +260,10 @@ try {
   else if (command === 'export') await cmdExport(positionals, values);
   else if (command === 'check') await cmdCheck(positionals);
   else if (command === 'example') await cmdExample(positionals, values);
-  else die(`unknown command "${command}"\n\n${USAGE}`);
+  else if (command === 'annotations') {
+    const { cmdAnnotations } = await import('./annotations.mjs');
+    await cmdAnnotations(await teamDirOf(positionals[0]), values);
+  } else die(`unknown command "${command}"\n\n${USAGE}`);
 } catch (err) {
   die(err.message);
 }

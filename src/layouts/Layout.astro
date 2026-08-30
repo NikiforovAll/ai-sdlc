@@ -2,6 +2,7 @@
 import '@fontsource-variable/archivo';
 import '../styles/global.css';
 import DevLive from '../components/DevLive.astro';
+import Annotate from '../components/Annotate.astro';
 
 interface Props {
   title: string;
@@ -48,6 +49,7 @@ const { title, description } = Astro.props;
     finish review, the verdict, and DESIGN.md
     -->
     <slot />
+    {import.meta.env.DEV && <Annotate />}
     {import.meta.env.DEV && <DevLive />}
   </body>
 </html>
