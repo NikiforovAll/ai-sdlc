@@ -22,13 +22,24 @@ Two things that look like model elements and are not:
 - **A dependency arrow.** Never authored. Name the artifact and the arrow appears.
 - **A rework or retry loop.** Never drawn. It is an `event:` with a `recommends:` attached.
 
+### Loops, in full
+
+Order is derived: one activity's `produces` matching another's `consumes`. A late activity that produces an artifact an earlier one consumes is a cycle, and it corrupts the layout of the figure whose entire job is order.
+
+Packages are full of loops — a sync that rewrites the spec after handoff, a resume that re-enters a phase, a harvest that updates the guides the next run reads. Model each one **one of these two ways**:
+
+- give it its own downstream artifact (`run-index`, `curated-memory`), or
+- make it a `recommends:` bound to an `event:` on the activity where the loop is felt.
+
+The second is usually the truer one. A rework loop is not a step in the flow; it is a moment, with a play attached.
+
 ## Naming
 
 - **A tool's `id` is its file or directory name**, unchanged. `agents/complexity-assessor.md` → `complexity-assessor`. This is what makes the shelf checkable: a reader can go to the file.
 - **A tool's `name` is what the source calls it** when invoked — including a namespace prefix if the source uses one.
 - **`kind`** carries provenance, and is where a tool's origin goes: `entry-point skill`, `orchestrator skill`, `agent`, `lifecycle hook`, `adapter`, and the plugin name when tools come from more than one package. Provenance in `kind` is what lets the harness stay a runtime instead of becoming a bundle list.
 - **Activity ids and names are verb phrases in the source's own vocabulary.** If the package says "intake", the activity is not called "Gather Requirements".
-- **`refs` on every entry that has a file.** Every shelf takes one — artifacts, harnesses, events and tools alike — and so do processes, activities and fills. A mined document's whole claim to accuracy is that each entry can be opened.
+- **`refs` on every entry that has a file.** Every shelf takes one — artifacts, harnesses, events, tools and roles alike — and so do processes, activities and fills. A mined document's whole claim to accuracy is that each entry can be opened.
 
   An entry is either the address alone or the address under a name, and the second is the better one whenever the address is not readable:
 
@@ -40,7 +51,7 @@ Two things that look like model elements and are not:
 
 ## The delegation ladder
 
-Read the mechanism, never the tone. The ladder is *where the human stands*: **manual** (doing it) → **assisted** (in the loop) → **delegated-review** (on the loop) → **gated-autonomous** (at the gate).
+Read the mechanism, never the tone. The ladder itself is in the cheatsheet; this is how a repository's evidence lands on it.
 
 | The source says | Level |
 | --- | --- |
@@ -54,7 +65,7 @@ Read the mechanism, never the tone. The ladder is *where the human stands*: **ma
 
 Two rules that follow from the ladder and are easy to get wrong:
 
-- **The same tool takes different levels in different activities.** A review orchestrator whose verdict *informs a human* is `delegated-review`; the same orchestrator whose verdict *resolves a gate* is `gated-autonomous`. The catalog deliberately carries no level: resolve it once per activity, from the mechanism that activity uses.
+- **The same tool takes different levels in different activities.** A review orchestrator whose verdict *informs a human* is `delegated-review`; the same orchestrator whose verdict *resolves a gate* is `gated-autonomous`. Resolve it once per activity, from the mechanism that activity uses.
 - **`gated-autonomous` is not "very automated".** It is a human at the gate. If nothing in the source can hold the gate — no hook, no exit code, no escalation rule — the level is lower.
 
 ## Fill, recommendation, open, or nothing

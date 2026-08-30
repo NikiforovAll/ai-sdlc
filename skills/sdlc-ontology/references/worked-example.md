@@ -6,7 +6,7 @@ The commentary below is about a document you read, not one reproduced here. Run 
 ai-sdlc example
 ```
 
-That serves the packaged example team — three processes, five roles, every field the schema has an opinion about. It ships inside `ai-sdlc`, so this works on any machine that has the CLI, with no repository checked out. To edit a copy rather than read it: `ai-sdlc example --copy <dir>`.
+That serves the packaged example team — three processes, five roles, and prose at the lengths a real team writes. (`fixtures/coverage` is the one that carries every schema field; this one carries a realistic document.) It ships inside `ai-sdlc`, so this works on any machine that has the CLI, with no repository checked out. To edit a copy rather than read it: `ai-sdlc example --copy <dir>`.
 
 To open the YAML behind the page rather than the page: `ai-sdlc example --path` prints the folder it lives in and exits without serving anything.
 
@@ -32,6 +32,6 @@ Everything below cites `processes/bugfix.yaml` by activity id, relative to that 
 
 ## Where else to look
 
-- `processes/feature.yaml` — sub-activities. `implement` contains its own activities, two levels deep, and one of them is an open slot inside a sub-process.
-- `processes/incident.yaml` — an interrupt path, and the only process where the top of the ladder carries a `usage:` explaining why it is gated there.
+- `processes/feature.yaml` — sub-activities. `implement` contains its own activities, and `write-change` expands again into `explore` and `edit-test-loop`, two levels deep, each carrying its own fill.
+- `processes/incident.yaml` — an interrupt path, and the only process where a `gated-autonomous` **fill** carries a `usage:` explaining why it is gated there.
 - `team.yaml` and the catalog files beside it — how `note:` and `description:` divide the work: the caption a figure can afford, and the markdown the drawer renders.

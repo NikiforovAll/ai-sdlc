@@ -1,6 +1,6 @@
 # The ontology, on one page
 
-The full version is `docs/ontology/`, five documents in dependency order. This is what you need while a session is running.
+The full version is `docs/ontology/` — six documents in dependency order, in the ai-sdlc repository only. This is what you need while a session is running.
 
 ## The one distinction that matters
 
@@ -35,7 +35,7 @@ note: ...                # optional — one plain line; the caption and the page
 description: ...         # optional — markdown, rendered in the drawer
 refs:       [ ... ]      # optional — the sources the document was read out of
                          #   each entry: "<url-or-path>" | { name, url }
-roles:      [{ id, name, note?, description? }]        # at least one
+roles:      [{ id, name, note?, description?, refs? }]  # at least one
 ```
 
 Each other catalog is a file of its own beside `team.yaml`, holding the one key it is named for. A shelf may instead be written inline in `team.yaml` under that key, but never in both places — `check` fails a shelf declared twice.
@@ -92,6 +92,8 @@ tooling:
   tool: agent-session          # must exist in the tools catalog
   level: delegated-review      # manual | assisted | delegated-review | gated-autonomous
   usage: ...                   # optional — advice true only here
+  asset: ...                   # optional — the prompt, config or rule the fill runs on
+  refs:  [ ... ]               # optional — where this use of the tool is written down
 ```
 
 ```yaml
@@ -132,3 +134,12 @@ Reach for this when one box on the page is hiding a process of its own — not t
 - **The folder name is the team id; each process file name is its process id.** Renaming the file renames the process.
 - **Order, never duration.** Horizontal position means dependency depth. Dates, estimates and lead times belong to a different product.
 - **Forward-only.** The figure draws the path forward; every reader supplies the rework themselves.
+
+## Verifying
+
+Two commands, answering different questions, and only one is a gate.
+
+- **`ai-sdlc check <dir>`** — schema. Exits non-zero and prints the file, the path and the message. This is the gate.
+- **`ai-sdlc status <dir>`** — an inventory. Always exits 0. Two of its lines matter: **`ids referenced but not in a catalog`**, and **`unreferenced`** (a catalog entry no activity uses — use it or remove it).
+
+A dangling id is the failure worth knowing by heart, because it is schema-legal and mostly silent. An unknown **role**, **artifact** or **stage** renders without complaint, and the only symptom is an arrow that never appears — in figures whose entire job is drawing arrows. An unknown **tool** id is the loud exception: it fails the build.
