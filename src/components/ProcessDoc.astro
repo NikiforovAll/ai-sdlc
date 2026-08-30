@@ -7,6 +7,7 @@ import GridFigure from './GridFigure.astro';
 import PlaybookFigure from './PlaybookFigure.astro';
 import Drawer from './Drawer.astro';
 import RepoMark from './RepoMark.astro';
+import AnnotateMark from './AnnotateMark.astro';
 import { docPath } from '../lib/docs';
 import type { ProcessModel } from '../lib/docs';
 
@@ -42,6 +43,7 @@ const views = [
         <span class="mast__status">
           {doc.activities.length} ACTIVITIES · {process.stages.length} STAGES
         </span>
+        <AnnotateMark />
         <RepoMark />
       </div>
       <nav class="mast__switch" aria-label="Process">

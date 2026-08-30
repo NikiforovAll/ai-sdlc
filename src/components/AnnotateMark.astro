@@ -1,0 +1,46 @@
+---
+// The masthead's switch for annotate mode — see `_plans/spec-annotations.md`.
+//
+// The mode already has a keyboard binding, but a binding nobody is told about is
+// a feature only its author has. This is the same toggle with a face on it, and
+// it sits beside the repo mark because both are the tool talking about itself
+// rather than the process talking about the team.
+//
+// The dev-only gate is here rather than at the call sites. `Layout` can gate the
+// layer inline because there is one layout; this renders once per document, and
+// a gate copied to each masthead is a gate the next document component forgets —
+// which would ship a switch into the export for a mode the export cannot serve
+// (D-ANN-5), with no listener behind it because `Annotate` really is gated.
+const dev = import.meta.env.DEV;
+---
+
+{
+  dev && (
+    /* `data-ann` marks this as annotate-mode chrome rather than part of the
+       document being annotated — the same thing it means on the bar and the
+       composer. It is what exempts the button from the layer's capture-phase
+       click handler and from the mode's crosshair cursor, so pressing it leaves
+       the mode instead of annotating it. */
+    <button
+      type="button"
+      class="mast__mark mast__ann"
+      data-ann
+      data-ann-toggle
+      aria-pressed="false"
+      title="Annotate this document (A)"
+    >
+      <svg class="mast__mark-glyph" viewBox="0 0 16 16" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M11.4 1.6a1.4 1.4 0 0 1 2 2l-.8.8-2-2 .8-.8ZM9.9 3.1l2 2-6.6 6.6-2.6.6.6-2.6 6.6-6.6ZM2 14h12v1.4H2V14Z"
+        />
+      </svg>
+      <span class="mast__mark-name">annotate</span>
+    </button>
+  )
+}
+
+{/* No style block: `.mast__mark` in `global.css` carries the look, and the lit
+    state belongs to `Annotate.astro`, which is gated. A scoped rule here would
+    be emitted into the built page even though the button never renders there —
+    Astro collects a used component's styles whether or not it returns markup. */}

@@ -70,7 +70,7 @@ npm run dev        # serves examples/reference at http://localhost:4321
 
 ## Annotations
 
-A reader who disagrees with the document says so on the page. On a served page press `a`, click the thing that is wrong, write a sentence. The note is anchored to the model id underneath the click — an activity, a tool, a role — so it survives a re-render and an edit that moves the node; a click that names nothing is a note about the whole document.
+A reader who disagrees with the document says so on the page. On a served page press `a` — or click ANNOTATE in the masthead, beside the repo mark — then click the thing that is wrong and write a sentence. While the mode is on the viewport is ringed in green, so a click never means something the reader did not expect. The note is anchored to the model id underneath the click — an activity, a tool, a role — so it survives a re-render and an edit that moves the node; a click that names nothing is a note about the whole document.
 
 Arming the mode marks every node that already carries a note. Click one and its note opens for editing — the composer floats beside the node, prefilled, and saving rewrites that note in place; `+ NEW NOTE` starts a separate one on the same node.
 

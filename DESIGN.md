@@ -244,6 +244,8 @@ Flat. No decorative shadows anywhere; depth is conveyed by hairline rules, washi
 
 **The Shadowless Rule.** Surfaces never lift. If two layers must separate, use a solid 1px ink border and, for true overlays only, the white halo.
 
+The one other sanctioned glow is annotate mode's, and it is exempt for the same reason the halo is: it lifts nothing. Nothing is behind it — it is a state of the page said at the edge of the page, and a border alone could not say it, because the reader has to notice a mode they did not mean to leave on. It is scoped to that mode, which exists only on a served page, and it is the only place in this world where green is allowed to bloom.
+
 ## Shapes
 
 Everything is a rectangle with square corners; border-radius is 0 throughout and no rounding token exists. Form language is line-drawn: 1px hairline (#dadada) for passive structure, 1px solid ink for interactive nodes and the drawer edge, 1px dashed muted for open slots, 2px solid green for the constraint edge, the nested sub-flow spine, and the selected node's reading edge. The 135° green stripe texture (`--stripe`, 12%-alpha green, 1px stripes on a 6px period) fills open slots over a washi base; a 45° hatch of #e4e4e0 lines fills idle stage×lane cells. Flow edges are cubic bezier curves in SVG; glyphs are drawn or typographic (▸/▾ expanders, ✕ close, ① constraint, an inline SVG bolt) — no icon font, no icon library.
@@ -301,8 +303,13 @@ Roles are the exception, and the only catalog whose entries stack: the id leads 
 ### Process Switcher
 The process page's sibling navigation, a hairline-topped row under the display name: a quiet PROCESSES tab, one link per process in the team (10px/700 uppercase, 1px ink border, washi on hover, inverted to solid ink for `aria-current="page"`), and a right-aligned stage run of the current process. It is the filter-chip shape doing navigation, so the page's own position reads the same as an active filter. The masthead also carries an up-link to the document page ("↑ TEAM NAME", 10px uppercase, hairline underline that turns green on hover).
 
+### Annotate Mode
+Served pages only, and the one mode this world has. The masthead's quiet end carries its switch — a pencil glyph and the word ANNOTATE in the repo mark's own line, lit green while armed — and `a` arms it from the keyboard. Armed, a 2px signal-green frame rings the viewport with the accent breathing inward, an ink bar sits at the bottom-left corner on the constraint chip's own 14px inset (green border, green glow, the ANNOTATE tab seated in a 5px gutter, the hint beside it), and every node the model names answers the pointer: solid accent outline on hover, dashed ink where a note already exists, solid ink with a heavier wash on the composer's subject. The composer is a floating `.module` placed against its node. Nothing about the mode survives into a built page.
+
 ### Motion
-Two speeds only: 0.12s ease-out for hover washes and selection inversion on nodes, chips, and buttons (0.14s `--ease-out` on the process card's link, which recolors its name, underline, and arrow together and moves nothing); 0.28s `cubic-bezier(0.16, 1, 0.3, 1)` (`--ease-out`) for filter dim/undim opacity across lanes, edges, labels, and rows. No entrance animations, no transforms, no easing flourishes. Under `prefers-reduced-motion: reduce` every duration collapses to nothing: each state here is already legible standing still — a wash, an inversion, a green mark — so the transition only smooths the arrival and costs a reader nothing when removed.
+Two speeds, and one loop. The loop is annotate mode's frame, which breathes its glow on a 2.4s ease-in-out alternate for as long as the mode is armed — the only animation in this world that is not a transition between two states, because it is not reporting an arrival, it is a pilot light for a mode that changes what every click on the page means. It fades opacity on its own layer and never takes the ring underneath out, so the signal is legible standing still and `prefers-reduced-motion: reduce` drops the motion alone.
+
+0.12s ease-out for hover washes and selection inversion on nodes, chips, and buttons (0.14s `--ease-out` on the process card's link, which recolors its name, underline, and arrow together and moves nothing); 0.28s `cubic-bezier(0.16, 1, 0.3, 1)` (`--ease-out`) for filter dim/undim opacity across lanes, edges, labels, and rows. No entrance animations, no transforms, no easing flourishes. Under `prefers-reduced-motion: reduce` every duration collapses to nothing: each state here is already legible standing still — a wash, an inversion, a green mark — so the transition only smooths the arrival and costs a reader nothing when removed.
 
 ## Do's and Don'ts
 
@@ -316,7 +323,7 @@ Two speeds only: 0.12s ease-out for hover washes and selection inversion on node
 - **Do** state where a catalog entry is used in its row's right-aligned micro tag, and say so plainly when nothing uses it ("shelf inventory", "unused", "no play yet").
 
 ### Don't:
-- **Don't** round a corner, add a decorative shadow, or introduce a gradient; the only sanctioned shadow is the inset overlay's white halo.
+- **Don't** round a corner, add a decorative shadow, or introduce a gradient; the only sanctioned shadows are the inset overlay's white halo and annotate mode's frame glow.
 - **Don't** use green as a fill, background wash, or body-text color; it is a tab-and-signal ink only, with #7fd6a8 as its sole on-ink variant.
 - **Don't** imply time on any axis — no timelines, durations, dates, or drawn rework loops; sequence is topological order only.
 - **Don't** introduce a second typeface, an icon set, or sizes outside 56/28/20/16/14/12/10/9 (+11px node titles).

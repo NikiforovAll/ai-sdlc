@@ -11,6 +11,13 @@
 import { MAX_NOTE } from '../lib/anchor';
 ---
 
+<!-- The armed mode, said at the edge of the screen. It is the one state that
+     changes what a click means everywhere at once, so it is stated everywhere
+     at once rather than in a corner the reader's eye has already left. Inert to
+     the pointer — the whole page underneath stays clickable, which is the point
+     of the mode. -->
+<div class="ann__frame" data-ann-frame aria-hidden="true"></div>
+
 <div class="ann" data-ann>
   <div class="ann__bar" data-ann-bar>
     <span class="tab">ANNOTATE</span>
@@ -44,12 +51,15 @@ import { MAX_NOTE } from '../lib/anchor';
   /* The bar sits in the one corner nothing else claims: the drawer takes the
      right edge, the impeccable live bar the bottom center. One flag puts it
      there — the body attribute that arms the mode is also what shows it, so
-     there is no second piece of visibility state to keep in step. */
+     there is no second piece of visibility state to keep in step.
+     The 14px seam is the constraint chip's, in the opposite corner: this world
+     has one inset for a panel that floats over a figure, and a bar run into the
+     corner instead reads as a strip the viewport cut off rather than a panel. */
   .ann {
     display: none;
     position: fixed;
-    left: 0;
-    bottom: 0;
+    left: 14px;
+    bottom: 14px;
     z-index: 90;
     font-family: var(--font);
   }
@@ -58,18 +68,95 @@ import { MAX_NOTE } from '../lib/anchor';
     display: block;
   }
 
+  /* The mode frame. A 2px signal-green ring with the accent bleeding inward —
+     the one sanctioned glow outside the sub-process halo, and functional for
+     the same reason that one is: it is not lifting a surface, it is saying the
+     page itself is in a state. Green because that is this world's signal ink,
+     and it is drawn on nothing, so the ban on green as a fill still holds.
+     Inset rather than outset: an outer glow on a fixed frame has nowhere to
+     fall, and would only clip against the viewport edge. */
+  .ann__frame {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 89;
+    pointer-events: none;
+    border: 2px solid var(--accent);
+  }
+
+  /* The glow breathes on its own layer, and by opacity alone: animating the
+     shadow itself repaints the whole frame every frame, while an opacity fade
+     on a pseudo-element the compositor already holds costs nothing. Slow —
+     2.4s, and the ring underneath never goes out — because this runs for as
+     long as the mode is on, behind a reader who is trying to read. A blink
+     would be a countdown; this is a pilot light. */
+  .ann__frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* The haze alone. The ring is the element's own border, already solid and
+       already full strength — a second ring at the same inset would be the
+       static one breathing over itself. */
+    box-shadow: inset 0 0 44px rgba(15, 107, 60, 0.5);
+    animation: ann-breathe 2.4s ease-in-out infinite alternate;
+  }
+
+  @keyframes ann-breathe {
+    from {
+      opacity: 0.1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* The frame is fully legible standing still, which is what this world asks of
+     a state — so the motion is the part that goes, not the signal. */
+  @media (prefers-reduced-motion: reduce) {
+    .ann__frame::after {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
+  :global(body[data-annotate]) .ann__frame {
+    display: block;
+  }
+
+  /* The masthead switch, lit. It reads the body flag rather than its own
+     `aria-pressed` so the mode has one source of truth for its look and
+     `aria-pressed` stays what it is — the announcement, which CSS cannot make
+     and a selector should not depend on. The rule lives here because this file
+     is the one the layout gates: a scoped rule in the button's own component
+     would ship into a built page the button is absent from. */
+  :global(body[data-annotate] [data-ann-toggle]) {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
   /* `display` on the element beats the UA rule for `[hidden]`, and the composer
      is flex — without this it never visibly closes. */
   .ann__composer[hidden] {
     display: none;
   }
 
+  /* A module head that happens to float: tab seated in an even gutter, ink
+     ground, and the 1px border the Shadowless Rule gives a layer that has to
+     separate from what it sits over. The border is the frame's green and the
+     glow is the frame's glow, so the bar reads as the lit edge's label rather
+     than as a second piece of chrome that happens to be on at the same time. */
   .ann__bar {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 10px 5px 0;
+    padding: 5px 10px 5px 5px;
+    /* The same cap the constraint chip takes in the opposite corner: on a phone
+       the hint wraps to a second line rather than running off the edge, which
+       is the truncation this bar is meant not to read as. */
+    max-width: calc(100vw - 28px);
     background: var(--ink);
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 14px rgba(15, 107, 60, 0.3);
     color: var(--white);
     font-size: var(--label);
     letter-spacing: 0.08em;
@@ -341,13 +428,23 @@ import { MAX_NOTE } from '../lib/anchor';
     mark();
   }
 
+  // One switch per document, and the export puts several documents in one file —
+  // so the pressed state is written to all of them, not to the one that was
+  // clicked. The mode is a property of the page.
+  const toggles = document.querySelectorAll<HTMLButtonElement>('[data-ann-toggle]');
+  const showArmed = (on: boolean) => {
+    for (const t of toggles) t.setAttribute('aria-pressed', String(on));
+  };
+
   function arm() {
     document.body.setAttribute('data-annotate', '');
+    showArmed(true);
     void load();
   }
 
   function disarm() {
     document.body.removeAttribute('data-annotate');
+    showArmed(false);
     closeComposer();
     // Leaving takes the marks with it, so the next arming draws what the folder
     // holds then rather than what it held before.
@@ -497,6 +594,8 @@ import { MAX_NOTE } from '../lib/anchor';
     },
     true
   );
+
+  for (const t of toggles) t.addEventListener('click', () => (armed() ? disarm() : arm()));
 
   cancel.addEventListener('click', closeComposer);
 

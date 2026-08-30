@@ -570,6 +570,56 @@ main {
   color: var(--accent);
 }
 
+/* The quiet end of the masthead strip: the repo link, and on a served page the
+   annotate switch beside it. One class rather than one per mark — they are read
+   as a single line, so a change to the look has to be a change to the line.
+   Reads as the quiet end of the status line, not as a fourth title: the glyph
+   carries the recognition and the word stays at the label step in sub gray.
+   Everything a link and a button disagree about is settled here too, so neither
+   component has to reset the other's default. */
+.mast__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 0 1px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: var(--sub);
+  font-family: var(--font);
+  font-size: var(--micro);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.mast__mark:hover,
+.mast__mark:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.mast__mark-glyph {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+/* Narrow: the strip keeps its glyphs and drops its words. */
+@media (max-width: 620px) {
+  .mast__mark-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 /* The document page states its name inside the thin top line and puts the prose
    behind the drawer, so the masthead costs one row instead of a display block. */
 .mast__title {

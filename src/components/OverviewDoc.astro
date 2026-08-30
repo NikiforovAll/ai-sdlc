@@ -5,6 +5,7 @@
 import TeamDrawer from './TeamDrawer.astro';
 import UseList from './UseList.astro';
 import RepoMark from './RepoMark.astro';
+import AnnotateMark from './AnnotateMark.astro';
 import { docPath } from '../lib/docs';
 import type { OverviewModel } from '../lib/docs';
 
@@ -39,6 +40,7 @@ const docHref = (slug: string) => (inline ? '#' : docPath(slug));
         <span class="mast__status">
           VERSION {team.version} · STATUS <strong class:list={{ 'mast__living': team.status === 'living' }}>{team.status.toUpperCase()}</strong>
         </span>
+        <AnnotateMark />
         <RepoMark />
       </div>
 
