@@ -116,10 +116,15 @@ const views = [
 <script>
   import { panelNav } from '../lib/panel-nav';
   import type { PanelState } from '../lib/panel-nav';
+  import { dropState, keyToToken, onStateChange, readState, tokenToKey, writeState } from '../lib/url-state';
+  import type { UrlState } from '../lib/url-state';
 
   // Root-scoped, initialized once per process document. The export puts four of
   // these in one file, so nothing here may reach for a document-global singleton.
   const escapers: (() => void)[] = [];
+  // Same rule for the URL: the export holds every document in one file and one
+  // address bar, so only the document a reader can see may state the reading.
+  const appliers: ((state: UrlState) => void)[] = [];
 
   const init = (root: HTMLElement) => {
     const main = root.querySelector('main')!;
@@ -129,34 +134,51 @@ const views = [
     const topActs = acts.filter((a) => a.dataset.depth === '0');
     const total = new Set(topActs.map((a) => a.dataset.act)).size;
 
-    // View switcher
+    // Only the document a reader is looking at may write the address bar. On a
+    // route that is always this one; in the export three of the four are hidden,
+    // and a hidden document restoring its own state would overwrite the showing
+    // one's.
+    const state = (next: UrlState) => {
+      if (!root.hidden) writeState(next);
+    };
+
+    // View switcher. The buttons are the vocabulary: a fourth view added to the
+    // frontmatter renders a button, and a deep link naming it is answered from
+    // the same list rather than from a second one that would forget it.
+    const viewBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-viewbtn]')];
+    const VIEWS = viewBtns.map((b) => b.dataset.viewbtn!);
     const setView = (id: string) => {
       main.dataset.view = id;
-      for (const b of root.querySelectorAll<HTMLElement>('[data-viewbtn]')) {
-        b.setAttribute('aria-pressed', String(b.dataset.viewbtn === id));
-      }
+      for (const b of viewBtns) b.setAttribute('aria-pressed', String(b.dataset.viewbtn === id));
+      // FLOW is the view a document opens on, so it is said by silence: coming
+      // back to it shortens the link rather than growing it.
+      state({ view: id === 'flow' ? '' : id });
     };
-    for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-viewbtn]')) {
+    for (const btn of viewBtns) {
       btn.addEventListener('click', () => setView(btn.dataset.viewbtn!));
     }
 
-    // Role filter (counts top-level activities only)
-    for (const chip of root.querySelectorAll<HTMLButtonElement>('.filter__chip')) {
-      chip.addEventListener('click', () => {
-        const role = chip.dataset.filter ?? '';
-        main.dataset.role = role;
-        for (const c of root.querySelectorAll('.filter__chip')) {
-          c.setAttribute('aria-pressed', String(c === chip));
-        }
-        if (!role) {
-          readout.textContent = `all ${total} activities in scope`;
-        } else {
-          const inScope = new Set(
-            topActs.filter((a) => (a.dataset.roles ?? '').split(' ').includes(role)).map((a) => a.dataset.act)
-          ).size;
-          readout.textContent = `${chip.textContent?.trim()} — ${inScope} of ${total} activities in scope`;
-        }
-      });
+    // Role filter (counts top-level activities only). Lifted out of the click
+    // handler because a pasted link sets the same lens without a chip to click.
+    const chips = [...root.querySelectorAll<HTMLButtonElement>('.filter__chip')];
+    const setRole = (role: string) => {
+      const chip = chips.find((c) => (c.dataset.filter ?? '') === role);
+      if (!chip) return false;
+      main.dataset.role = role;
+      for (const c of chips) c.setAttribute('aria-pressed', String(c === chip));
+      if (!role) {
+        readout.textContent = `all ${total} activities in scope`;
+      } else {
+        const inScope = new Set(
+          topActs.filter((a) => (a.dataset.roles ?? '').split(' ').includes(role)).map((a) => a.dataset.act)
+        ).size;
+        readout.textContent = `${chip.textContent?.trim()} — ${inScope} of ${total} activities in scope`;
+      }
+      state({ role });
+      return true;
+    };
+    for (const chip of chips) {
+      chip.addEventListener('click', () => setRole(chip.dataset.filter ?? ''));
     }
 
     // The mark is one reading position, and it lands on every node that names the
@@ -248,6 +270,7 @@ const views = [
       drawer.hidden = false;
       main.setAttribute('data-drawer-open', '');
       procOpen?.setAttribute('aria-expanded', String(key === '__process'));
+      state({ open: keyToToken(key) ?? '' });
     };
     const closeDrawer = () => {
       drawer.hidden = true;
@@ -255,6 +278,7 @@ const views = [
       main.removeAttribute('data-drawer-open');
       clearMarks();
       procOpen?.setAttribute('aria-expanded', 'false');
+      state({ open: '' });
     };
 
     // Every figure scrolls sideways inside its own track, so "bring this node
@@ -381,32 +405,45 @@ const views = [
     });
 
     // A catalog link on the team document arrives as #act-<id> or #tool-<id> (a
-    // route) or as an `aisdlc:focus` event (the export, which has no routes).
-    // A hash is read, never written: a drawer opened by clicking a node is a
-    // reading position, not an address, and writing it would fill the history
-    // with noise.
-    const focus = (target: string) => {
-      const sep = target.indexOf('-');
-      const kind = target.slice(0, sep);
-      const id = target.slice(sep + 1);
-      const key = kind === 'tool' ? `tool:${id}` : kind === 'act' ? id : null;
-      if (!key || !nav.has(key)) return;
+    // route) or as an `aisdlc:focus` event (the export, which has no routes) —
+    // and, since deep links, as the `open` key of a pasted address.
+    //
+    // The hash is written as well as read now, but never pushed. The objection
+    // this used to answer — that writing it would fill the history with noise —
+    // was to `pushState` and to one entry per filter click. `replaceState` adds
+    // no entry, so Back still leaves the page, and the reading a coach wants to
+    // paste is the one thing the address bar could not previously say. Restoring
+    // needs no write suppression: a restore's writes reproduce the hash they came
+    // from, and `writeState` drops a write that changes nothing.
+    //
+    // `inView` is the view a link asked for, which the target's own view
+    // overrules only when the target has no node there to be seen in.
+    const focus = (target: string, inView = '') => {
+      const key = tokenToKey(target);
+      if (!key || !nav.has(key)) return false;
       // A tool that fills an activity has no button of its own — it is drawn as
       // the activity that reaches for it — so the link's node is that fill, and
       // the swimlane is where a reader expects to land: `acts` is in document
       // order, and the flow panel comes before the grid and the playbook. Only a
       // tool that is recommended rather than filled has a button of its own.
       // Without this the drawer opened onto a page where nothing was marked and
-      // nothing moved.
-      const btn = kind === 'tool'
-        ? acts.find((b) => b.dataset.fills === id) ??
-          tools.find((b) => b.dataset.tool === id)
-        : acts.find((b) => b.dataset.act === id);
+      // nothing moved. A catalog entry — an artifact, a role, a harness — has no
+      // node at all and opens its panel with nothing marked.
+      const toolId = key.startsWith('tool:') ? key.slice(5) : null;
+      const candidates = toolId
+        ? [...acts.filter((b) => b.dataset.fills === toolId), ...tools.filter((b) => b.dataset.tool === toolId)]
+        : acts.filter((b) => b.dataset.act === key);
+      const panelOf = (b: HTMLElement) => b.closest<HTMLElement>('[data-viewpanel]')?.dataset.viewpanel ?? '';
+      // A link that names both a view and a node is answered in the view it
+      // named, when the node is drawn there. When it is not — a tool has a button
+      // only in PLAYBOOK — the node's own view wins: a selection the reader
+      // cannot see reads as a link that did nothing.
+      const wanted = inView ? candidates.find((b) => panelOf(b) === inView) : undefined;
+      const btn = wanted ?? candidates[0];
       if (btn) {
-        // The node may live in a view that is not showing — a tool only has a button
-        // in PLAYBOOK — so the link brings its own view with it.
-        const panel = btn.closest<HTMLElement>('[data-viewpanel]');
-        if (panel?.dataset.viewpanel) setView(panel.dataset.viewpanel);
+        // The node may live in a view that is not showing, so the link brings its
+        // own view with it.
+        if (!wanted && panelOf(btn)) setView(panelOf(btn));
         // An artifact with no top-level producer points at a sub-activity, whose node
         // sits in a collapsed inset — open every inset on the way down to it.
         for (let el = btn.closest<HTMLElement>('[data-subflow-panel]'); el; el = el.parentElement?.closest<HTMLElement>('[data-subflow-panel]') ?? null) {
@@ -422,8 +459,45 @@ const views = [
       // reveal below has to know how much room is left before it centres.
       openDrawer(key);
       if (btn) bringIntoView(btn, 'center');
+      return true;
     };
     root.addEventListener('aisdlc:focus', (e) => focus((e as CustomEvent<string>).detail));
+
+    // Restoring a pasted reading, in the one order that works. View first,
+    // because everything below is read inside it. Lens second, because it dims
+    // non-matching nodes and takes their pointer events away — restoring the
+    // drawer first would centre a node and then fade it under the reader. Drawer
+    // last, because it is the only step that measures the page, and it has to
+    // measure the layout the other two produced.
+    //
+    // A key this document cannot answer is dropped from the address bar rather
+    // than reported: the link visibly shortens itself and what is left is exactly
+    // what is on screen. A team folder's name is its id, so links do go stale by
+    // design, and a stale one is not worth a surface this world has no vocabulary
+    // for. The `dropState` console line is the coach's half, and is dev-only.
+    const applyState = (s: UrlState) => {
+      if (root.hidden) return;
+      const view = s.view ?? '';
+      const known = VIEWS.includes(view);
+      if (view && !known) dropState('view', view, `not one of ${VIEWS.join(', ')}`);
+      setView(known ? view : 'flow');
+
+      const role = s.role ?? '';
+      if (!setRole(role)) {
+        dropState('role', role, 'no role with that id in this team');
+        setRole('');
+      }
+
+      const open = s.open ?? '';
+      if (open) {
+        if (!focus(open, known ? view : '')) {
+          dropState('open', open, 'nothing in this document answers to it');
+        }
+      } else if (!drawer.hidden) {
+        closeDrawer();
+      }
+    };
+    appliers.push(applyState);
 
     // Sub-process expand/collapse
     for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-expand]')) {
@@ -449,16 +523,15 @@ const views = [
     for (const escape of escapers) escape();
   });
 
-  // A route holds exactly one process document, so the hash addresses it.
-  if (roots.length === 1) {
-    const root = roots[0];
-    const fromHash = () => {
-      const h = decodeURIComponent(location.hash.slice(1));
-      if (h) root.dispatchEvent(new CustomEvent('aisdlc:focus', { detail: h }));
-    };
-    fromHash();
-    window.addEventListener('hashchange', fromHash);
-  }
+  // Every document offers to restore; the one that is showing accepts. On a route
+  // that is the only one there is. In the export the `doc` key is answered by the
+  // page's own switcher, which runs in a script of its own — so the first restore
+  // waits a frame, by which time the right document is the one on screen.
+  const apply = (state: UrlState) => {
+    for (const applier of appliers) applier(state);
+  };
+  requestAnimationFrame(() => apply(readState()));
+  onStateChange(apply);
 </script>
 
 <style>

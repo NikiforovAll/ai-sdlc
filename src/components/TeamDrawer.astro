@@ -259,6 +259,7 @@ const openPanels = [
 
 <script>
   import { panelNav } from '../lib/panel-nav';
+  import { dropState, keyToToken, onStateChange, readState, tokenToKey, writeState } from '../lib/url-state';
 
   const drawer = document.getElementById('team-drawer');
   const openers = document.querySelectorAll<HTMLButtonElement>('[data-open-team]');
@@ -274,12 +275,19 @@ const openPanels = [
       close: closeBtn,
     });
 
+    // The team document has no view and no lens, so `open` is the whole of what
+    // its address can say. `writeState` touches only the key it is given, which is
+    // what lets this drawer and the process document share one address bar in the
+    // export without erasing each other.
+    const state = (key: string | null) => writeState({ open: key ? keyToToken(key) ?? '' : '' });
+
     const setOpen = (open: boolean) => {
       drawer.hidden = !open;
       for (const b of openers) b.setAttribute('aria-expanded', String(open));
     };
     const close = () => {
       setOpen(false);
+      state(null);
       // The drawer is opened from a single line of chrome; without this the focus
       // ring lands at the top of the document and the reader loses their place.
       opener?.focus();
@@ -291,6 +299,7 @@ const openPanels = [
         opener = btn;
         nav.show('__team');
         setOpen(true);
+        state('__team');
         closeBtn?.focus();
       });
     }
@@ -305,6 +314,7 @@ const openPanels = [
       if (!deeper) opener = el instanceof HTMLButtonElement ? el : null;
       nav.show(key, deeper, { invoker: el });
       setOpen(true);
+      state(key);
       // Stepping deeper puts the way out under the cursor's own hand: the back
       // control, not close, is what a reader one panel down wants next.
       (nav.depth() ? back : closeBtn)?.focus();
@@ -320,8 +330,38 @@ const openPanels = [
       const t = e.target as HTMLElement | null;
       if (t?.closest('#team-drawer') || t?.closest('[data-open-team]') || t?.closest('[data-detail-key]')) return;
       setOpen(false);
+      state(null);
       opener = null;
     });
+
+    // The read side. A catalog entry is reachable from a pasted link the same way
+    // it is from a click — `/#open=role-lead` — which is what makes the team
+    // document addressable at all; before this it ignored the hash entirely.
+    // A key this team has no panel for is dropped from the address bar, so the
+    // link shortens itself rather than leaving the reader in front of a document
+    // that quietly did nothing.
+    const applyState = (s = readState()) => {
+      // A process document owns `view` and `role`; this one reads `open` alone,
+      // and only when its own document is the one showing.
+      if (drawer.closest<HTMLElement>('[data-doc]')?.hidden) return;
+      const token = s.open ?? '';
+      const key = token ? tokenToKey(token) : null;
+      if (!token) {
+        if (!drawer.hidden) {
+          setOpen(false);
+          opener = null;
+        }
+        return;
+      }
+      if (!key || !nav.has(key)) {
+        dropState('open', token, 'no panel in this team document answers to it');
+        return;
+      }
+      nav.show(key);
+      setOpen(true);
+    };
+    requestAnimationFrame(() => applyState());
+    onStateChange(applyState);
   }
 </script>
 

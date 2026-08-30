@@ -31,28 +31,55 @@ const [overview, processes] = await Promise.all([overviewModel(), processModels(
   // There are no routes inside one file, so every link that named one becomes a
   // document switch. `data-goto` carries the target ('' is the team document) and
   // `data-focus` the drawer key the process document should open on arrival.
+  import { onStateChange, readState, writeState } from '../lib/url-state';
+  import type { UrlState } from '../lib/url-state';
+
   const TEAM = '__team';
   const docs = new Map(
     [...document.querySelectorAll<HTMLElement>('[data-doc]')].map((el) => [el.dataset.doc!, el])
   );
   const buttons = [...document.querySelectorAll<HTMLButtonElement>('.switch__doc')];
 
-  const show = (name: string, focus?: string) => {
+  // The switch alone — the URL is written by the click handler, not here, so a
+  // restore can land on a document without erasing the rest of the pasted state.
+  const show = (name: string) => {
     const key = name || TEAM;
     const target = docs.get(key);
-    if (!target) return;
+    if (!target) return null;
+    if (!target.hidden) return target;
     for (const [id, el] of docs) el.hidden = id !== key;
     for (const b of buttons) b.setAttribute('aria-pressed', String((b.dataset.goto || TEAM) === key));
     window.scrollTo(0, 0);
-    if (focus) target.dispatchEvent(new CustomEvent('aisdlc:focus', { detail: focus }));
+    return target;
   };
 
   for (const el of document.querySelectorAll<HTMLElement>('[data-goto]')) {
     el.addEventListener('click', (e) => {
       e.preventDefault();
-      show(el.dataset.goto!, el.dataset.focus);
+      const target = show(el.dataset.goto!);
+      if (!target) return;
+      // The `doc` key exists only here: a route's path already names its document,
+      // and one file has no path to name anything with. `open` is cleared because
+      // a drawer key belongs to the document it was read in — carried across, it
+      // would name a panel the new document has never heard of; a link's own
+      // `data-focus` re-states it through the target document, normalised.
+      writeState({ doc: el.dataset.goto!, open: '' });
+      const focus = el.dataset.focus;
+      if (focus) target.dispatchEvent(new CustomEvent('aisdlc:focus', { detail: focus }));
     });
   }
+
+  // Answered before the documents restore their own state, and synchronously:
+  // this module is deferred, so the page is parsed, and the view/lens/drawer
+  // restore inside each document waits a frame precisely so it finds the right
+  // one already on screen. `team` is read but never written — the document a file
+  // opens on is said by silence, like FLOW and the empty lens.
+  const fromState = (s: UrlState = readState()) => {
+    const doc = s.doc ?? '';
+    if (doc && !show(doc === 'team' ? '' : doc)) writeState({ doc: '' });
+  };
+  fromState();
+  onStateChange(fromState);
 </script>
 
 <style>

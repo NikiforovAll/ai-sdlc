@@ -155,13 +155,19 @@ const DOC_STATE = `() => JSON.stringify({
   overlay: !!document.querySelector('vite-error-overlay'),
 })`;
 
+// The one spelling of "which drawer panels are showing", parameterised on the
+// scope so the same probe serves a route (the whole document) and the export
+// (the one visible document among four).
+const openPanels = (scope) =>
+  `[...${scope}.querySelectorAll('[data-detail]')].filter(p => !p.hidden).map(p => p.dataset.detail)`;
+
 const OPEN_FIRST_ACT = `() => {
   const b = document.querySelector('button[data-act]');
   b.click();
   return JSON.stringify({
     act: b.dataset.act,
     drawerHidden: document.querySelector('[data-drawer]').hidden,
-    open: [...document.querySelectorAll('[data-detail]')].filter(p => !p.hidden).map(p => p.dataset.detail),
+    open: ${openPanels('document')},
   });
 }`;
 
@@ -198,6 +204,128 @@ async function driveProcess(base, id) {
   );
 }
 
+// ── deep links ─────────────────────────────────────────────────────────────
+// The restore runs a frame after load — the export's document switcher has to
+// answer `doc` first — and the drawer's reveal waits two more to measure the
+// column the panel pushed. So every probe settles before it reads.
+const settle = (expr) => `() => new Promise(res => {
+  let n = 5;
+  const tick = () => (--n ? requestAnimationFrame(tick) : res(JSON.stringify(${expr})));
+  requestAnimationFrame(tick);
+})`;
+
+// Scoped to the showing document, so the same probe is correct on a route (one
+// document is the page) and in the export (four share it, three hidden).
+const URL_STATE = `(() => {
+  const scope = document.querySelector('[data-doc]:not([hidden])') ?? document;
+  return {
+    view: scope.querySelector('main')?.dataset.view ?? null,
+    role: scope.querySelector('main')?.dataset.role ?? null,
+    hash: location.hash,
+    panels: ${openPanels('scope')},
+    drawerHidden: scope.querySelector('[data-drawer]')?.hidden ?? null,
+    teamHidden: document.getElementById('team-drawer')?.hidden ?? null,
+    readout: scope.querySelector('[data-readout]')?.textContent?.trim() ?? null,
+    doc: [...document.querySelectorAll('[data-doc]')].filter(d => !d.hidden).map(d => d.dataset.doc),
+  };
+})()`;
+
+// A hash-only change is a same-document navigation, which exercises the
+// `hashchange` path rather than the cold arrival a pasted link actually is. Every
+// landing goes via about:blank so the page is really loaded from scratch, without
+// rendering a throwaway document just to leave it.
+function land(url) {
+  pw('goto', 'about:blank');
+  pw('goto', url);
+  return evalPage(settle(URL_STATE));
+}
+
+async function driveDeepLinks(base, id) {
+  pw('goto', `${base}/${id}`);
+  const pick = evalPage(`() => JSON.stringify({
+    role: [...document.querySelectorAll('.filter__chip')].find(c => c.dataset.filter)?.dataset.filter ?? '',
+    act: document.querySelector('button[data-act][data-depth="0"]').dataset.act,
+  })`);
+  const at = (hash) => land(`${base}/${id}#${hash}`);
+
+  check(`/${id} #view= restores the view`, at('view=grid').view === 'grid', 'grid');
+
+  const lensed = at(`role=${pick.role}`);
+  check(
+    `/${id} #role= restores the lens`,
+    lensed.role === pick.role && /of \d+ activities in scope/.test(lensed.readout ?? ''),
+    lensed.readout
+  );
+
+  const opened = at(`open=act-${pick.act}`);
+  check(
+    `/${id} #open= restores the drawer`,
+    opened.drawerHidden === false && opened.panels.length === 1 && opened.panels[0] === pick.act,
+    pick.act
+  );
+
+  const all = at(`view=grid&role=${pick.role}&open=act-${pick.act}`);
+  check(
+    `/${id} view, lens and drawer compose`,
+    all.view === 'grid' && all.role === pick.role && all.panels[0] === pick.act,
+    `grid · ${pick.role} · ${pick.act}`
+  );
+
+  // Every `useHref` link ever pasted is a bare token, and a two-month-old link in
+  // a chat log is exactly the reader this feature is for.
+  const legacy = at(`act-${pick.act}`);
+  check(`/${id} legacy #act- hash still opens its panel`, legacy.panels[0] === pick.act, pick.act);
+
+  // The inverse of the old "the drawer position is deliberately not in the URL".
+  pw('goto', 'about:blank');
+  pw('goto', `${base}/${id}`);
+  const written = evalPage(`() => {
+    const b = document.querySelector('button[data-act][data-depth="0"]');
+    b.click();
+    document.querySelector('[data-viewbtn="grid"]').click();
+    [...document.querySelectorAll('.filter__chip')].find(c => c.dataset.filter).click();
+    return JSON.stringify({ act: b.dataset.act, hash: location.hash });
+  }`);
+  check(
+    `/${id} clicking writes the reading into the hash`,
+    written.hash.includes(`open=act-${written.act}`) &&
+      written.hash.includes('view=grid') &&
+      written.hash.includes('role='),
+    written.hash
+  );
+
+  // `replaceState`, never `pushState` — the objection the old comment raised.
+  const history = evalPage(`() => {
+    const before = window.history.length;
+    const buttons = [...document.querySelectorAll('button[data-act][data-depth="0"]')].slice(0, 3);
+    for (const b of buttons) b.click();
+    document.querySelector('[data-viewbtn="playbook"]').click();
+    return JSON.stringify({ before, after: window.history.length, clicks: buttons.length });
+  }`);
+  check(
+    `/${id} clicking adds no history entry`,
+    history.after === history.before,
+    `${history.clicks} activities + a view · length ${history.before} → ${history.after}`
+  );
+
+  // A team folder's name is its id, so links go stale by design. The address bar
+  // is the report: it stops naming a state the page is not in.
+  const stale = at('view=grid&open=act-no-such-activity');
+  check(
+    `/${id} a stale #open= drops itself from the hash`,
+    stale.drawerHidden === true && stale.view === 'grid' && !stale.hash.includes('open='),
+    stale.hash
+  );
+
+  // The team document ignored the hash entirely before this.
+  const team = land(`${base}/#open=role-${pick.role}`);
+  check(
+    '/ #open= opens the team drawer on that panel',
+    team.teamHidden === false && team.panels.includes(`role:${pick.role}`),
+    `role:${pick.role}`
+  );
+}
+
 // ── commands ───────────────────────────────────────────────────────────────
 async function smoke(teamDir) {
   const cache = await mkdtemp(join(tmpdir(), 'ai-sdlc-driver-'));
@@ -217,6 +345,11 @@ async function smoke(teamDir) {
 
   for (const id of ids) await driveProcess(base, id);
 
+  // One process carries the deep-link suite: the grammar is the same on every
+  // route, and running it three times would only be slower.
+  console.log('\ndeep links');
+  await driveDeepLinks(base, ids[0]);
+
   console.log('\nexporting');
   const out = join(cache, 'export.html');
   spawnSync(process.execPath, [join(ROOT, 'bin', 'ai-sdlc.mjs'), 'export', teamDir, '--out', out], {
@@ -225,7 +358,8 @@ async function smoke(teamDir) {
   });
   check('export writes one file', existsSync(out));
 
-  pw('goto', await serveFile(out));
+  const fileUrl = await serveFile(out);
+  pw('goto', fileUrl);
   const artifact = evalPage(`() => {
     const buttons = [...document.querySelectorAll('.switch__doc')];
     buttons[buttons.length - 1].click();
@@ -235,7 +369,7 @@ async function smoke(teamDir) {
     return JSON.stringify({
       docs: buttons.length,
       shown,
-      open: [...doc.querySelectorAll('[data-detail]')].filter(p => !p.hidden).map(p => p.dataset.detail),
+      open: ${openPanels('doc')},
       external: [...document.querySelectorAll('[src^="/"],[href^="/_astro"]')].length,
     });
   }`);
@@ -243,6 +377,18 @@ async function smoke(teamDir) {
   check('export shows one document at a time', artifact.shown.length === 1, artifact.shown[0]);
   check('export drawer works offline', artifact.open.length === 1, artifact.open[0]);
   check('export references no external asset', artifact.external === 0);
+
+  // The one file has no routes, so `doc` is the key that names a document — and
+  // the whole reading has to survive the switch to it. Every document is in the
+  // page at once, so the probe reads the one that is showing rather than the
+  // first one in the markup.
+  const act = evalPage(`() => JSON.stringify(document.querySelector('[data-doc="${ids[0]}"] button[data-act][data-depth="0"]').dataset.act)`);
+  const deep = land(`${fileUrl}#doc=${ids[0]}&view=grid&open=act-${act}`);
+  check(
+    'export restores document, view and drawer from one hash',
+    deep.doc.length === 1 && deep.doc[0] === ids[0] && deep.view === 'grid' && deep.panels[0] === act,
+    `${ids[0]} · grid · ${act}`
+  );
 }
 
 async function shot(teamDir, outDir) {
@@ -265,7 +411,7 @@ async function shot(teamDir, outDir) {
 const [command, ...rest] = process.argv.slice(2);
 const positional = rest.filter((a) => !a.startsWith('--'));
 const flag = (name) => rest.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=');
-const teamDir = resolve(positional[0] ?? join(ROOT, 'content', 'teams', 'reference'));
+const teamDir = resolve(positional[0] ?? join(ROOT, 'examples', 'reference'));
 
 try {
   if (command === 'smoke') await smoke(teamDir);

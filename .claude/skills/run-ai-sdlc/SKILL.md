@@ -36,24 +36,46 @@ It starts its own server on a free port, drives a real browser, and exits
 non-zero if any check fails. Last verified run:
 
 ```
-serving C:\Users\nikiforovall\dev\ai-sdlc\content\teams\reference
-  ok   / renders the team document — Reference Delivery Team — ai-sdlc
+serving C:\Users\nikiforovall\dev\ai-sdlc\examples\reference
+  ok   / renders the team document — Example Team — ai-sdlc
   ok   /bugfix renders — 8 activities
   ok   /bugfix drawer starts closed
   ok   /bugfix activity opens its drawer panel — triage-bug
   ok   /bugfix Escape closes the drawer
   ok   /bugfix view switches to PLAYBOOK
   ok   /bugfix role filter narrows the readout — Product Lead — 1 of 8 activities in scope
-  … same seven for /feature and /incident …
+  … same six for /feature and /incident …
+
+deep links
+  ok   /bugfix #view= restores the view — grid
+  ok   /bugfix #role= restores the lens — Product Lead — 1 of 8 activities in scope
+  ok   /bugfix #open= restores the drawer — triage-bug
+  ok   /bugfix view, lens and drawer compose — grid · lead · triage-bug
+  ok   /bugfix legacy #act- hash still opens its panel — triage-bug
+  ok   /bugfix clicking writes the reading into the hash — #view=grid&role=lead&open=act-triage-bug
+  ok   /bugfix clicking adds no history entry — 3 activities + a view · length 18 → 18
+  ok   /bugfix a stale #open= drops itself from the hash — #view=grid
+  ok   / #open= opens the team drawer on that panel — role:lead
+
 exporting
   ok   export writes one file
   ok   export holds every document — 4 documents
   ok   export shows one document at a time — incident
   ok   export drawer works offline — acknowledge-page
   ok   export references no external asset
+  ok   export restores document, view and drawer from one hash — bugfix · grid · triage-bug
 
-24/24 checks passed
+34/34 checks passed
 ```
+
+`fixtures/coverage` runs the same suite at 28/28 — two processes instead of
+three, and the deep-link block runs once per team, not once per route.
+
+The one thing the driver cannot reach is the export opened from `file://`, where
+the hash is written by `location.replace` because the history API refuses a URL
+argument on an opaque origin. Check that branch by hand: open
+`_exports/reference.html` from disk, click a view button and an activity, and
+confirm the address bar follows while Back still leaves the page.
 
 Screenshots — one PNG per route, at 1440×1000:
 
@@ -62,7 +84,7 @@ node .claude/skills/run-ai-sdlc/driver.mjs shot --out=/tmp/shots
 ```
 
 Both commands take a team folder as their first argument and default to
-`content/teams/reference`:
+`examples/reference`:
 
 ```bash
 node .claude/skills/run-ai-sdlc/driver.mjs smoke path/to/other-team
@@ -88,9 +110,9 @@ playwright-cli -s=probe close
 and never inferred:
 
 ```bash
-node bin/ai-sdlc.mjs check  content/teams/reference   # zod validation, no Astro — fast
-node bin/ai-sdlc.mjs export content/teams/reference --out _exports/reference.html
-AISDLC_CACHE_DIR=/tmp/aisdlc-serve node bin/ai-sdlc.mjs serve content/teams/reference --port 4400
+node bin/ai-sdlc.mjs check  examples/reference   # zod validation, no Astro — fast
+node bin/ai-sdlc.mjs export examples/reference --out _exports/reference.html
+AISDLC_CACHE_DIR=/tmp/aisdlc-serve node bin/ai-sdlc.mjs serve examples/reference --port 4400
 ```
 
 `serve` needs that env var only when another Astro process is already running
@@ -138,9 +160,12 @@ it means for a behavioural one.
 - **Each activity has three buttons**, one per figure. Count
   `new Set(…map(b => b.dataset.act)).size`, not `querySelectorAll` length, or
   every count is 3× too high.
-- **The drawer position is deliberately not in the URL.** A hash is read on
-  load (`#act-<id>`, `#tool-<id>`) and never written, so you cannot verify a
-  drawer by looking at `location`.
+- **The reading is in the hash, so `location` is a probe.** View, lens and open
+  drawer are written as `#view=grid&role=lead&open=act-<id>` on every change —
+  with `replaceState`, so `history.length` never grows. A default is absent
+  rather than spelled out, so a document sitting on FLOW with no lens and a
+  closed drawer has an empty hash. Bare `#act-<id>` / `#tool-<id>` is still read
+  as `open=`. The export adds `doc=<slug>` because one file has no routes.
 - **`playwright-cli` writes snapshot YAML into `.playwright-cli/`** in the cwd.
   It is gitignored; ignore it.
 
