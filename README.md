@@ -72,6 +72,8 @@ npm run dev        # serves examples/reference at http://localhost:4321
 
 A reader who disagrees with the document says so on the page. On a served page press `a` — or click ANNOTATE in the masthead, beside the repo mark — then click the thing that is wrong and write a sentence. While the mode is on the viewport is ringed in green, so a click never means something the reader did not expect. The note is anchored to the model id underneath the click — an activity, a tool, a role — so it survives a re-render and an edit that moves the node; a click that names nothing is a note about the whole document.
 
+The composer names the whole chain the click sat inside — `feature → write-spec → spec-interview` — with the nearest step chosen. A tool is drawn under every activity that uses it, so a note about it is usually a note about one of them: click a step to move the anchor up, and the rest is written into the file as `context`, which `ai-sdlc annotations` prints under the note.
+
 Arming the mode marks every node that already carries a note. Click one and its note opens for editing — the composer floats beside the node, prefilled, and saving rewrites that note in place; `+ NEW NOTE` starts a separate one on the same node.
 
 Each note lands as one file under `<team-dir>/annotations/`, so it is versioned with the YAML it is about. `ai-sdlc annotations <team-dir>` prints what is waiting and `--resolve <id>` deletes one that has been folded into the document — the YAML is the record, so a note whose change is already made is noise.

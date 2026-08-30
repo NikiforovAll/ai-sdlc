@@ -11,7 +11,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 // Imported at config load, not lazily inside the handler: a dynamic import from
 // here goes through Vite's module runner, which is already closed by the time a
 // request arrives — the write hangs with an unhandled rejection.
-import { ANNOTATIONS_ROUTE, isAnchor, MAX_NOTE } from '../lib/anchor';
+import { ANNOTATIONS_ROUTE, chainText, isAnchor, MAX_NOTE, toContext } from '../lib/anchor';
 import { readAnnotations, updateAnnotation, writeAnnotation } from '../lib/annotations';
 import { teamDirFromEnv } from '../lib/load';
 
@@ -65,8 +65,16 @@ export default function annotate(): AstroIntegration {
                 return send(res, 200, edited);
               }
               if (!isAnchor(body.anchor)) return send(res, 400, { error: 'anchor is not a model id' });
-              const written = await writeAnnotation(teamDir, body.anchor, note);
-              logger.info(`annotation ${written.id} → ${written.anchor}`);
+              // The chain is normalised, not validated: the note is the thing the
+              // reader spent effort on, and a bad crumb is not worth a 400. The
+              // anchor above is the half that is rejected, because a wrong one
+              // files the note against the wrong node.
+              const written = await writeAnnotation(teamDir, {
+                anchor: body.anchor,
+                context: toContext(body.context),
+                note,
+              });
+              logger.info(`annotation ${written.id} → ${chainText([...(written.context ?? []), written.anchor])}`);
               return send(res, 201, written);
             }
           } catch (err) {

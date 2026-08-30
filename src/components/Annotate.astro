@@ -34,6 +34,13 @@ import { MAX_NOTE } from '../lib/anchor';
     <button type="button" class="drawer-ctl ann__new" data-ann-new hidden>+ NEW NOTE</button>
     <button type="button" class="drawer-ctl" data-ann-cancel aria-label="Cancel">✕</button>
   </div>
+  <!-- Where the anchor sits, and the way to move it. A tool is drawn under every
+       activity that fills with it, so the innermost thing under the pointer is
+       not always the thing the sentence is about — the reader who meant "this
+       activity's use of it" says so here rather than aiming a second click.
+       Below the head rather than above it, because the head names what the note
+       is filed against and this names how that was arrived at. -->
+  <nav class="ann__trail" data-ann-trail aria-label="Where this sits" hidden></nav>
   <div class="ann__prior" data-ann-prior hidden></div>
   <textarea
     class="ann__text"
@@ -200,6 +207,57 @@ import { MAX_NOTE } from '../lib/anchor';
     white-space: nowrap;
   }
 
+  /* The drawer's crumb, made of buttons: same micro uppercase accent, same `→`,
+     because "where this sits" is one idea and the world says it one way. */
+  .ann__trail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 4px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    font-size: var(--micro);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* `:global` under the trail, because the crumbs are built by the script and a
+     scoped selector only matches markup Astro compiled — an element created at
+     runtime carries no `data-astro-cid`. The trail itself is in the markup, so
+     the rule is still anchored to this component and reaches nothing else.
+     Every rule below that names a node the script creates is global for the
+     same reason. */
+  .ann__trail :global(.ann__crumb) {
+    padding: 0;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  .ann__trail :global(.ann__crumb:hover),
+  .ann__trail :global(.ann__crumb:focus-visible) {
+    border-color: var(--accent);
+  }
+
+  /* The link the note is filed against. Ink and bold, so the trail says which
+     of its own steps was chosen without a second row to say it. */
+  .ann__trail :global(.ann__crumb[aria-current]) {
+    color: var(--ink);
+    font-weight: 700;
+    cursor: default;
+  }
+
+  .ann__trail :global(.ann__crumb[aria-current]:hover) {
+    border-color: transparent;
+  }
+
   /* Notes already on this node, so the reader does not say a second time what
      the folder already holds. Read-only here: resolving is a CLI verb (D-ANN-12). */
   .ann__prior {
@@ -212,17 +270,27 @@ import { MAX_NOTE } from '../lib/anchor';
     color: var(--sub);
   }
 
-  .ann__prior p {
+  .ann__prior :global(p) {
     margin: 0 0 4px;
   }
 
-  .ann__prior p:last-child {
+  .ann__prior :global(p:last-child) {
     margin-bottom: 0;
   }
 
-  .ann__prior b {
+  .ann__prior :global(b) {
     color: var(--ink);
     font-weight: 600;
+  }
+
+  /* Its own line under the sentence. Left inline, the uppercase `IN` lands at
+     the end of the prose and reads as the last word of the note. */
+  .ann__prior :global(.ann__where) {
+    display: block;
+    color: var(--muted);
+    font-size: var(--micro);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 
   .ann__text {
@@ -324,13 +392,20 @@ import { MAX_NOTE } from '../lib/anchor';
   // The route and the anchor test, from the module the endpoint reads them
   // from — a client that mints an anchor the server rejects, or posts to a path
   // it does not answer, is the failure a second copy of either would cause.
-  import { ANNOTATIONS_ROUTE, isAnchor } from '../lib/anchor';
+  import { ANNOTATIONS_ROUTE, chainText, crumbOf, isAnchor, toContext } from '../lib/anchor';
 
   interface Annotation {
     id: string;
     anchor: string;
+    context?: string[];
     created: string;
     note: string;
+  }
+
+  /** One step of the chain the click landed in: what it names, and the element that named it. */
+  interface Link {
+    anchor: string;
+    node: HTMLElement | null;
   }
 
   const composer = document.querySelector<HTMLFormElement>('[data-ann-composer]')!;
@@ -341,6 +416,7 @@ import { MAX_NOTE } from '../lib/anchor';
   const save = composer.querySelector<HTMLButtonElement>('[type="submit"]')!;
   const cancel = composer.querySelector<HTMLButtonElement>('[data-ann-cancel]')!;
   const newNote = composer.querySelector<HTMLButtonElement>('[data-ann-new]')!;
+  const trail = composer.querySelector<HTMLElement>('[data-ann-trail]')!;
   const hint = document.querySelector<HTMLElement>('[data-ann-hint]')!;
 
   // The endpoint is relative, so a `base` prefix rides along without this
@@ -351,8 +427,13 @@ import { MAX_NOTE } from '../lib/anchor';
   // handlers alike, so there is no second copy to keep in step.
   const armed = () => document.body.hasAttribute('data-annotate');
 
-  let target: string | null = null;
-  let subject: HTMLElement | null = null;
+  // The chain the click landed in, outermost first, and which of its links the
+  // note is filed against. Two slots, not four: the anchor and its element are
+  // read through `at()`, so a path that moves `pick` cannot leave the save
+  // filing against one link while the trail highlights another.
+  let chain: Link[] = [];
+  let pick = 0;
+  const at = () => chain[pick] as Link | undefined;
   // Where the click landed. A note the model has no node for still opens where
   // the reader was looking rather than in a corner.
   let point = { x: 0, y: 0 };
@@ -376,29 +457,53 @@ import { MAX_NOTE } from '../lib/anchor';
   // against the whole document while the reader is pointing at a node.
   const ADDRESSED = '[data-detail-key], [data-act], [data-tool]';
 
+  // The chain reads one attribute more: `data-detail`, the open drawer panel's
+  // own id. A panel is not something the reader points at — it is not in
+  // `ADDRESSED`, so it is never hovered or marked — but it is the activity a
+  // tool link inside the drawer was read under, which is exactly the
+  // surrounding the flat anchor used to lose.
+  const CHAIN = `${ADDRESSED}, [data-detail]`;
+
   const keyOf = (node: HTMLElement | null) => {
     if (node?.dataset.act) return `activity:${node.dataset.act}`;
     if (node?.dataset.tool) return `tool:${node.dataset.tool}`;
-    const key = node?.dataset.detailKey;
-    // A bare `data-detail-key` is an activity id; a prefixed one already names
-    // its kind. `__`-prefixed keys are the drawer's own panels (`__process`,
-    // `__open`), not nodes in the model.
+    // Both write the same grammar, so both are read by the same rule.
+    const key = node?.dataset.detailKey ?? node?.dataset.detail;
+    // A bare key is an activity id; a prefixed one already names its kind.
+    // `__`-prefixed keys are the drawer's own panels (`__process`, `__open`,
+    // `__team`), not nodes in the model.
     return !key || key.startsWith('__') ? null : key.includes(':') ? key : `activity:${key}`;
   };
 
-  // Best-effort resolution (D-ANN-3): the click walks up to the nearest thing
-  // the model actually names, and a click that names nothing is a note about the
-  // document it landed in (D-ANN-7). No precision is asked of the reader.
-  function subjectAt(el: Element | null): { anchor: string; node: HTMLElement | null } {
-    const node = el?.closest<HTMLElement>(ADDRESSED) ?? null;
-    const key = keyOf(node);
-    // The same predicate the endpoint answers 400 with: a key the model does
-    // not name — a drawer route like `open:feature` — is a note about the page.
-    return { anchor: key && isAnchor(key) ? key : docAnchor(el), node };
+  // Best-effort resolution (D-ANN-3), now the whole way up rather than one step:
+  // the click collects every thing the model names above it, outermost first,
+  // ending in the document it landed in (D-ANN-7) so the chain is never empty.
+  // No precision is asked of the reader — the nearest link is preselected and
+  // the rest are there to be picked.
+  function chainAt(el: Element | null): Link[] {
+    const links: Link[] = [];
+    // Drops a node wrapped in a container naming the same id — a `data-act` card
+    // inside its own drawer panel — which would otherwise draw the crumb twice in
+    // a row. The document at the end is that same rule, not a special case.
+    const add = (anchor: string, node: HTMLElement | null) => {
+      if (anchor !== links[0]?.anchor) links.unshift({ anchor, node });
+    };
+    for (
+      let node = el?.closest<HTMLElement>(CHAIN) ?? null;
+      node;
+      node = node.parentElement?.closest<HTMLElement>(CHAIN) ?? null
+    ) {
+      const key = keyOf(node);
+      // The same predicate the endpoint answers 400 with: a key the model does
+      // not name — a drawer route like `open:feature` — is not a step.
+      if (key && isAnchor(key)) add(key, node);
+    }
+    add(docAnchor(el), null);
+    return links;
   }
 
   // The reverse trip, for marking. One pass over everything the page addresses,
-  // asked the same question `subjectAt` asks — so a node that can be annotated
+  // asked the same question `chainAt` asks it — so a node that can be annotated
   // is exactly a node that can be marked, with no second mapping to keep in
   // step. `team` and `process:` name a whole document, which has no node.
   function mark() {
@@ -410,6 +515,12 @@ import { MAX_NOTE } from '../lib/anchor';
       if (key && anchors.has(key)) el.setAttribute('data-ann-marked', '');
     }
   }
+
+  // One owner for the composer's subject mark, because it is now taken down from
+  // two places — closing the card, and moving the anchor to another link.
+  const clearTarget = () => {
+    for (const el of document.querySelectorAll('[data-ann-target]')) el.removeAttribute('data-ann-target');
+  };
 
   const label = (anchor: string) => (anchor === 'team' ? 'THE DOCUMENT' : anchor.replace(':', ' · '));
 
@@ -472,7 +583,7 @@ import { MAX_NOTE } from '../lib/anchor';
 
     // A click on lane background names no node, but it still names a place —
     // the pointer becomes a box of no size, so one rule places both cases.
-    const box = subject?.getBoundingClientRect() ?? new DOMRect(point.x, point.y, 0, 0);
+    const box = at()?.node?.getBoundingClientRect() ?? new DOMRect(point.x, point.y, 0, 0);
 
     let left = box.right + GAP;
     if (left + w > right) left = box.left - GAP - w;
@@ -501,10 +612,11 @@ import { MAX_NOTE } from '../lib/anchor';
   // carries. Everything but the one being edited, or the reader reads their own
   // sentence twice.
   function showPrior() {
-    const head = target ? label(target) : '';
+    const anchor = at()?.anchor;
+    const head = anchor ? label(anchor) : '';
     anchorLabel.textContent = editing ? `${head} · ${editing.id}` : head;
     newNote.hidden = !editing;
-    const rest = known.filter((a) => a.anchor === target && a.id !== editing?.id);
+    const rest = known.filter((a) => a.anchor === anchor && a.id !== editing?.id);
     prior.hidden = rest.length === 0;
     prior.replaceChildren(
       ...rest.map((a) => {
@@ -512,44 +624,95 @@ import { MAX_NOTE } from '../lib/anchor';
         const id = document.createElement('b');
         id.textContent = `${a.id} `;
         p.append(id, a.note);
+        // Two notes on one shared catalog entry are usually about two different
+        // uses of it, so the list says where each was written or the reader
+        // reads them as the same complaint twice.
+        if (a.context?.length) {
+          const where = document.createElement('span');
+          where.className = 'ann__where';
+          where.textContent = `in ${chainText(a.context)}`;
+          p.append(where);
+        }
         return p;
       })
     );
+  }
+
+  // The chain, drawn as the drawer draws its crumb. Hidden when the click named
+  // one thing and nothing above it — a trail with a single step is a step the
+  // reader cannot take.
+  function showTrail() {
+    trail.hidden = chain.length < 2;
+    const steps: Node[] = [];
+    if (!trail.hidden) {
+      for (const [i, link] of chain.entries()) {
+        if (i) steps.push(document.createTextNode('→'));
+        const crumb = document.createElement('button');
+        crumb.type = 'button';
+        crumb.className = 'ann__crumb';
+        crumb.textContent = crumbOf(link.anchor);
+        crumb.title = link.anchor;
+        if (i === pick) crumb.setAttribute('aria-current', 'true');
+        else crumb.addEventListener('click', () => select(i));
+        steps.push(crumb);
+      }
+    }
+    trail.replaceChildren(...steps);
+  }
+
+  // File the note against one link of the chain. Called for the preselected one
+  // when the composer opens, and again whenever the reader picks another.
+  function select(i: number) {
+    // Before anything moves: has the reader written since the box was filled?
+    // An untouched box is still the layer's suggestion, so moving the anchor
+    // re-suggests. A sentence they typed is theirs, so it follows them to the
+    // new anchor as a new note rather than being overwritten by what that node
+    // already says.
+    const untouched = text.value === (editing?.note ?? '');
+    pick = i;
+    // The clicked element alone, not every twin the anchor marks: the subject of
+    // the sentence being written is the node the reader is looking at.
+    clearTarget();
+    at()?.node?.setAttribute('data-ann-target', '');
+    if (untouched) {
+      // A marked node already carries a sentence, and the reader who lands on it
+      // is almost always coming back to that sentence — so the note opens rather
+      // than an empty box beside a note they then say twice. The newest is the
+      // one opened; the rest stay listed above it, and `+ NEW NOTE` is the way
+      // out to a blank one.
+      const existing = known.filter((a) => a.anchor === at()?.anchor);
+      editing = existing[existing.length - 1] ?? null;
+      text.value = editing?.note ?? '';
+    } else editing = null;
+    showTrail();
+    showPrior();
+    place();
   }
 
   function closeComposer() {
     composer.hidden = true;
     window.removeEventListener('scroll', reposition, SCROLL);
     window.removeEventListener('resize', reposition);
-    target = null;
-    subject = null;
+    chain = [];
+    pick = 0;
+    showTrail();
     editing = null;
     newNote.hidden = true;
     text.value = '';
     status.textContent = '';
     save.disabled = false;
-    for (const el of document.querySelectorAll('[data-ann-target]')) el.removeAttribute('data-ann-target');
+    clearTarget();
   }
 
-  function openComposer(anchor: string, on: HTMLElement | null, at: { x: number; y: number }) {
+  function openComposer(links: Link[], at: { x: number; y: number }) {
     closeComposer();
-    target = anchor;
-    subject = on;
+    chain = links;
     point = at;
-    // The clicked element alone, not every twin the anchor marks: the subject of
-    // the sentence being written is the node the reader is looking at.
-    on?.setAttribute('data-ann-target', '');
-    // A marked node already carries a sentence, and the reader who clicks it is
-    // almost always coming back to that sentence — so the note opens, rather
-    // than an empty box beside a note they then say twice. The newest is the
-    // one opened; the rest stay listed above it, and `+ NEW NOTE` is the way
-    // out to a blank one.
-    const existing = known.filter((a) => a.anchor === anchor);
-    editing = existing[existing.length - 1] ?? null;
-    text.value = editing?.note ?? '';
-    showPrior();
+    // Visible before `select`, which measures the card to place it.
     composer.hidden = false;
-    place();
+    // The innermost link, which is where the pointer was. Everything above it is
+    // context until the reader says otherwise.
+    select(links.length - 1);
     // Capture, so a scroll inside the drawer or any other scroller moves the
     // card with the node it is about — those do not bubble.
     window.addEventListener('scroll', reposition, SCROLL);
@@ -567,8 +730,7 @@ import { MAX_NOTE } from '../lib/anchor';
       if (el?.closest('[data-ann]')) return;
       e.preventDefault();
       e.stopPropagation();
-      const { anchor, node } = subjectAt(el);
-      openComposer(anchor, node, { x: e.clientX, y: e.clientY });
+      openComposer(chainAt(el), { x: e.clientX, y: e.clientY });
     },
     true
   );
@@ -610,14 +772,22 @@ import { MAX_NOTE } from '../lib/anchor';
   composer.addEventListener('submit', async (e) => {
     e.preventDefault();
     const note = text.value.trim();
-    if (!note || !target) return;
+    const anchor = at()?.anchor;
+    if (!note || !anchor) return;
     save.disabled = true;
     status.textContent = 'saving…';
     try {
       const res = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ anchor: target, note, id: editing?.id }),
+        // Everything above the chosen link, nearest last, bounded by the same
+        // normaliser the endpoint and the store apply.
+        body: JSON.stringify({
+          anchor,
+          context: toContext(chain.slice(0, pick).map((l) => l.anchor)),
+          note,
+          id: editing?.id,
+        }),
       });
       if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? `HTTP ${res.status}`);
       // One arming is one note: the mode leaves with the note (D-ANN-3).

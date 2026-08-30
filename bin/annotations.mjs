@@ -6,6 +6,7 @@
 //
 // A sidecar, not part of the team document (D-ANN-10): `check` never reads this
 // and a malformed note is reported here rather than failing anyone's build.
+import { chainText } from '../src/lib/anchor.ts';
 import { readAnnotations, resolveAnnotation } from '../src/lib/annotations.ts';
 import { address } from '../src/lib/load.ts';
 
@@ -47,7 +48,13 @@ export function reportAnnotations({ annotations, problems }, teamDir) {
   const width = Math.max(...annotations.map((a) => a.anchor.length));
   for (const a of annotations) {
     const head = `${a.id} ${when(a.created)} ${a.anchor.padEnd(width)}`;
-    console.log(`${head}  ${wrap(a.note, 78, ' '.repeat(head.length + 2))}`);
+    const indent = ' '.repeat(head.length + 2);
+    console.log(`${head}  ${wrap(a.note, 78, indent)}`);
+    // Under the sentence, not beside the anchor: a shared catalog entry is drawn
+    // under every activity that uses it, so `tool:ci-workflows` alone does not
+    // say which one the reader was looking at — but the sentence is still what
+    // the eye is here for, and the chain is what it reaches for second.
+    if (a.context?.length) console.log(`${indent}in ${chainText(a.context)}`);
   }
   console.log(`\n${annotations.length} open — ai-sdlc annotations <team-dir> --resolve <id> when one is dealt with`);
 }

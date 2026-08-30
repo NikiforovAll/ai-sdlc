@@ -14,12 +14,14 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { parse, stringify } from 'yaml';
-import { isAnchor } from './anchor.ts';
+import { isAnchor, toContext } from './anchor.ts';
 
 export interface Annotation {
   id: string;
   /** `kind:id` naming a node in the model — or bare `team`, the whole document. */
   anchor: string;
+  /** Where the anchor sat when the note was written: the anchors above it, outermost first. */
+  context?: string[];
   created: string;
   note: string;
 }
@@ -30,11 +32,17 @@ export const annotationsDir = (teamDir: string) => join(resolve(teamDir), 'annot
 
 const newId = () => randomBytes(3).toString('hex');
 
+// Absent rather than empty when there is nothing above the anchor: a note on the
+// whole document has no surroundings, and a key that is always there but usually
+// `[]` is a key every reader has to learn to ignore. Said once, because every
+// writer of an `Annotation` has to say it.
+const withContext = (context?: string[]) => (context?.length ? { context } : {});
+
 // Frontmatter carries the machine half, the body carries the sentence. A note is
 // prose a person wrote, so it is not folded into a YAML string where a colon or
 // a line break would have to be escaped to survive.
 function serialize(a: Annotation) {
-  const front = stringify({ id: a.id, anchor: a.anchor, created: a.created });
+  const front = stringify({ id: a.id, anchor: a.anchor, ...withContext(a.context), created: a.created });
   return `---\n${front}---\n\n${a.note.trim()}\n`;
 }
 
@@ -51,9 +59,16 @@ function parseFile(file: string, text: string): Annotation | string {
   const f = front as Partial<Annotation> | null;
   if (!f || typeof f !== 'object') return 'frontmatter is not a mapping';
   if (!isAnchor(f.anchor)) return `anchor "${f.anchor}" is not a model id`;
+  // The context is read leniently where the anchor is not, because they are not
+  // the same kind of thing: the anchor is the record and a wrong one files the
+  // note against the wrong node, while the context only says where the reader
+  // was standing. A hand-edited chain with a typo in it loses a crumb, and
+  // losing a crumb is not worth withholding the sentence.
+  const context = toContext(f.context);
   return {
     id: typeof f.id === 'string' ? f.id : basename(file, '.md'),
     anchor: f.anchor,
+    ...withContext(context),
     created: typeof f.created === 'string' ? f.created : '',
     note: m[2].trim(),
   };
@@ -83,14 +98,27 @@ export async function readAnnotations(teamDir: string): Promise<Store> {
   return { annotations, problems };
 }
 
-export async function writeAnnotation(teamDir: string, anchor: string, note: string): Promise<Annotation> {
+// The draft is everything the caller supplies; the store mints the rest. A
+// record shape rather than a positional per field, because `anchor` and `note`
+// are both strings and the next field would be a third one to transpose.
+export type Draft = Omit<Annotation, 'id' | 'created'>;
+
+export async function writeAnnotation(teamDir: string, draft: Draft): Promise<Annotation> {
   const dir = annotationsDir(teamDir);
   await mkdir(dir, { recursive: true });
 
   // `wx` is the collision check — the write fails rather than overwriting a note
   // somebody else is looking at, which a read-then-write cannot promise.
   for (;;) {
-    const annotation: Annotation = { id: newId(), anchor, created: new Date().toISOString(), note: note.trim() };
+    const annotation: Annotation = {
+      id: newId(),
+      anchor: draft.anchor,
+      // The store owns the file format, so the bound on what a file may hold is
+      // enforced here rather than trusted from whoever is writing.
+      ...withContext(toContext(draft.context)),
+      created: new Date().toISOString(),
+      note: draft.note.trim(),
+    };
     try {
       await writeFile(join(dir, `${annotation.id}.md`), serialize(annotation), { encoding: 'utf8', flag: 'wx' });
       return annotation;
